@@ -1,0 +1,7 @@
+<resources>
+    <!-- solo para recursos del sistema (icono y ventana antes de compose); la app usa Color.kt -->
+    <color name="ventana_clara">#FBFAF7</color>
+    <color name="ventana_oscura">#141312</color>
+    <color name="icono_fondo">#FFFFFF</color>
+    <color name="icono_estrella">#3B9AD4</color>
+</resources>

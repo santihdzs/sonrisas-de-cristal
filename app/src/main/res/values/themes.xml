@@ -1,0 +1,5 @@
+<resources>
+    <style name="Theme.Sonrisas" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/ventana_clara</item>
+    </style>
+</resources>
