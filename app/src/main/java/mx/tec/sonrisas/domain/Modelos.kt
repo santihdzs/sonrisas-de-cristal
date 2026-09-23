@@ -219,6 +219,7 @@ data class RegistroActividad(
     val accion: AccionRegistro,
     val detalle: String,
     val ninoId: String? = null,
+    val estanciaId: String? = null,
 )
 
 interface Reloj {
