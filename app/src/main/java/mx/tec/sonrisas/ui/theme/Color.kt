@@ -113,3 +113,6 @@ internal val SonrisasOscuro = SonrisasColors(
     estrellaVerde = ParEstrella(Color(0xFF9AD27C), Color(0xFF233519)),
     estrellaAmarilla = ParEstrella(Color(0xFFF7D774), Color(0xFF3D3312)),
 )
+
+// el logo siempre va sobre superficie clara, tambien en modo oscuro
+internal val FondoLogo = Color(0xFFFBFAF7)
