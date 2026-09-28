@@ -8,7 +8,13 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import mx.tec.sonrisas.SonrisasApplication
 import mx.tec.sonrisas.data.AppContainer
+import mx.tec.sonrisas.ui.screens.comun.AvisosViewModel
 import mx.tec.sonrisas.ui.screens.comun.LoginViewModel
+import mx.tec.sonrisas.ui.screens.educadora.AsistenciaViewModel
+import mx.tec.sonrisas.ui.screens.educadora.FichaViewModel
+import mx.tec.sonrisas.ui.screens.educadora.IncidenteViewModel
+import mx.tec.sonrisas.ui.screens.educadora.RegistroGrupalViewModel
+import mx.tec.sonrisas.ui.screens.educadora.SalaViewModel
 import mx.tec.sonrisas.ui.screens.comun.PerfilViewModel
 import mx.tec.sonrisas.ui.state.SesionViewModel
 
@@ -19,6 +25,30 @@ object AppViewModelProvider {
         initializer {
             val c = contenedor()
             PerfilViewModel(c.sesionRepository, c.estanciasRepository, c.ninosRepository)
+        }
+        initializer { AvisosViewModel(contenedor().avisosRepository) }
+        initializer {
+            val c = contenedor()
+            SalaViewModel(c.sesionRepository, c.estanciasRepository, c.ninosRepository, c.jornadaRepository, c.reloj)
+        }
+        initializer {
+            val c = contenedor()
+            AsistenciaViewModel(c.jornadaRepository, c.incidentesRepository, c.reloj)
+        }
+        initializer {
+            val c = contenedor()
+            FichaViewModel(
+                createSavedStateHandle(), c.sesionRepository, c.estanciasRepository, c.ninosRepository,
+                c.jornadaRepository, c.incidentesRepository, c.reloj,
+            )
+        }
+        initializer {
+            val c = contenedor()
+            RegistroGrupalViewModel(c.sesionRepository, c.estanciasRepository, c.ninosRepository, c.jornadaRepository, c.reloj)
+        }
+        initializer {
+            val c = contenedor()
+            IncidenteViewModel(createSavedStateHandle(), c.estanciasRepository, c.ninosRepository, c.incidentesRepository, c.reloj)
         }
     }
 }

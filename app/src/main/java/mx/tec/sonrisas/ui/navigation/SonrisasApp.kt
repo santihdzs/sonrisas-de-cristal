@@ -5,7 +5,13 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import android.app.Application
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.HasDefaultViewModelProviderFactory
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.viewmodel.CreationExtras
+import androidx.lifecycle.viewmodel.MutableCreationExtras
 import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
@@ -40,14 +46,18 @@ fun SonrisasApp(sesionViewModel: SesionViewModel) {
     }
 }
 
-private class AlmacenDeSesion : ViewModelStoreOwner {
+private class AlmacenDeSesion(app: Application) : ViewModelStoreOwner, HasDefaultViewModelProviderFactory {
     override val viewModelStore = ViewModelStore()
+    override val defaultViewModelProviderFactory: ViewModelProvider.Factory = AppViewModelProvider.Factory
+    override val defaultViewModelCreationExtras: CreationExtras =
+        MutableCreationExtras().apply { set(ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY, app) }
 }
 
 @Composable
 private fun SesionActiva(sesion: Sesion, onCerrarSesion: () -> Unit) {
     // cada sesion tiene sus propios viewmodels; al salir se descartan y no queda nada del usuario anterior
-    val almacen = remember(sesion.usuario.id) { AlmacenDeSesion() }
+    val app = LocalContext.current.applicationContext as Application
+    val almacen = remember(sesion.usuario.id) { AlmacenDeSesion(app) }
     DisposableEffect(almacen) { onDispose { almacen.viewModelStore.clear() } }
     CompositionLocalProvider(LocalViewModelStoreOwner provides almacen) {
         when (sesion.usuario.rol) {

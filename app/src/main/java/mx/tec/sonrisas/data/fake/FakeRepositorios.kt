@@ -145,6 +145,14 @@ class FakeEstanciasRepository(
             else us.filter { it.rol == Rol.EDUCADORA && (u.rol == Rol.FUNDACION || it.estanciaId == u.estanciaId) }
         }
 
+    override fun personal(): Flow<List<Usuario>> =
+        combine(sesion.usuario, almacen.usuarios) { u, us ->
+            if (u == null) emptyList()
+            else us.filter {
+                (it.rol == Rol.EDUCADORA || it.rol == Rol.DIRECCION) && (u.rol == Rol.FUNDACION || it.estanciaId == u.estanciaId)
+            }
+        }
+
     override fun resumenFundacion(): Flow<List<ResumenEstancia>> =
         combine(sesion.usuario, almacen.estancias, almacen.ninos, almacen.asistencias) { u, estancias, ninos, asistencias ->
             if (u?.rol != Rol.FUNDACION && u?.rol != Rol.DIRECCION) return@combine emptyList()
@@ -333,10 +341,14 @@ class FakeJornadaRepository(
 
     override suspend fun agregarEventos(eventos: List<EventoBitacora>) {
         latencia()
-        val ninos = eventos.map { e -> educadoraCon(e.ninoId) }
-        almacen.eventos.update { it + eventos }
+        // el autor siempre sale de la sesion, no de lo que mande la pantalla (RF-14)
+        val firmados = eventos.map { e ->
+            val (u, n) = educadoraCon(e.ninoId)
+            Triple(e.conAutor(u.id), u, n)
+        }
+        almacen.eventos.update { it + firmados.map { f -> f.first } }
         val ahora = reloj.ahora()
-        eventos.zip(ninos).forEach { (e, par) -> almacen.registrar(par.first, ahora, AccionRegistro.CAPTURA, describirEvento(par.second, e), e.ninoId) }
+        firmados.forEach { (e, u, n) -> almacen.registrar(u, ahora, AccionRegistro.CAPTURA, describirEvento(n, e), n.id) }
     }
 
     override suspend fun terminarSiesta(id: String, fin: LocalTime) {
@@ -355,6 +367,14 @@ class FakeJornadaRepository(
         almacen.eventos.update { lista -> lista.filterNot { it.id == id } }
         almacen.registrar(u, reloj.ahora(), AccionRegistro.BORRADO, "Borró: " + describirEvento(n, evento).replaceFirstChar { it.lowercase() }, n.id)
     }
+}
+
+private fun EventoBitacora.conAutor(usuarioId: String): EventoBitacora = when (this) {
+    is EventoBitacora.Alimento -> copy(registradoPorId = usuarioId)
+    is EventoBitacora.Siesta -> copy(registradoPorId = usuarioId)
+    is EventoBitacora.Evacuacion -> copy(registradoPorId = usuarioId)
+    is EventoBitacora.Animo -> copy(registradoPorId = usuarioId)
+    is EventoBitacora.Nota -> copy(registradoPorId = usuarioId)
 }
 
 class FakeIncidentesRepository(

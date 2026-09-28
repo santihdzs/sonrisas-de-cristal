@@ -36,6 +36,9 @@ interface EstanciasRepository {
     fun estancias(): Flow<List<Estancia>>
     fun salas(): Flow<List<Sala>>
     fun educadoras(): Flow<List<Usuario>>
+
+    /** personal de la estancia (educadoras y direccion), para mostrar quien registro algo */
+    fun personal(): Flow<List<Usuario>>
     fun resumenFundacion(): Flow<List<ResumenEstancia>>
 }
 
