@@ -17,6 +17,8 @@ import mx.tec.sonrisas.ui.screens.comun.AvisosScreen
 import mx.tec.sonrisas.ui.screens.comun.AvisosViewModel
 import mx.tec.sonrisas.ui.screens.comun.PerfilScreen
 import mx.tec.sonrisas.ui.screens.comun.PerfilViewModel
+import mx.tec.sonrisas.ui.screens.fotos.FotoDetalleScreen
+import mx.tec.sonrisas.ui.screens.fotos.FotoDetalleViewModel
 import mx.tec.sonrisas.ui.state.UiState
 
 fun NavGraphBuilder.destinosComunes(navController: NavHostController, onCerrarSesion: () -> Unit) {
@@ -51,6 +53,27 @@ fun NavGraphBuilder.destinoAvisos(alSalir: (Collection<String>) -> Unit, onPubli
             UiState.Cargando -> CargandoView()
             is UiState.Error -> ErrorView(e.mensaje, vm::reintentar)
             is UiState.Exito -> AvisosScreen(e.datos, onPublicar = onPublicar)
+        }
+    }
+}
+
+fun NavGraphBuilder.destinoFoto(navController: NavHostController, mensajero: Mensajero) {
+    composable(Route.FOTO) {
+        val vm: FotoDetalleViewModel = viewModel(factory = AppViewModelProvider.Factory)
+        val estado by vm.uiState.collectAsStateWithLifecycle()
+        when (val e = estado) {
+            UiState.Cargando -> CargandoView()
+            is UiState.Error -> ErrorView(e.mensaje, vm::reintentar)
+            is UiState.Exito -> FotoDetalleScreen(
+                datos = if (vm.borrada) null else e.datos,
+                borrando = vm.borrando,
+                onBorrar = {
+                    vm.borrar {
+                        mensajero.mostrar(it)
+                        navController.popBackStack()
+                    }
+                },
+            )
         }
     }
 }

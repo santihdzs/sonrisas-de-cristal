@@ -17,6 +17,10 @@ import mx.tec.sonrisas.ui.components.CargandoView
 import mx.tec.sonrisas.ui.components.ErrorView
 import mx.tec.sonrisas.ui.screens.comun.AvisosViewModel
 import mx.tec.sonrisas.ui.screens.educadora.AsistenciaViewModel
+import mx.tec.sonrisas.ui.screens.fotos.AgregarFotoScreen
+import mx.tec.sonrisas.ui.screens.fotos.AgregarFotoViewModel
+import mx.tec.sonrisas.ui.screens.fotos.FotosSalaViewModel
+import mx.tec.sonrisas.ui.screens.fotos.GaleriaFotos
 import mx.tec.sonrisas.ui.screens.educadora.FichaScreen
 import mx.tec.sonrisas.ui.screens.educadora.FichaViewModel
 import mx.tec.sonrisas.ui.screens.educadora.HojasAsistencia
@@ -141,7 +145,41 @@ fun EducadoraApp(onCerrarSesion: () -> Unit) {
                     )
                 }
             }
-            composable(Route.FOTOS_SALA) { Pendiente("Fotos de la sala") }
+            composable(Route.FOTOS_SALA) {
+                val vm: FotosSalaViewModel = viewModel(factory = AppViewModelProvider.Factory)
+                val estado by vm.uiState.collectAsStateWithLifecycle()
+                when (val e = estado) {
+                    UiState.Cargando -> CargandoView()
+                    is UiState.Error -> ErrorView(e.mensaje, vm::reintentar)
+                    is UiState.Exito -> GaleriaFotos(
+                        datos = e.datos,
+                        onFoto = { navController.navigate(Route.foto(it.id)) },
+                        onAgregar = { navController.navigate(Route.AGREGAR_FOTO) },
+                    )
+                }
+            }
+            composable(Route.AGREGAR_FOTO) {
+                val vm: AgregarFotoViewModel = viewModel(factory = AppViewModelProvider.Factory)
+                val estado by vm.uiState.collectAsStateWithLifecycle()
+                when (val e = estado) {
+                    UiState.Cargando -> CargandoView()
+                    is UiState.Error -> ErrorView(e.mensaje, vm::reintentar)
+                    is UiState.Exito -> AgregarFotoScreen(
+                        datos = e.datos,
+                        form = vm.form,
+                        onCambiar = vm::cambiar,
+                        onUso = { vm.cambiarUso(it, e.datos.ninos) },
+                        onAlternar = vm::alternar,
+                        onGuardar = {
+                            vm.guardar {
+                                mensajero.mostrar(it)
+                                navController.popBackStack()
+                            }
+                        },
+                    )
+                }
+            }
+            destinoFoto(navController, mensajero)
             destinoAvisos(alSalir = avisosVm::marcarLeidos)
             destinosComunes(navController, onCerrarSesion)
         }
