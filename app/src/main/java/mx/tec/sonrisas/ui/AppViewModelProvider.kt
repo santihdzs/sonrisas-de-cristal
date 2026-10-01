@@ -16,6 +16,8 @@ import mx.tec.sonrisas.ui.screens.educadora.IncidenteViewModel
 import mx.tec.sonrisas.ui.screens.educadora.RegistroGrupalViewModel
 import mx.tec.sonrisas.ui.screens.educadora.SalaViewModel
 import mx.tec.sonrisas.ui.screens.comun.PerfilViewModel
+import mx.tec.sonrisas.ui.screens.familia.FamiliaViewModel
+import mx.tec.sonrisas.ui.screens.familia.IncidenteDetalleViewModel
 import mx.tec.sonrisas.ui.screens.fotos.AgregarFotoViewModel
 import mx.tec.sonrisas.ui.screens.fotos.FotoDetalleViewModel
 import mx.tec.sonrisas.ui.screens.fotos.FotosSalaViewModel
@@ -64,6 +66,17 @@ object AppViewModelProvider {
         initializer {
             val c = contenedor()
             FotoDetalleViewModel(createSavedStateHandle(), c.sesionRepository, c.estanciasRepository, c.ninosRepository, c.fotosRepository, c.reloj)
+        }
+        initializer {
+            val c = contenedor()
+            FamiliaViewModel(
+                c.estanciasRepository, c.ninosRepository, c.jornadaRepository, c.incidentesRepository,
+                c.fotosRepository, c.horariosRepository, c.reloj,
+            )
+        }
+        initializer {
+            val c = contenedor()
+            IncidenteDetalleViewModel(createSavedStateHandle(), c.estanciasRepository, c.ninosRepository, c.incidentesRepository)
         }
     }
 }

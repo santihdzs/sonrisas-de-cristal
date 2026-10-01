@@ -1,5 +1,7 @@
 package mx.tec.sonrisas.ui.navigation
 
+import android.content.Context
+import android.content.Intent
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
@@ -17,6 +19,8 @@ import mx.tec.sonrisas.ui.screens.comun.AvisosScreen
 import mx.tec.sonrisas.ui.screens.comun.AvisosViewModel
 import mx.tec.sonrisas.ui.screens.comun.PerfilScreen
 import mx.tec.sonrisas.ui.screens.comun.PerfilViewModel
+import mx.tec.sonrisas.ui.screens.familia.IncidenteDetalleScreen
+import mx.tec.sonrisas.ui.screens.familia.IncidenteDetalleViewModel
 import mx.tec.sonrisas.ui.screens.fotos.FotoDetalleScreen
 import mx.tec.sonrisas.ui.screens.fotos.FotoDetalleViewModel
 import mx.tec.sonrisas.ui.state.UiState
@@ -76,4 +80,26 @@ fun NavGraphBuilder.destinoFoto(navController: NavHostController, mensajero: Men
             )
         }
     }
+}
+
+fun NavGraphBuilder.destinoIncidente() {
+    composable(Route.INCIDENTE_DETALLE) {
+        val vm: IncidenteDetalleViewModel = viewModel(factory = AppViewModelProvider.Factory)
+        val estado by vm.uiState.collectAsStateWithLifecycle()
+        when (val e = estado) {
+            UiState.Cargando -> CargandoView()
+            is UiState.Error -> ErrorView(e.mensaje, vm::reintentar)
+            is UiState.Exito -> IncidenteDetalleScreen(e.datos)
+        }
+    }
+}
+
+/** abre la hoja de compartir de android con texto plano (RF-12, RF-20) */
+fun compartirTexto(context: Context, titulo: String, texto: String) {
+    val envio = Intent(Intent.ACTION_SEND).apply {
+        type = "text/plain"
+        putExtra(Intent.EXTRA_SUBJECT, titulo)
+        putExtra(Intent.EXTRA_TEXT, texto)
+    }
+    context.startActivity(Intent.createChooser(envio, titulo))
 }
