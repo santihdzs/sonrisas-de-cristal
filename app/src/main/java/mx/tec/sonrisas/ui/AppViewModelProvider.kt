@@ -10,6 +10,15 @@ import mx.tec.sonrisas.SonrisasApplication
 import mx.tec.sonrisas.data.AppContainer
 import mx.tec.sonrisas.ui.screens.comun.AvisosViewModel
 import mx.tec.sonrisas.ui.screens.comun.LoginViewModel
+import mx.tec.sonrisas.ui.screens.direccion.ActividadViewModel
+import mx.tec.sonrisas.ui.screens.direccion.ExpedienteViewModel
+import mx.tec.sonrisas.ui.screens.direccion.FundacionViewModel
+import mx.tec.sonrisas.ui.screens.direccion.HorariosViewModel
+import mx.tec.sonrisas.ui.screens.direccion.InicioViewModel
+import mx.tec.sonrisas.ui.screens.direccion.InscripcionViewModel
+import mx.tec.sonrisas.ui.screens.direccion.NinosViewModel
+import mx.tec.sonrisas.ui.screens.direccion.PublicarAvisoViewModel
+import mx.tec.sonrisas.ui.screens.direccion.ReporteViewModel
 import mx.tec.sonrisas.ui.screens.educadora.AsistenciaViewModel
 import mx.tec.sonrisas.ui.screens.educadora.FichaViewModel
 import mx.tec.sonrisas.ui.screens.educadora.IncidenteViewModel
@@ -78,6 +87,36 @@ object AppViewModelProvider {
             val c = contenedor()
             IncidenteDetalleViewModel(createSavedStateHandle(), c.estanciasRepository, c.ninosRepository, c.incidentesRepository)
         }
+        initializer {
+            val c = contenedor()
+            InicioViewModel(c.estanciasRepository, c.ninosRepository, c.jornadaRepository, c.incidentesRepository, c.avisosRepository, c.reloj)
+        }
+        initializer {
+            val c = contenedor()
+            NinosViewModel(c.estanciasRepository, c.ninosRepository, c.reloj)
+        }
+        initializer {
+            val c = contenedor()
+            ExpedienteViewModel(createSavedStateHandle(), c.estanciasRepository, c.ninosRepository, c.reloj)
+        }
+        initializer {
+            val c = contenedor()
+            InscripcionViewModel(createSavedStateHandle(), c.estanciasRepository, c.ninosRepository, c.reloj)
+        }
+        initializer { PublicarAvisoViewModel(contenedor().avisosRepository) }
+        initializer {
+            val c = contenedor()
+            ReporteViewModel(c.sesionRepository, c.estanciasRepository, c.jornadaRepository, c.reloj)
+        }
+        initializer {
+            val c = contenedor()
+            HorariosViewModel(c.estanciasRepository, c.horariosRepository, c.reloj)
+        }
+        initializer {
+            val c = contenedor()
+            ActividadViewModel(c.actividadRepository, c.ninosRepository, c.reloj)
+        }
+        initializer { FundacionViewModel(contenedor().estanciasRepository) }
     }
 }
 

@@ -155,7 +155,6 @@ sealed interface ActividadActual {
                 it.fecha == ahora.toLocalDate() && !hora.isBefore(it.inicio) && hora.isBefore(it.fin)
             }
             if (especial != null) return Especial(especial)
-            if (!ahora.toLocalDate().esDiaHabil()) return FueraDeHorario
             val bloque = bloques.firstOrNull { !hora.isBefore(it.inicio) && hora.isBefore(it.fin) }
             return if (bloque != null) Regular(bloque) else FueraDeHorario
         }
@@ -173,9 +172,9 @@ data class ReporteAsistencia(
     val diasHabiles: Int,
     val filas: List<FilaReporte>,
     val salas: List<FilaSala>,
+    // se guarda aparte para poder quitar las filas por nino sin perder el promedio
+    val promedio: Int = if (filas.isEmpty()) 0 else filas.map { it.porcentaje }.average().roundToInt(),
 ) {
-    val promedio: Int
-        get() = if (filas.isEmpty()) 0 else filas.map { it.porcentaje }.average().roundToInt()
 
     fun comoTexto(titulo: String): String = buildString {
         val fmt = DateTimeFormatter.ofPattern("MMMM yyyy", LOCALE_MX)
@@ -189,7 +188,7 @@ data class ReporteAsistencia(
             salas.forEach { appendLine("  ${it.nombre}: ${it.inscritos} niños, ${it.promedio} %") }
             appendLine()
         }
-        appendLine("Por niño")
+        if (filas.isNotEmpty()) appendLine("Por niño")
         filas.forEach { appendLine("  ${it.nombre}: ${it.asistidos} de ${it.habiles} días (${it.porcentaje} %)") }
     }
 

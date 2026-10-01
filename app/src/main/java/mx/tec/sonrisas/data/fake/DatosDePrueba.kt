@@ -157,7 +157,9 @@ private class Generador(reloj: Reloj, semilla: Int) {
             especiales = especiales,
             registros = registros.sortedByDescending { it.cuando },
             // la familia demo ya leyo los dos avisos mas viejos
-            avisosLeidos = mapOf(familia.id to avisosSb.take(2).map { it.id }.toSet()),
+            avisosLeidos = mapOf(familia.id to avisosSb.take(2).map { it.id }.toSet()) +
+                // cada directora ya leyo lo que ella misma publico
+                directoraDeEstancia.values.associate { d -> d.id to avisos.filter { it.autorId == d.id }.map { it.id }.toSet() },
             siguienteFolio = numerados.size + 1,
         )
     }

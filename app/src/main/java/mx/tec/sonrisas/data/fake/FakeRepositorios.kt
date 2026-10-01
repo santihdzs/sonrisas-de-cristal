@@ -309,7 +309,9 @@ class FakeJornadaRepository(
             val deReporte = if (u == null || u.rol == Rol.EDUCADORA || u.rol == Rol.FAMILIAR) emptyList()
             else ninos.filter { it.activo && it.salaId in salaIds }
             val ids = deReporte.map { it.id }.toSet()
-            ReporteAsistencia.de(mes, reloj.hoy(), deReporte, salasFiltradas, asistencias.filter { it.ninoId in ids })
+            val reporte = ReporteAsistencia.de(mes, reloj.hoy(), deReporte, salasFiltradas, asistencias.filter { it.ninoId in ids })
+            // la fundacion solo recibe datos consolidados, sin nombres de ninos (RF-17)
+            if (u?.rol == Rol.FUNDACION) reporte.copy(filas = emptyList()) else reporte
         }
 
     private fun educadoraCon(ninoId: String): Pair<Usuario, Nino> {
