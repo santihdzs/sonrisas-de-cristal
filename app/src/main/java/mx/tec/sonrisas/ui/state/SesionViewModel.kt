@@ -6,20 +6,45 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import mx.tec.sonrisas.data.EstanciasRepository
 import mx.tec.sonrisas.data.SesionEstado
 import mx.tec.sonrisas.data.SesionRepository
+import mx.tec.sonrisas.domain.ColorEstrella
 
 const val MINUTOS_INACTIVIDAD = 5L
 
-class SesionViewModel(private val sesionRepository: SesionRepository) : ViewModel() {
+data class ContextoBloqueo(val titulo: String, val estrella: ColorEstrella?, val nombre: String)
+
+class SesionViewModel(
+    private val sesionRepository: SesionRepository,
+    estanciasRepository: EstanciasRepository,
+) : ViewModel() {
 
     val estado: StateFlow<SesionEstado> = sesionRepository.estado
 
     var bloqueada by mutableStateOf(false)
         private set
+
+    var mensajeBloqueo by mutableStateOf<String?>(null)
+        private set
+
+    /** en la pantalla de bloqueo se muestra la sala (o la estancia) de quien tiene la sesion */
+    val contextoBloqueo: StateFlow<ContextoBloqueo?> =
+        combine(estado, estanciasRepository.salas(), estanciasRepository.estancias()) { e, salas, estancias ->
+            val u = (e as? SesionEstado.Activa)?.sesion?.usuario ?: return@combine null
+            val sala = salas.firstOrNull { it.id == u.salaId }
+            ContextoBloqueo(
+                titulo = sala?.let { "Sala ${it.nombre}" } ?: estancias.firstOrNull { it.id == u.estanciaId }?.nombre ?: "Sonrisas de Cristal",
+                estrella = sala?.estrella,
+                nombre = u.nombre,
+            )
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     private var ultimaInteraccion = System.currentTimeMillis()
 
@@ -48,12 +73,18 @@ class SesionViewModel(private val sesionRepository: SesionRepository) : ViewMode
 
     fun desbloquear() {
         bloqueada = false
+        mensajeBloqueo = null
         registrarInteraccion()
+    }
+
+    fun avisarBloqueo(mensaje: String?) {
+        mensajeBloqueo = mensaje
     }
 
     fun cerrarSesion() {
         viewModelScope.launch {
             bloqueada = false
+            mensajeBloqueo = null
             sesionRepository.cerrar()
         }
     }

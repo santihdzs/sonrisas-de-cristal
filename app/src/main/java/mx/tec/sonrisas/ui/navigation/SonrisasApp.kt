@@ -1,6 +1,10 @@
 package mx.tec.sonrisas.ui.navigation
 
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -20,13 +24,14 @@ import mx.tec.sonrisas.data.Sesion
 import mx.tec.sonrisas.data.SesionEstado
 import mx.tec.sonrisas.domain.Rol
 import mx.tec.sonrisas.ui.AppViewModelProvider
+import mx.tec.sonrisas.ui.screens.comun.BloqueoScreen
 import mx.tec.sonrisas.ui.screens.comun.LoginScreen
 import mx.tec.sonrisas.ui.screens.comun.LoginViewModel
 import mx.tec.sonrisas.ui.screens.comun.SplashScreen
 import mx.tec.sonrisas.ui.state.SesionViewModel
 
 @Composable
-fun SonrisasApp(sesionViewModel: SesionViewModel) {
+fun SonrisasApp(sesionViewModel: SesionViewModel, onDesbloquear: () -> Unit) {
     val estado by sesionViewModel.estado.collectAsStateWithLifecycle()
     when (val e = estado) {
         SesionEstado.Cargando -> SplashScreen()
@@ -42,7 +47,25 @@ fun SonrisasApp(sesionViewModel: SesionViewModel) {
                 onCuentaDemo = vm::entrarComo,
             )
         }
-        is SesionEstado.Activa -> SesionActiva(e.sesion, onCerrarSesion = sesionViewModel::cerrarSesion)
+        is SesionEstado.Activa -> {
+            val bloqueada = sesionViewModel.bloqueada
+            // la app sigue compuesta debajo para no perder la navegacion, pero sin semantica mientras esta bloqueada
+            Box(if (bloqueada) Modifier.clearAndSetSemantics { } else Modifier) {
+                SesionActiva(e.sesion, onCerrarSesion = sesionViewModel::cerrarSesion)
+            }
+            if (bloqueada) {
+                val contexto by sesionViewModel.contextoBloqueo.collectAsStateWithLifecycle()
+                BackHandler { }
+                BloqueoScreen(
+                    titulo = contexto?.titulo ?: "Sonrisas de Cristal",
+                    estrella = contexto?.estrella,
+                    nombreUsuario = contexto?.nombre ?: e.sesion.usuario.nombre,
+                    mensaje = sesionViewModel.mensajeBloqueo,
+                    onDesbloquear = onDesbloquear,
+                    onCambiarUsuario = sesionViewModel::cerrarSesion,
+                )
+            }
+        }
     }
 }
 
