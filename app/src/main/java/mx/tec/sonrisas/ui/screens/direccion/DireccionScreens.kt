@@ -386,10 +386,12 @@ fun MasScreen(
     onAsistencia: () -> Unit,
     onHorarios: () -> Unit,
     onActividad: () -> Unit,
+    onSalas: () -> Unit,
     onPerfil: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val opciones = listOf(
+        Triple("Salas", "Registrar salas y elegir el color de su estrella", R.drawable.ic_meeting_room) to onSalas,
         Triple("Reporte de asistencia", "Asistencia por sala y por mes", R.drawable.ic_bar_chart) to onAsistencia,
         Triple("Horarios", "Actividades de cada sala y actividades especiales", R.drawable.ic_calendar_month) to onHorarios,
         Triple("Registro de actividad", "Quién capturó o consultó cada dato", R.drawable.ic_history) to onActividad,
@@ -410,7 +412,13 @@ fun MasScreen(
 }
 
 @Composable
-fun FundacionScreen(datos: FundacionDatos, onReporte: () -> Unit, modifier: Modifier = Modifier) {
+fun FundacionScreen(
+    datos: FundacionDatos,
+    onReporte: () -> Unit,
+    onRegistrar: () -> Unit,
+    onEstancia: (Estancia) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(Espacio.space4),
@@ -423,9 +431,24 @@ fun FundacionScreen(datos: FundacionDatos, onReporte: () -> Unit, modifier: Modi
                 Text("${datos.presentes} presentes ahora", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
+        item {
+            FilledTonalButton(onClick = onRegistrar, modifier = Modifier.heightIn(min = 48.dp)) {
+                Icono(R.drawable.ic_add, null)
+                Text("Registrar estancia", modifier = Modifier.padding(start = Espacio.space2))
+            }
+        }
         items(datos.estancias, key = { it.estancia.id }) { r ->
-            TarjetaSeccion(titulo = r.estancia.nombre, icono = R.drawable.ic_apartment) {
-                Text(r.estancia.colonia, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            TarjetaSeccion(
+                titulo = r.estancia.nombre,
+                icono = R.drawable.ic_apartment,
+                onClick = { onEstancia(r.estancia) },
+                accion = { Icono(R.drawable.ic_edit, "Editar ${r.estancia.nombre}", tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+            ) {
+                Text(
+                    listOf(r.estancia.colonia, r.estancia.telefono).filter { it.isNotBlank() }.joinToString(" · "),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
                 Row(horizontalArrangement = Arrangement.spacedBy(Espacio.space4)) {
                     Cifra("${r.inscritos}", "inscritos", Modifier.weight(1f))
                     Cifra("${r.presentesHoy}", "presentes hoy", Modifier.weight(1f))
@@ -485,12 +508,12 @@ private fun ExpedientePreview() {
 @Preview(showBackground = true)
 @Composable
 private fun MasPreview() {
-    SonrisasTheme { MasScreen({}, {}, {}, {}) }
+    SonrisasTheme { MasScreen({}, {}, {}, {}, {}) }
 }
 
 @Preview(showBackground = true)
 @Composable
 private fun FundacionPreview() {
     val e = Estancia("e", "Estancia San Bernabé", "San Bernabé, Monterrey")
-    SonrisasTheme { FundacionScreen(FundacionDatos(listOf(ResumenEstancia(e, 34, 28, 91))), {}) }
+    SonrisasTheme { FundacionScreen(FundacionDatos(listOf(ResumenEstancia(e, 34, 28, 91))), {}, {}, {}) }
 }

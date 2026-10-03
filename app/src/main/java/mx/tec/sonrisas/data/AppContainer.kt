@@ -8,6 +8,7 @@ import mx.tec.sonrisas.data.fake.AlmacenMemoria
 import mx.tec.sonrisas.data.fake.DatosDePrueba
 import mx.tec.sonrisas.data.fake.FakeActividadRepository
 import mx.tec.sonrisas.data.fake.FakeAvisosRepository
+import mx.tec.sonrisas.data.fake.FakeCuentasRepository
 import mx.tec.sonrisas.data.fake.FakeEstanciasRepository
 import mx.tec.sonrisas.data.fake.FakeFotosRepository
 import mx.tec.sonrisas.data.fake.FakeHorariosRepository
@@ -37,6 +38,7 @@ class AppContainer {
     val avisosRepository: AvisosRepository by lazy { FakeAvisosRepository(almacen, sesionFake, reloj) }
     val horariosRepository: HorariosRepository by lazy { FakeHorariosRepository(almacen, sesionFake, reloj) }
     val actividadRepository: ActividadRepository by lazy { FakeActividadRepository(almacen, sesionFake) }
+    val cuentasRepository: CuentasRepository by lazy { FakeCuentasRepository(almacen, sesionFake, reloj) }
 
     fun iniciar() {
         scope.launch {

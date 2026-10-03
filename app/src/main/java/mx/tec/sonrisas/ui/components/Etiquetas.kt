@@ -2,6 +2,7 @@ package mx.tec.sonrisas.ui.components
 
 import mx.tec.sonrisas.R
 import mx.tec.sonrisas.domain.AccionRegistro
+import mx.tec.sonrisas.domain.ColorEstrella
 import mx.tec.sonrisas.domain.ControlEsfinteres
 import mx.tec.sonrisas.domain.EstadoAnimo
 import mx.tec.sonrisas.domain.Porcion
@@ -119,6 +120,15 @@ val TipoSala.etiqueta: String
         TipoSala.PREESCOLAR -> "Preescolar"
     }
 
+val ColorEstrella.etiqueta: String
+    get() = when (this) {
+        ColorEstrella.AZUL -> "Azul"
+        ColorEstrella.ROJO -> "Roja"
+        ColorEstrella.NARANJA -> "Naranja"
+        ColorEstrella.VERDE -> "Verde"
+        ColorEstrella.AMARILLO -> "Amarilla"
+    }
+
 val Rol.etiqueta: String
     get() = when (this) {
         Rol.EDUCADORA -> "Educadora"
@@ -143,6 +153,8 @@ val AccionRegistro.etiqueta: String
         AccionRegistro.EXPEDIENTE -> "Expediente"
         AccionRegistro.AVISO -> "Aviso"
         AccionRegistro.SESION -> "Sesión"
+        AccionRegistro.ESTRUCTURA -> "Estancias y salas"
+        AccionRegistro.CUENTA -> "Cuentas"
     }
 
 val AccionRegistro.icono: Int
@@ -154,4 +166,6 @@ val AccionRegistro.icono: Int
         AccionRegistro.EXPEDIENTE -> R.drawable.ic_badge
         AccionRegistro.AVISO -> R.drawable.ic_campaign
         AccionRegistro.SESION -> R.drawable.ic_login
+        AccionRegistro.ESTRUCTURA -> R.drawable.ic_meeting_room
+        AccionRegistro.CUENTA -> R.drawable.ic_key
     }

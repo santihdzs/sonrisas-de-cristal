@@ -4,7 +4,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 
-data class Estancia(val id: String, val nombre: String, val colonia: String)
+data class Estancia(val id: String, val nombre: String, val colonia: String, val telefono: String = "")
 
 enum class TipoSala { LACTANTES, MATERNALES, PREESCOLAR }
 
@@ -30,6 +30,9 @@ data class Usuario(
     val salaId: String? = null,
     val tutorId: String? = null,
 )
+
+/** se muestran una sola vez al crear la cuenta; despues ya no se pueden consultar */
+data class Credenciales(val nombre: String, val usuario: String, val contrasena: String, val rol: Rol)
 
 data class Tutor(val id: String, val nombre: String, val parentesco: String, val telefono: String)
 
@@ -209,7 +212,7 @@ data class ActividadEspecial(
     val titulo: String,
 )
 
-enum class AccionRegistro { CAPTURA, EDICION, BORRADO, FOTO_CONSULTADA, EXPEDIENTE, AVISO, SESION }
+enum class AccionRegistro { CAPTURA, EDICION, BORRADO, FOTO_CONSULTADA, EXPEDIENTE, AVISO, SESION, ESTRUCTURA, CUENTA }
 
 data class RegistroActividad(
     val id: String,

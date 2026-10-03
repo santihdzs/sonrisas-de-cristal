@@ -37,6 +37,9 @@ import mx.tec.sonrisas.ui.screens.direccion.PublicarAvisoScreen
 import mx.tec.sonrisas.ui.screens.direccion.PublicarAvisoViewModel
 import mx.tec.sonrisas.ui.screens.direccion.ReporteScreen
 import mx.tec.sonrisas.ui.screens.direccion.ReporteViewModel
+import mx.tec.sonrisas.ui.screens.direccion.HojaSalaForm
+import mx.tec.sonrisas.ui.screens.direccion.SalasScreen
+import mx.tec.sonrisas.ui.screens.direccion.SalasViewModel
 import mx.tec.sonrisas.ui.state.UiState
 
 @Composable
@@ -150,10 +153,32 @@ fun DireccionApp(onCerrarSesion: () -> Unit) {
                     onAsistencia = { navController.navigate(Route.ASISTENCIA) },
                     onHorarios = { navController.navigate(Route.HORARIOS) },
                     onActividad = { navController.navigate(Route.ACTIVIDAD) },
+                    onSalas = { navController.navigate(Route.SALAS) },
                     onPerfil = { navController.navigate(Route.PERFIL) },
                 )
             }
             destinoReporte()
+            composable(Route.SALAS) {
+                val vm: SalasViewModel = viewModel(factory = AppViewModelProvider.Factory)
+                val estado by vm.uiState.collectAsStateWithLifecycle()
+                when (val e = estado) {
+                    UiState.Cargando -> CargandoView()
+                    is UiState.Error -> ErrorView(e.mensaje, vm::reintentar)
+                    is UiState.Exito -> {
+                        SalasScreen(e.datos, onNueva = vm::nueva, onEditar = vm::editar)
+                        vm.hoja?.let { h ->
+                            HojaSalaForm(
+                                hoja = h,
+                                errores = vm.errores(h),
+                                ocupadas = e.datos.todas.filter { it.id != h.id }.map { it.estrella }.toSet(),
+                                onCambiar = vm::cambiar,
+                                onGuardar = { vm.guardar(mensajero::mostrar) },
+                                onCerrar = vm::cerrar,
+                            )
+                        }
+                    }
+                }
+            }
             composable(Route.HORARIOS) {
                 val vm: HorariosViewModel = viewModel(factory = AppViewModelProvider.Factory)
                 val estado by vm.uiState.collectAsStateWithLifecycle()
@@ -227,5 +252,6 @@ private fun tituloDireccion(ruta: String?): String = tituloComun(ruta) ?: when (
     Route.ASISTENCIA -> "Reporte de asistencia"
     Route.HORARIOS -> "Horarios"
     Route.ACTIVIDAD -> "Registro de actividad"
+    Route.SALAS -> "Salas"
     else -> ""
 }

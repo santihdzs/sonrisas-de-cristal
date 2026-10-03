@@ -168,8 +168,8 @@ private class Generador(reloj: Reloj, semilla: Int) {
     private lateinit var valleVerde: Estancia
 
     private fun crearEstructura() {
-        sanBernabe = Estancia(id(), "Estancia San Bernabé", "San Bernabé, Monterrey")
-        valleVerde = Estancia(id(), "Estancia Valle Verde", "Valle Verde, Monterrey")
+        sanBernabe = Estancia(id(), "Estancia San Bernabé", "San Bernabé, Monterrey", "81 8331 2040")
+        valleVerde = Estancia(id(), "Estancia Valle Verde", "Valle Verde, Monterrey", "81 8370 1185")
         estancias += listOf(sanBernabe, valleVerde)
 
         salas += Sala(id(), sanBernabe.id, "Lactantes", TipoSala.LACTANTES, ColorEstrella.AZUL)

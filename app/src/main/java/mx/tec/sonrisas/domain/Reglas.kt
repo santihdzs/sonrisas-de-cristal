@@ -1,5 +1,6 @@
 package mx.tec.sonrisas.domain
 
+import java.text.Normalizer
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -9,6 +10,7 @@ import java.time.format.DateTimeFormatter
 import java.time.temporal.TemporalAdjusters
 import java.util.Locale
 import kotlin.math.roundToInt
+import kotlin.random.Random
 
 // periodo de gracia antes de borrar un expediente dado de baja.
 // la fundacion todavia tiene que definir su duracion (RF-18), 30 dias es provisional.
@@ -261,6 +263,22 @@ object Validaciones {
         requerido(cuerpo, "el mensaje")?.let { put("cuerpo", it) }
     }
 
+    fun estancia(nombre: String, colonia: String, telefono: String): Map<String, String> = buildMap {
+        requerido(nombre, "el nombre de la estancia")?.let { put("nombre", it) }
+        requerido(colonia, "la colonia o dirección")?.let { put("colonia", it) }
+        telefono(telefono)?.let { put("telefono", it) }
+    }
+
+    /** el color de estrella identifica a la sala, asi que no se repite dentro de la estancia */
+    fun sala(nombre: String, estrella: ColorEstrella?, otras: List<Sala>): Map<String, String> = buildMap {
+        requerido(nombre, "el nombre de la sala")?.let { put("nombre", it) }
+        if (otras.any { it.nombre.equals(nombre.trim(), ignoreCase = true) }) put("nombre", "Ya hay una sala con ese nombre.")
+        when {
+            estrella == null -> put("estrella", "Elige el color de la estrella.")
+            otras.any { it.estrella == estrella } -> put("estrella", "Otra sala ya usa ese color. Elige uno libre.")
+        }
+    }
+
     fun bloque(inicio: LocalTime, fin: LocalTime, actividad: String, otros: List<BloqueHorario>): String? = when {
         actividad.isBlank() -> "Escribe la actividad."
         !fin.isAfter(inicio) -> "La hora de fin debe ser después del inicio."
@@ -269,6 +287,26 @@ object Validaciones {
         else -> null
     }
 }
+
+private val marcasAcento = Regex("\\p{Mn}+")
+
+/** nombre.apellido sin acentos; si ya existe se le agrega un numero */
+fun usuarioSugerido(nombre: String, ocupados: Collection<String>): String {
+    val partes = Normalizer.normalize(nombre.lowercase(LOCALE_MX), Normalizer.Form.NFD)
+        .replace(marcasAcento, "")
+        .split(Regex("[^a-z]+"))
+        .filter { it.isNotBlank() }
+    val base = partes.take(2).joinToString(".").ifBlank { "usuario" }
+    val usados = ocupados.map { it.lowercase(LOCALE_MX) }.toSet()
+    if (base !in usados) return base
+    return generateSequence(2) { it + 1 }.map { "$base$it" }.first { it !in usados }
+}
+
+private val palabrasContrasena = listOf("luna", "nube", "flor", "sol", "mar", "pino", "lago", "rio")
+
+// facil de dictar en voz alta; la persona la usa para entrar la primera vez
+fun contrasenaTemporal(azar: Random = Random.Default): String =
+    palabrasContrasena[azar.nextInt(palabrasContrasena.size)] + azar.nextInt(1000, 10000)
 
 // feriados oficiales de la ley federal del trabajo (sin los de cambio de gobierno)
 fun siguienteFeriado(desde: LocalDate): Pair<LocalDate, String> {

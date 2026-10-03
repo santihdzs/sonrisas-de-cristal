@@ -11,6 +11,7 @@ import mx.tec.sonrisas.data.AppContainer
 import mx.tec.sonrisas.ui.screens.comun.AvisosViewModel
 import mx.tec.sonrisas.ui.screens.comun.LoginViewModel
 import mx.tec.sonrisas.ui.screens.direccion.ActividadViewModel
+import mx.tec.sonrisas.ui.screens.direccion.EstanciaViewModel
 import mx.tec.sonrisas.ui.screens.direccion.ExpedienteViewModel
 import mx.tec.sonrisas.ui.screens.direccion.FundacionViewModel
 import mx.tec.sonrisas.ui.screens.direccion.HorariosViewModel
@@ -19,6 +20,7 @@ import mx.tec.sonrisas.ui.screens.direccion.InscripcionViewModel
 import mx.tec.sonrisas.ui.screens.direccion.NinosViewModel
 import mx.tec.sonrisas.ui.screens.direccion.PublicarAvisoViewModel
 import mx.tec.sonrisas.ui.screens.direccion.ReporteViewModel
+import mx.tec.sonrisas.ui.screens.direccion.SalasViewModel
 import mx.tec.sonrisas.ui.screens.educadora.AsistenciaViewModel
 import mx.tec.sonrisas.ui.screens.educadora.FichaViewModel
 import mx.tec.sonrisas.ui.screens.educadora.IncidenteViewModel
@@ -30,6 +32,7 @@ import mx.tec.sonrisas.ui.screens.familia.IncidenteDetalleViewModel
 import mx.tec.sonrisas.ui.screens.fotos.AgregarFotoViewModel
 import mx.tec.sonrisas.ui.screens.fotos.FotoDetalleViewModel
 import mx.tec.sonrisas.ui.screens.fotos.FotosSalaViewModel
+import mx.tec.sonrisas.ui.state.CredencialesViewModel
 import mx.tec.sonrisas.ui.state.SesionViewModel
 
 object AppViewModelProvider {
@@ -117,6 +120,15 @@ object AppViewModelProvider {
             ActividadViewModel(c.actividadRepository, c.ninosRepository, c.reloj)
         }
         initializer { FundacionViewModel(contenedor().estanciasRepository) }
+        initializer { CredencialesViewModel() }
+        initializer {
+            val c = contenedor()
+            EstanciaViewModel(createSavedStateHandle(), c.estanciasRepository, c.cuentasRepository)
+        }
+        initializer {
+            val c = contenedor()
+            SalasViewModel(c.estanciasRepository, c.ninosRepository)
+        }
     }
 }
 

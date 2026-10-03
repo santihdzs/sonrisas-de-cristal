@@ -45,6 +45,7 @@ import mx.tec.sonrisas.domain.TipoAviso
 import mx.tec.sonrisas.domain.TipoIncidente
 import mx.tec.sonrisas.domain.Tutor
 import mx.tec.sonrisas.domain.Usuario
+import mx.tec.sonrisas.domain.Validaciones
 import mx.tec.sonrisas.domain.folioIncidente
 import mx.tec.sonrisas.domain.puedeAparecerEn
 import java.time.LocalDate
@@ -55,7 +56,7 @@ import java.util.UUID
 import kotlin.random.Random
 
 // simula la latencia de red para que se vean los estados de carga y "Guardando..."
-private suspend fun latencia() = delay(Random.nextLong(200, 401))
+internal suspend fun latencia() = delay(Random.nextLong(200, 401))
 
 /** reglas de quien ve a que nino (RF-02, RF-07, RF-17) */
 internal object Visibilidad {
@@ -166,6 +167,41 @@ class FakeEstanciasRepository(
                 )
             }
         }
+
+    override suspend fun guardarEstancia(estancia: Estancia): Estancia {
+        latencia()
+        val u = sesion.usuarioActual()
+        if (u?.rol != Rol.FUNDACION) throw AccesoDenegado()
+        if (Validaciones.estancia(estancia.nombre, estancia.colonia, estancia.telefono).isNotEmpty()) {
+            throw IllegalArgumentException("Revisa los datos de la estancia.")
+        }
+        val limpia = estancia.copy(nombre = estancia.nombre.trim(), colonia = estancia.colonia.trim(), telefono = estancia.telefono.trim())
+        val existe = almacen.estancias.value.any { it.id == limpia.id }
+        almacen.estancias.update { lista -> if (existe) lista.map { if (it.id == limpia.id) limpia else it } else lista + limpia }
+        almacen.registrar(
+            u, reloj.ahora(), AccionRegistro.ESTRUCTURA,
+            if (existe) "Editó los datos de ${limpia.nombre}" else "Registró la estancia ${limpia.nombre}",
+            estanciaId = limpia.id,
+        )
+        return limpia
+    }
+
+    override suspend fun guardarSala(sala: Sala): Sala {
+        latencia()
+        val u = sesion.usuarioActual()
+        if (u?.rol != Rol.DIRECCION || u.estanciaId == null) throw AccesoDenegado()
+        val existente = almacen.salas.value.firstOrNull { it.id == sala.id }
+        if (existente != null && existente.estanciaId != u.estanciaId) throw AccesoDenegado()
+        val otras = almacen.salas.value.filter { it.estanciaId == u.estanciaId && it.id != sala.id }
+        if (Validaciones.sala(sala.nombre, sala.estrella, otras).isNotEmpty()) throw IllegalArgumentException("Revisa los datos de la sala.")
+        val limpia = sala.copy(estanciaId = u.estanciaId, nombre = sala.nombre.trim())
+        almacen.salas.update { lista -> if (existente != null) lista.map { if (it.id == limpia.id) limpia else it } else lista + limpia }
+        almacen.registrar(
+            u, reloj.ahora(), AccionRegistro.ESTRUCTURA,
+            if (existente != null) "Editó la sala ${limpia.nombre}" else "Registró la sala ${limpia.nombre}",
+        )
+        return limpia
+    }
 }
 
 class FakeNinosRepository(

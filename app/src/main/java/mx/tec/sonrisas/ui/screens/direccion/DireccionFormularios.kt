@@ -42,18 +42,18 @@ import mx.tec.sonrisas.ui.theme.Espacio
 import mx.tec.sonrisas.ui.theme.SonrisasTheme
 import java.time.LocalDate
 
-private val nombres = KeyboardOptions(capitalization = KeyboardCapitalization.Words)
-private val oraciones = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
-private val telefono = KeyboardOptions(keyboardType = KeyboardType.Phone)
+internal val tecladoNombres = KeyboardOptions(capitalization = KeyboardCapitalization.Words)
+internal val tecladoOraciones = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
+internal val tecladoTelefono = KeyboardOptions(keyboardType = KeyboardType.Phone)
 
 @Composable
-private fun Campo(
+internal fun Campo(
     valor: String,
     onCambio: (String) -> Unit,
     etiqueta: String,
     error: String?,
     modifier: Modifier = Modifier,
-    teclado: KeyboardOptions = oraciones,
+    teclado: KeyboardOptions = tecladoOraciones,
     ayuda: String? = null,
     lineas: Int = 1,
 ) {
@@ -88,8 +88,8 @@ fun InscripcionScreen(
         verticalArrangement = Arrangement.spacedBy(Espacio.space3),
     ) {
         TarjetaSeccion(titulo = "Datos generales", icono = R.drawable.ic_badge) {
-            Campo(form.nombre, { onCambiar(form.copy(nombre = it)) }, "Nombre", errores["nombre"], teclado = nombres)
-            Campo(form.apellidos, { onCambiar(form.copy(apellidos = it)) }, "Apellidos", errores["apellidos"], teclado = nombres)
+            Campo(form.nombre, { onCambiar(form.copy(nombre = it)) }, "Nombre", errores["nombre"], teclado = tecladoNombres)
+            Campo(form.apellidos, { onCambiar(form.copy(apellidos = it)) }, "Apellidos", errores["apellidos"], teclado = tecladoNombres)
             CampoFecha("Fecha de nacimiento", form.fechaNacimiento, { onCambiar(form.copy(fechaNacimiento = it)) }, error = errores["fecha"])
             EtiquetaCampo("Sala")
             SelectorOpciones(datos.salas.map { it.id }, form.salaId, { onCambiar(form.copy(salaId = it)) }, { id -> datos.salas.first { it.id == id }.nombre })
@@ -112,9 +112,9 @@ fun InscripcionScreen(
                     }
                 }
                 fun cambiar(nuevo: FilaTutor) = onCambiar(form.copy(tutores = form.tutores.map { if (it.id == t.id) nuevo else it }))
-                Campo(t.nombre, { cambiar(t.copy(nombre = it)) }, "Nombre completo", errores["tutor.nombre.${t.id}"], teclado = nombres)
-                Campo(t.parentesco, { cambiar(t.copy(parentesco = it)) }, "Parentesco", errores["tutor.parentesco.${t.id}"], teclado = nombres, ayuda = "Por ejemplo: Mamá, Papá, Abuela")
-                Campo(t.telefono, { cambiar(t.copy(telefono = it)) }, "Teléfono", errores["tutor.telefono.${t.id}"], teclado = telefono, ayuda = "10 dígitos")
+                Campo(t.nombre, { cambiar(t.copy(nombre = it)) }, "Nombre completo", errores["tutor.nombre.${t.id}"], teclado = tecladoNombres)
+                Campo(t.parentesco, { cambiar(t.copy(parentesco = it)) }, "Parentesco", errores["tutor.parentesco.${t.id}"], teclado = tecladoNombres, ayuda = "Por ejemplo: Mamá, Papá, Abuela")
+                Campo(t.telefono, { cambiar(t.copy(telefono = it)) }, "Teléfono", errores["tutor.telefono.${t.id}"], teclado = tecladoTelefono, ayuda = "10 dígitos")
                 FilaSwitch("Puede recogerlo", t.puedeRecoger, { cambiar(t.copy(puedeRecoger = it)) })
             }
             errores["tutores"]?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
@@ -137,9 +137,9 @@ fun InscripcionScreen(
                     }
                 }
                 fun cambiar(nueva: FilaPersona) = onCambiar(form.copy(otras = form.otras.map { if (it.id == p.id) nueva else it }))
-                Campo(p.nombre, { cambiar(p.copy(nombre = it)) }, "Nombre completo", errores["otra.nombre.${p.id}"], teclado = nombres)
-                Campo(p.parentesco, { cambiar(p.copy(parentesco = it)) }, "Parentesco", errores["otra.parentesco.${p.id}"], teclado = nombres)
-                Campo(p.telefono, { cambiar(p.copy(telefono = it)) }, "Teléfono", errores["otra.telefono.${p.id}"], teclado = telefono)
+                Campo(p.nombre, { cambiar(p.copy(nombre = it)) }, "Nombre completo", errores["otra.nombre.${p.id}"], teclado = tecladoNombres)
+                Campo(p.parentesco, { cambiar(p.copy(parentesco = it)) }, "Parentesco", errores["otra.parentesco.${p.id}"], teclado = tecladoNombres)
+                Campo(p.telefono, { cambiar(p.copy(telefono = it)) }, "Teléfono", errores["otra.telefono.${p.id}"], teclado = tecladoTelefono)
             }
             errores["recoger"]?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
             OutlinedButton(onClick = { onCambiar(form.copy(otras = form.otras + FilaPersona())) }, modifier = Modifier.heightIn(min = 48.dp)) {

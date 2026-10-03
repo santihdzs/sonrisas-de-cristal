@@ -576,6 +576,7 @@ enum class FiltroActividad(val etiqueta: String, val acciones: Set<AccionRegistr
     FOTOS("Fotos consultadas", setOf(AccionRegistro.FOTO_CONSULTADA)),
     EXPEDIENTES("Expedientes", setOf(AccionRegistro.EXPEDIENTE)),
     AVISOS("Avisos", setOf(AccionRegistro.AVISO)),
+    ADMINISTRACION("Salas y personal", setOf(AccionRegistro.ESTRUCTURA, AccionRegistro.CUENTA)),
 }
 
 data class ActividadDatos(val registros: List<RegistroActividad>, val ninos: Map<String, Nino>, val hoy: LocalDate)

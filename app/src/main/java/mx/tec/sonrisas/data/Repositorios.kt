@@ -3,6 +3,7 @@ package mx.tec.sonrisas.data
 import kotlinx.coroutines.flow.Flow
 import mx.tec.sonrisas.domain.ActividadEspecial
 import mx.tec.sonrisas.domain.Asistencia
+import mx.tec.sonrisas.domain.Credenciales
 import mx.tec.sonrisas.domain.Aviso
 import mx.tec.sonrisas.domain.BloqueHorario
 import mx.tec.sonrisas.domain.Estancia
@@ -40,6 +41,12 @@ interface EstanciasRepository {
     /** personal de la estancia (educadoras y direccion), para mostrar quien registro algo */
     fun personal(): Flow<List<Usuario>>
     fun resumenFundacion(): Flow<List<ResumenEstancia>>
+
+    /** solo la fundacion registra o edita estancias */
+    suspend fun guardarEstancia(estancia: Estancia): Estancia
+
+    /** solo la direccion, y solo salas de su estancia */
+    suspend fun guardarSala(sala: Sala): Sala
 }
 
 interface NinosRepository {
@@ -104,6 +111,14 @@ interface HorariosRepository {
     suspend fun borrarBloque(id: String)
     suspend fun guardarEspecial(actividad: ActividadEspecial)
     suspend fun borrarEspecial(id: String)
+}
+
+interface CuentasRepository {
+    /** la fundacion ve las cuentas de direccion; la direccion, las de su estancia */
+    fun cuentas(): Flow<List<Usuario>>
+
+    /** solo la fundacion; la contrasena temporal se devuelve una sola vez */
+    suspend fun crearDireccion(estanciaId: String, nombre: String): Credenciales
 }
 
 interface ActividadRepository {
