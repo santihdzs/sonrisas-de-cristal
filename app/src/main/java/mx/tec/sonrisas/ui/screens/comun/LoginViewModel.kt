@@ -7,9 +7,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.launch
 import mx.tec.sonrisas.data.SesionRepository
-import mx.tec.sonrisas.domain.Rol
-
-data class CuentaDemo(val usuario: String, val contrasena: String, val nombre: String, val rol: Rol)
 
 data class LoginUiState(
     val usuario: String = "",
@@ -26,8 +23,6 @@ class LoginViewModel(private val sesionRepository: SesionRepository) : ViewModel
     var estado by mutableStateOf(LoginUiState())
         private set
 
-    val cuentas: List<CuentaDemo> = sesionRepository.cuentasDemo().map { CuentaDemo(it.usuario, it.contrasena, it.nombre, it.rol) }
-
     fun cambiarUsuario(texto: String) {
         estado = estado.copy(usuario = texto, error = null)
     }
@@ -43,11 +38,6 @@ class LoginViewModel(private val sesionRepository: SesionRepository) : ViewModel
     fun entrar() {
         if (!estado.puedeEntrar) return
         iniciar(estado.usuario, estado.contrasena)
-    }
-
-    fun entrarComo(cuenta: CuentaDemo) {
-        estado = estado.copy(usuario = cuenta.usuario, contrasena = cuenta.contrasena)
-        iniciar(cuenta.usuario, cuenta.contrasena)
     }
 
     private fun iniciar(usuario: String, contrasena: String) {

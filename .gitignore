@@ -9,3 +9,9 @@ build/
 .externalNativeBuild
 .cxx
 .kotlin/
+*.apk
+*.aab
+*.jks
+*.keystore
+/DEMO.md
+/backend/

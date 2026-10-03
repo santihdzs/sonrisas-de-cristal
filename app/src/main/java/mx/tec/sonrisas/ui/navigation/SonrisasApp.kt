@@ -39,12 +39,10 @@ fun SonrisasApp(sesionViewModel: SesionViewModel, onDesbloquear: () -> Unit) {
             val vm: LoginViewModel = viewModel(factory = AppViewModelProvider.Factory)
             LoginScreen(
                 estado = vm.estado,
-                cuentas = vm.cuentas,
                 onUsuario = vm::cambiarUsuario,
                 onContrasena = vm::cambiarContrasena,
                 onMostrarContrasena = vm::alternarMostrar,
                 onEntrar = vm::entrar,
-                onCuentaDemo = vm::entrarComo,
             )
         }
         is SesionEstado.Activa -> {

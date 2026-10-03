@@ -98,11 +98,6 @@ class FakeSesionRepository(
         return true
     }
 
-    override fun cuentasDemo(): List<Usuario> {
-        val principales = listOf("educadora", "familia", "direccion", "fundacion")
-        return principales.mapNotNull { u -> almacen.usuarios.value.firstOrNull { it.usuario == u } }
-    }
-
     override suspend fun cerrar() {
         usuarioActual()?.let { almacen.registrar(it, reloj.ahora(), AccionRegistro.SESION, "Cerró sesión") }
         _estado.value = SesionEstado.Anonima

@@ -17,8 +17,6 @@ interface SesionRepository {
     /** devuelve false si el usuario o la contrasena no coinciden */
     suspend fun iniciar(usuario: String, contrasena: String): Boolean
 
-    fun cuentasDemo(): List<Usuario>
-
     suspend fun cerrar()
 
     fun cambiarDesbloqueoHuella(activo: Boolean)

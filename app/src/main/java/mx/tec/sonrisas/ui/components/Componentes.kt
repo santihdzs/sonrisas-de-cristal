@@ -148,7 +148,7 @@ fun EstadoChip(
         TipoEstado.AVISO -> colores.avisoContenedor to colores.enAvisoContenedor
         TipoEstado.ERROR -> esquema.errorContainer to esquema.onErrorContainer
         TipoEstado.INFO -> esquema.primaryContainer to esquema.onPrimaryContainer
-        TipoEstado.NEUTRO -> esquema.surfaceContainerHigh to esquema.onSurfaceVariant
+        TipoEstado.NEUTRO -> esquema.surfaceContainerHighest to esquema.onSurfaceVariant
     }
     Surface(color = fondo, contentColor = frente, shape = MaterialTheme.shapes.small, modifier = modifier) {
         Row(

@@ -2,7 +2,6 @@ package mx.tec.sonrisas.ui.screens.comun
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,10 +18,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -35,8 +31,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.foundation.clickable
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -44,23 +38,18 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import mx.tec.sonrisas.R
-import mx.tec.sonrisas.domain.ColorEstrella
 import mx.tec.sonrisas.domain.Rol
-import mx.tec.sonrisas.ui.components.GlifoEstrella
 import mx.tec.sonrisas.ui.components.Icono
-import mx.tec.sonrisas.ui.components.etiqueta
 import mx.tec.sonrisas.ui.theme.Espacio
 import mx.tec.sonrisas.ui.theme.SonrisasTheme
 
 @Composable
 fun LoginScreen(
     estado: LoginUiState,
-    cuentas: List<CuentaDemo>,
     onUsuario: (String) -> Unit,
     onContrasena: (String) -> Unit,
     onMostrarContrasena: () -> Unit,
     onEntrar: () -> Unit,
-    onCuentaDemo: (CuentaDemo) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var olvido by remember { mutableStateOf(false) }
@@ -75,9 +64,7 @@ fun LoginScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Column(Modifier.widthIn(max = 480.dp), verticalArrangement = Arrangement.spacedBy(Espacio.space4)) {
-                Row(horizontalArrangement = Arrangement.spacedBy(Espacio.space2)) {
-                    ColorEstrella.entries.forEach { GlifoEstrella(it, tamano = 28.dp) }
-                }
+                LogoFundacion(Modifier.align(Alignment.CenterHorizontally), tamano = 160.dp)
                 Column {
                     Text("Sonrisas de Cristal", style = MaterialTheme.typography.displaySmall)
                     Text("Estancias infantiles", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -126,27 +113,6 @@ fun LoginScreen(
                 TextButton(onClick = { olvido = true }, modifier = Modifier.heightIn(min = 48.dp)) {
                     Text("¿Olvidaste tu contraseña?")
                 }
-                HorizontalDivider(Modifier.padding(vertical = Espacio.space2))
-                Text("Cuentas de demostración", style = MaterialTheme.typography.titleLarge)
-                Text(
-                    "Entra directo con cualquiera de estas cuentas. Todas usan la contraseña demo1234.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Column {
-                    cuentas.forEach { cuenta ->
-                        ListItem(
-                            headlineContent = { Text(cuenta.rol.etiqueta) },
-                            supportingContent = { Text("${cuenta.nombre} · ${cuenta.usuario}") },
-                            leadingContent = { Icono(iconoRol(cuenta.rol), null) },
-                            trailingContent = { Icono(R.drawable.ic_chevron_right, null) },
-                            colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),
-                            modifier = Modifier
-                                .clip(MaterialTheme.shapes.medium)
-                                .clickable(enabled = !estado.entrando, onClickLabel = "Entrar como ${cuenta.rol.etiqueta.lowercase()}") { onCuentaDemo(cuenta) },
-                        )
-                    }
-                }
             }
         }
     }
@@ -173,11 +139,7 @@ private fun LoginPreview() {
     SonrisasTheme {
         LoginScreen(
             estado = LoginUiState(usuario = "educadora", error = "Usuario o contraseña incorrectos. Revísalos e inténtalo de nuevo."),
-            cuentas = listOf(
-                CuentaDemo("educadora", "demo1234", "Mariana López Hernández", Rol.EDUCADORA),
-                CuentaDemo("familia", "demo1234", "Laura Treviño Garza", Rol.FAMILIAR),
-            ),
-            onUsuario = {}, onContrasena = {}, onMostrarContrasena = {}, onEntrar = {}, onCuentaDemo = {},
+            onUsuario = {}, onContrasena = {}, onMostrarContrasena = {}, onEntrar = {},
         )
     }
 }
