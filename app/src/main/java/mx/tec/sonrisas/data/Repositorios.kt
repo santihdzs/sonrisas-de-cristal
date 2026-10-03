@@ -119,6 +119,13 @@ interface CuentasRepository {
 
     /** solo la fundacion; la contrasena temporal se devuelve una sola vez */
     suspend fun crearDireccion(estanciaId: String, nombre: String): Credenciales
+
+    /** solo la direccion, con una sala de su estancia */
+    suspend fun crearEducadora(nombre: String, salaId: String): Credenciales
+    suspend fun asignarSala(usuarioId: String, salaId: String)
+
+    /** la cuenta deja de poder entrar, pero su historial se conserva */
+    suspend fun retirarAcceso(usuarioId: String)
 }
 
 interface ActividadRepository {

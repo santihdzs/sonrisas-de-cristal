@@ -37,6 +37,7 @@ object Route {
     const val HORARIOS = "horarios"
     const val ACTIVIDAD = "actividad"
     const val SALAS = "salas"
+    const val PERSONAL = "personal"
 
     // fundacion
     const val FUNDACION = "fundacion"

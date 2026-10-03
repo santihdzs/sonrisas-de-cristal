@@ -170,7 +170,7 @@ class SalasViewModel(
                 salas.map { s ->
                     SalaFila(
                         s,
-                        educadoras.filter { it.salaId == s.id }.map { it.nombre },
+                        educadoras.filter { it.salaId == s.id && it.activo }.map { it.nombre },
                         ninos.count { it.salaId == s.id && it.activo },
                     )
                 },
@@ -218,6 +218,124 @@ class SalasViewModel(
                 onListo(if (h.id == null) "Registramos la sala ${sala.nombre}." else "Guardamos los cambios de la sala ${sala.nombre}.")
             } catch (e: Exception) {
                 hoja = h.copy(guardando = false, error = MENSAJE_ERROR_REGISTRO)
+            }
+        }
+    }
+}
+
+data class PersonalDatos(val educadoras: List<Usuario>, val salas: List<Sala>) {
+    fun sala(id: String?): Sala? = salas.firstOrNull { it.id == id }
+}
+
+sealed interface HojaPersonal {
+    data class Nueva(
+        val nombre: String = "",
+        val salaId: String? = null,
+        val intento: Boolean = false,
+        val guardando: Boolean = false,
+        val error: String? = null,
+    ) : HojaPersonal {
+        val errores: Map<String, String>
+            get() = buildMap {
+                Validaciones.requerido(nombre, "el nombre")?.let { put("nombre", it) }
+                if (salaId == null) put("sala", "Elige la sala.")
+            }
+    }
+
+    data class Detalle(
+        val educadora: Usuario,
+        val salaId: String?,
+        val confirmarRetiro: Boolean = false,
+        val guardando: Boolean = false,
+        val error: String? = null,
+    ) : HojaPersonal
+}
+
+class PersonalViewModel(
+    estanciasRepository: EstanciasRepository,
+    private val cuentasRepository: CuentasRepository,
+) : ViewModel() {
+    private val reintentos = MutableStateFlow(0)
+
+    val uiState: StateFlow<UiState<PersonalDatos>> = comoUiState(reintentos) {
+        combine(cuentasRepository.cuentas(), estanciasRepository.salas()) { cuentas, salas ->
+            PersonalDatos(cuentas.filter { it.rol == Rol.EDUCADORA }.sortedByDescending { it.activo }, salas)
+        }
+    }
+
+    var hoja by mutableStateOf<HojaPersonal?>(null)
+        private set
+
+    fun nueva() {
+        hoja = HojaPersonal.Nueva()
+    }
+
+    fun abrir(u: Usuario) {
+        hoja = HojaPersonal.Detalle(u, u.salaId)
+    }
+
+    fun cambiar(nueva: HojaPersonal) {
+        hoja = when (nueva) {
+            is HojaPersonal.Nueva -> nueva.copy(error = null)
+            is HojaPersonal.Detalle -> nueva.copy(error = null)
+        }
+    }
+
+    fun cerrar() {
+        hoja = null
+    }
+
+    fun reintentar() {
+        reintentos.value++
+    }
+
+    fun registrar(onListo: (String, Credenciales) -> Unit) {
+        val h = (hoja as? HojaPersonal.Nueva)?.copy(intento = true) ?: return
+        hoja = h
+        if (h.errores.isNotEmpty() || h.guardando) return
+        hoja = h.copy(guardando = true)
+        viewModelScope.launch {
+            try {
+                val credenciales = cuentasRepository.crearEducadora(h.nombre, h.salaId!!)
+                hoja = null
+                onListo("Registramos a ${credenciales.nombre}.", credenciales)
+            } catch (e: Exception) {
+                hoja = h.copy(guardando = false, error = MENSAJE_ERROR_REGISTRO)
+            }
+        }
+    }
+
+    fun asignar(onListo: (String) -> Unit) {
+        val h = hoja as? HojaPersonal.Detalle ?: return
+        val sala = h.salaId ?: return
+        if (h.guardando) return
+        if (sala == h.educadora.salaId) {
+            hoja = null
+            return
+        }
+        hoja = h.copy(guardando = true)
+        viewModelScope.launch {
+            try {
+                cuentasRepository.asignarSala(h.educadora.id, sala)
+                hoja = null
+                onListo("Cambiamos la sala de ${h.educadora.nombre}.")
+            } catch (e: Exception) {
+                hoja = h.copy(guardando = false, error = MENSAJE_ERROR_REGISTRO)
+            }
+        }
+    }
+
+    fun retirarAcceso(onListo: (String) -> Unit) {
+        val h = hoja as? HojaPersonal.Detalle ?: return
+        if (h.guardando) return
+        hoja = h.copy(guardando = true, confirmarRetiro = false)
+        viewModelScope.launch {
+            try {
+                cuentasRepository.retirarAcceso(h.educadora.id)
+                hoja = null
+                onListo("Retiramos el acceso de ${h.educadora.nombre}. Su historial sigue en el registro de actividad.")
+            } catch (e: Exception) {
+                hoja = h.copy(guardando = false, error = "No pudimos retirar el acceso. Revisa tu conexión e inténtalo de nuevo.")
             }
         }
     }

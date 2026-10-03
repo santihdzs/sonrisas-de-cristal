@@ -11,11 +11,12 @@ sealed interface SesionEstado {
     data class Activa(val sesion: Sesion) : SesionEstado
 }
 
+enum class ResultadoInicio { EXITO, INCORRECTO, SIN_ACCESO }
+
 interface SesionRepository {
     val estado: StateFlow<SesionEstado>
 
-    /** devuelve false si el usuario o la contrasena no coinciden */
-    suspend fun iniciar(usuario: String, contrasena: String): Boolean
+    suspend fun iniciar(usuario: String, contrasena: String): ResultadoInicio
 
     suspend fun cerrar()
 

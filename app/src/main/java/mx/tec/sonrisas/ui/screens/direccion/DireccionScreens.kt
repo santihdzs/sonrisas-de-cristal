@@ -387,11 +387,13 @@ fun MasScreen(
     onHorarios: () -> Unit,
     onActividad: () -> Unit,
     onSalas: () -> Unit,
+    onPersonal: () -> Unit,
     onPerfil: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val opciones = listOf(
         Triple("Salas", "Registrar salas y elegir el color de su estrella", R.drawable.ic_meeting_room) to onSalas,
+        Triple("Personal", "Educadoras, su sala y su acceso a la app", R.drawable.ic_badge) to onPersonal,
         Triple("Reporte de asistencia", "Asistencia por sala y por mes", R.drawable.ic_bar_chart) to onAsistencia,
         Triple("Horarios", "Actividades de cada sala y actividades especiales", R.drawable.ic_calendar_month) to onHorarios,
         Triple("Registro de actividad", "Quién capturó o consultó cada dato", R.drawable.ic_history) to onActividad,
@@ -508,7 +510,7 @@ private fun ExpedientePreview() {
 @Preview(showBackground = true)
 @Composable
 private fun MasPreview() {
-    SonrisasTheme { MasScreen({}, {}, {}, {}, {}) }
+    SonrisasTheme { MasScreen({}, {}, {}, {}, {}, {}) }
 }
 
 @Preview(showBackground = true)

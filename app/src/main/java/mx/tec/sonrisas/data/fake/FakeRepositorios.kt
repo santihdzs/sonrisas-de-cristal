@@ -20,6 +20,7 @@ import mx.tec.sonrisas.data.HorariosRepository
 import mx.tec.sonrisas.data.IncidentesRepository
 import mx.tec.sonrisas.data.JornadaRepository
 import mx.tec.sonrisas.data.NinosRepository
+import mx.tec.sonrisas.data.ResultadoInicio
 import mx.tec.sonrisas.data.ResumenEstancia
 import mx.tec.sonrisas.data.Sesion
 import mx.tec.sonrisas.data.SesionEstado
@@ -78,9 +79,13 @@ class FakeSesionRepository(
     private val _estado = MutableStateFlow<SesionEstado>(SesionEstado.Cargando)
     override val estado: StateFlow<SesionEstado> = _estado.asStateFlow()
 
-    val usuario: Flow<Usuario?> = estado.map { (it as? SesionEstado.Activa)?.sesion?.usuario }.distinctUntilChanged()
+    // se lee el registro vigente: si la direccion cambia la sala o retira el acceso, aplica de inmediato
+    val usuario: Flow<Usuario?> =
+        combine(estado, almacen.usuarios) { e, us -> vigente((e as? SesionEstado.Activa)?.sesion?.usuario, us) }.distinctUntilChanged()
 
-    fun usuarioActual(): Usuario? = (estado.value as? SesionEstado.Activa)?.sesion?.usuario
+    fun usuarioActual(): Usuario? = vigente((estado.value as? SesionEstado.Activa)?.sesion?.usuario, almacen.usuarios.value)
+
+    private fun vigente(u: Usuario?, todos: List<Usuario>): Usuario? = u?.let { s -> todos.firstOrNull { it.id == s.id && it.activo } }
 
     init {
         scope.launch {
@@ -89,14 +94,15 @@ class FakeSesionRepository(
         }
     }
 
-    override suspend fun iniciar(usuario: String, contrasena: String): Boolean {
+    override suspend fun iniciar(usuario: String, contrasena: String): ResultadoInicio {
         latencia()
         val encontrado = almacen.usuarios.value.firstOrNull {
             it.usuario.equals(usuario.trim(), ignoreCase = true) && it.contrasena == contrasena
-        } ?: return false
+        } ?: return ResultadoInicio.INCORRECTO
+        if (!encontrado.activo) return ResultadoInicio.SIN_ACCESO
         _estado.value = SesionEstado.Activa(Sesion(encontrado, encontrado.id in almacen.desbloqueoHuella.value))
         almacen.registrar(encontrado, reloj.ahora(), AccionRegistro.SESION, "Inició sesión")
-        return true
+        return ResultadoInicio.EXITO
     }
 
     override suspend fun cerrar() {
@@ -138,7 +144,7 @@ class FakeEstanciasRepository(
     override fun educadoras(): Flow<List<Usuario>> =
         combine(sesion.usuario, almacen.usuarios) { u, us ->
             if (u == null || u.rol == Rol.FAMILIAR) emptyList()
-            else us.filter { it.rol == Rol.EDUCADORA && (u.rol == Rol.FUNDACION || it.estanciaId == u.estanciaId) }
+            else us.filter { it.rol == Rol.EDUCADORA && it.activo && (u.rol == Rol.FUNDACION || it.estanciaId == u.estanciaId) }
         }
 
     override fun personal(): Flow<List<Usuario>> =

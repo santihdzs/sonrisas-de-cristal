@@ -21,6 +21,7 @@ import mx.tec.sonrisas.ui.screens.direccion.NinosViewModel
 import mx.tec.sonrisas.ui.screens.direccion.PublicarAvisoViewModel
 import mx.tec.sonrisas.ui.screens.direccion.ReporteViewModel
 import mx.tec.sonrisas.ui.screens.direccion.SalasViewModel
+import mx.tec.sonrisas.ui.screens.direccion.PersonalViewModel
 import mx.tec.sonrisas.ui.screens.educadora.AsistenciaViewModel
 import mx.tec.sonrisas.ui.screens.educadora.FichaViewModel
 import mx.tec.sonrisas.ui.screens.educadora.IncidenteViewModel
@@ -128,6 +129,10 @@ object AppViewModelProvider {
         initializer {
             val c = contenedor()
             SalasViewModel(c.estanciasRepository, c.ninosRepository)
+        }
+        initializer {
+            val c = contenedor()
+            PersonalViewModel(c.estanciasRepository, c.cuentasRepository)
         }
     }
 }

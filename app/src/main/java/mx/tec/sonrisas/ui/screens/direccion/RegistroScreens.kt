@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
@@ -22,6 +23,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -34,6 +36,7 @@ import mx.tec.sonrisas.domain.Sala
 import mx.tec.sonrisas.domain.TipoSala
 import mx.tec.sonrisas.domain.Usuario
 import mx.tec.sonrisas.ui.components.BotonPrincipal
+import mx.tec.sonrisas.ui.components.EstadoChip
 import mx.tec.sonrisas.ui.components.EstadoVacio
 import mx.tec.sonrisas.ui.components.EstrellaSala
 import mx.tec.sonrisas.ui.components.EtiquetaCampo
@@ -42,6 +45,7 @@ import mx.tec.sonrisas.ui.components.HojaModal
 import mx.tec.sonrisas.ui.components.Icono
 import mx.tec.sonrisas.ui.components.SelectorOpciones
 import mx.tec.sonrisas.ui.components.TarjetaSeccion
+import mx.tec.sonrisas.ui.components.TipoEstado
 import mx.tec.sonrisas.ui.components.etiqueta
 import mx.tec.sonrisas.ui.theme.Espacio
 import mx.tec.sonrisas.ui.theme.SonrisasTheme
@@ -241,4 +245,118 @@ private fun EstanciaFormPreview() {
 private fun SalasPreview() {
     val sala = Sala("s", "e", "Maternales", TipoSala.MATERNALES, ColorEstrella.ROJO)
     SonrisasTheme { SalasScreen(SalasDatos(listOf(SalaFila(sala, listOf("Mariana López Hernández"), 14))), {}, {}) }
+}
+
+@Composable
+fun PersonalScreen(
+    datos: PersonalDatos,
+    onNueva: () -> Unit,
+    onEducadora: (Usuario) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Scaffold(
+        modifier = modifier,
+        contentWindowInsets = WindowInsets(0),
+        floatingActionButton = {
+            if (datos.salas.isNotEmpty()) {
+                ExtendedFloatingActionButton(onClick = onNueva, icon = { Icono(R.drawable.ic_person_add, null) }, text = { Text("Registrar educadora") })
+            }
+        },
+    ) { padding ->
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(padding),
+            contentPadding = PaddingValues(start = Espacio.space4, end = Espacio.space4, top = Espacio.space2, bottom = 96.dp),
+            verticalArrangement = Arrangement.spacedBy(Espacio.space3),
+        ) {
+            if (datos.educadoras.isEmpty()) {
+                item {
+                    EstadoVacio(
+                        R.drawable.ic_badge, "Todavía no hay educadoras registradas",
+                        mensaje = if (datos.salas.isEmpty()) "Primero registra una sala en Más > Salas." else "Registra a una educadora y asígnale su sala.",
+                    )
+                }
+            }
+            items(datos.educadoras, key = { it.id }) { u ->
+                val sala = datos.sala(u.salaId)
+                TarjetaSeccion(onClick = { onEducadora(u) }) {
+                    Text(u.nombre, style = MaterialTheme.typography.titleMedium)
+                    Text("Usuario: ${u.usuario}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    if (u.activo) {
+                        if (sala != null) EstrellaSala("Sala ${sala.nombre}", sala.estrella, tamano = 24.dp)
+                        else Text("Sin sala asignada", style = MaterialTheme.typography.bodyMedium)
+                    } else {
+                        EstadoChip("Sin acceso a la app", TipoEstado.NEUTRO, R.drawable.ic_person_off)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun HojaPersonalForm(
+    hoja: HojaPersonal,
+    salas: List<Sala>,
+    onCambiar: (HojaPersonal) -> Unit,
+    onRegistrar: () -> Unit,
+    onAsignar: () -> Unit,
+    onRetirar: () -> Unit,
+    onCerrar: () -> Unit,
+) {
+    when (hoja) {
+        is HojaPersonal.Nueva -> {
+            val e = if (hoja.intento) hoja.errores else emptyMap()
+            HojaModal(
+                titulo = "Registrar educadora",
+                subtitulo = "Al registrarla verás su usuario y una contraseña temporal.",
+                onCerrar = onCerrar,
+                boton = { BotonPrincipal("Registrar educadora", onRegistrar, guardando = hoja.guardando) },
+            ) {
+                Campo(hoja.nombre, { onCambiar(hoja.copy(nombre = it)) }, "Nombre completo", e["nombre"], teclado = tecladoNombres)
+                EtiquetaCampo("Sala")
+                SelectorOpciones(salas.map { it.id }, hoja.salaId, { onCambiar(hoja.copy(salaId = it)) }, { id -> salas.first { it.id == id }.nombre })
+                e["sala"]?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
+                hoja.error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium) }
+            }
+        }
+        is HojaPersonal.Detalle -> {
+            val u = hoja.educadora
+            HojaModal(
+                titulo = u.nombre,
+                subtitulo = "Usuario: ${u.usuario}",
+                onCerrar = onCerrar,
+                boton = if (u.activo) ({ BotonPrincipal("Guardar sala", onAsignar, guardando = hoja.guardando) }) else null,
+            ) {
+                if (u.activo) {
+                    EtiquetaCampo("Sala asignada")
+                    SelectorOpciones(salas.map { it.id }, hoja.salaId, { onCambiar(hoja.copy(salaId = it)) }, { id -> salas.first { it.id == id }.nombre })
+                    OutlinedButton(
+                        onClick = { onCambiar(hoja.copy(confirmarRetiro = true)) },
+                        enabled = !hoja.guardando,
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                    ) {
+                        Icono(R.drawable.ic_person_off, null, tint = MaterialTheme.colorScheme.error)
+                        Text("Retirar acceso", color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(start = Espacio.space2))
+                    }
+                } else {
+                    EstadoChip("Sin acceso a la app", TipoEstado.NEUTRO, R.drawable.ic_person_off)
+                    Text(
+                        "Ya no puede iniciar sesión. Lo que registró sigue en la bitácora y en el registro de actividad con su nombre.",
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+                hoja.error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium) }
+            }
+            if (hoja.confirmarRetiro) {
+                AlertDialog(
+                    onDismissRequest = { onCambiar(hoja.copy(confirmarRetiro = false)) },
+                    icon = { Icono(R.drawable.ic_person_off, null) },
+                    title = { Text("¿Retirar el acceso de ${u.nombre}?") },
+                    text = { Text("Ya no podrá iniciar sesión ni verá a los niños de la sala. Su historial se conserva en el registro de actividad.") },
+                    confirmButton = { TextButton(onClick = onRetirar) { Text("Retirar acceso", color = MaterialTheme.colorScheme.error) } },
+                    dismissButton = { TextButton(onClick = { onCambiar(hoja.copy(confirmarRetiro = false)) }) { Text("Cancelar") } },
+                )
+            }
+        }
+    }
 }

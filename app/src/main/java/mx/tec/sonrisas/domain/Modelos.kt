@@ -29,6 +29,8 @@ data class Usuario(
     val estanciaId: String? = null,
     val salaId: String? = null,
     val tutorId: String? = null,
+    // al retirar el acceso la cuenta no se borra, para que su historial siga en el registro de actividad
+    val activo: Boolean = true,
 )
 
 /** se muestran una sola vez al crear la cuenta; despues ya no se pueden consultar */

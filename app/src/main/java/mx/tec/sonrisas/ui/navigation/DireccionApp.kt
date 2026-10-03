@@ -40,6 +40,11 @@ import mx.tec.sonrisas.ui.screens.direccion.ReporteViewModel
 import mx.tec.sonrisas.ui.screens.direccion.HojaSalaForm
 import mx.tec.sonrisas.ui.screens.direccion.SalasScreen
 import mx.tec.sonrisas.ui.screens.direccion.SalasViewModel
+import mx.tec.sonrisas.ui.screens.direccion.HojaPersonalForm
+import mx.tec.sonrisas.ui.screens.direccion.PersonalScreen
+import mx.tec.sonrisas.ui.screens.direccion.PersonalViewModel
+import mx.tec.sonrisas.ui.components.DialogoCredenciales
+import mx.tec.sonrisas.ui.state.CredencialesViewModel
 import mx.tec.sonrisas.ui.state.UiState
 
 @Composable
@@ -48,6 +53,7 @@ fun DireccionApp(onCerrarSesion: () -> Unit) {
     val snackbar = remember { SnackbarHostState() }
     val mensajero = rememberMensajero(snackbar)
     val avisosVm: AvisosViewModel = viewModel(factory = AppViewModelProvider.Factory)
+    val credenciales: CredencialesViewModel = viewModel(factory = AppViewModelProvider.Factory)
     val noLeidos by avisosVm.noLeidos.collectAsStateWithLifecycle()
     val pestanas = listOf(
         Pestana(Route.INICIO, "Inicio", R.drawable.ic_home, R.drawable.ic_home_fill),
@@ -154,6 +160,7 @@ fun DireccionApp(onCerrarSesion: () -> Unit) {
                     onHorarios = { navController.navigate(Route.HORARIOS) },
                     onActividad = { navController.navigate(Route.ACTIVIDAD) },
                     onSalas = { navController.navigate(Route.SALAS) },
+                    onPersonal = { navController.navigate(Route.PERSONAL) },
                     onPerfil = { navController.navigate(Route.PERFIL) },
                 )
             }
@@ -173,6 +180,33 @@ fun DireccionApp(onCerrarSesion: () -> Unit) {
                                 ocupadas = e.datos.todas.filter { it.id != h.id }.map { it.estrella }.toSet(),
                                 onCambiar = vm::cambiar,
                                 onGuardar = { vm.guardar(mensajero::mostrar) },
+                                onCerrar = vm::cerrar,
+                            )
+                        }
+                    }
+                }
+            }
+            composable(Route.PERSONAL) {
+                val vm: PersonalViewModel = viewModel(factory = AppViewModelProvider.Factory)
+                val estado by vm.uiState.collectAsStateWithLifecycle()
+                when (val e = estado) {
+                    UiState.Cargando -> CargandoView()
+                    is UiState.Error -> ErrorView(e.mensaje, vm::reintentar)
+                    is UiState.Exito -> {
+                        PersonalScreen(e.datos, onNueva = vm::nueva, onEducadora = vm::abrir)
+                        vm.hoja?.let { h ->
+                            HojaPersonalForm(
+                                hoja = h,
+                                salas = e.datos.salas,
+                                onCambiar = vm::cambiar,
+                                onRegistrar = {
+                                    vm.registrar { mensaje, nuevas ->
+                                        mensajero.mostrar(mensaje)
+                                        credenciales.mostrar(listOf(nuevas))
+                                    }
+                                },
+                                onAsignar = { vm.asignar(mensajero::mostrar) },
+                                onRetirar = { vm.retirarAcceso(mensajero::mostrar) },
                                 onCerrar = vm::cerrar,
                             )
                         }
@@ -214,6 +248,7 @@ fun DireccionApp(onCerrarSesion: () -> Unit) {
             destinosComunes(navController, onCerrarSesion)
         }
     }
+    DialogoCredenciales(credenciales.pendientes, onCerrar = credenciales::cerrar)
 }
 
 /** lo usan la direccion y la fundacion; cada una recibe solo lo que le toca */
@@ -253,5 +288,6 @@ private fun tituloDireccion(ruta: String?): String = tituloComun(ruta) ?: when (
     Route.HORARIOS -> "Horarios"
     Route.ACTIVIDAD -> "Registro de actividad"
     Route.SALAS -> "Salas"
+    Route.PERSONAL -> "Personal"
     else -> ""
 }
