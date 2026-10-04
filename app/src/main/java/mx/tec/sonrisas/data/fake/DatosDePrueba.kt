@@ -10,11 +10,13 @@ import mx.tec.sonrisas.domain.ControlEsfinteres
 import mx.tec.sonrisas.domain.DIAS_PERIODO_BAJA
 import mx.tec.sonrisas.domain.EstadoAnimo
 import mx.tec.sonrisas.domain.EstadoExpediente
+import mx.tec.sonrisas.domain.EstadoObjeto
 import mx.tec.sonrisas.domain.Estancia
 import mx.tec.sonrisas.domain.EventoBitacora
 import mx.tec.sonrisas.domain.Foto
 import mx.tec.sonrisas.domain.Incidente
 import mx.tec.sonrisas.domain.Nino
+import mx.tec.sonrisas.domain.ObjetoPerdido
 import mx.tec.sonrisas.domain.PersonaAutorizada
 import mx.tec.sonrisas.domain.Porcion
 import mx.tec.sonrisas.domain.RegistroActividad
@@ -62,6 +64,8 @@ data class DatosDePrueba(
     val registros: List<RegistroActividad>,
     val avisosLeidos: Map<String, Set<String>>,
     val siguienteFolio: Int,
+    val objetos: List<ObjetoPerdido>,
+    val objetosVistos: Map<String, Set<String>>,
 ) {
     companion object {
         fun generar(reloj: Reloj, semilla: Int = 2026): DatosDePrueba = Generador(reloj, semilla).generar()
@@ -91,6 +95,7 @@ private class Generador(reloj: Reloj, semilla: Int) {
     private val bloques = mutableListOf<BloqueHorario>()
     private val especiales = mutableListOf<ActividadEspecial>()
     private val registros = mutableListOf<RegistroActividad>()
+    private val objetos = mutableListOf<ObjetoPerdido>()
 
     private val nombresNina = listOf(
         "Valentina", "Regina", "Camila", "Ximena", "María José", "Renata", "Victoria", "Isabella",
@@ -138,6 +143,7 @@ private class Generador(reloj: Reloj, semilla: Int) {
         crearIncidentesPasados()
         crearFotos()
         crearAvisos()
+        crearObjetosPerdidos()
         crearRegistrosRecientes()
         val numerados = incidentes.sortedBy { it.cuando }.mapIndexed { i, inc -> inc.copy(folio = folioIncidente(i + 1)) }
         val familia = usuarios.first { it.usuario == "familia" }
@@ -161,6 +167,8 @@ private class Generador(reloj: Reloj, semilla: Int) {
                 // cada directora ya leyo lo que ella misma publico
                 directoraDeEstancia.values.associate { d -> d.id to avisos.filter { it.autorId == d.id }.map { it.id }.toSet() },
             siguienteFolio = numerados.size + 1,
+            objetos = objetos,
+            objetosVistos = emptyMap(),
         )
     }
 
@@ -236,6 +244,8 @@ private class Generador(reloj: Reloj, semilla: Int) {
 
     private lateinit var sofia: Nino
     private lateinit var mateo: Nino
+    private lateinit var diego: Nino
+    private lateinit var paola: Tutor
     private val ninosBajaVencida = mutableListOf<String>()
 
     private fun crearNinos() {
@@ -249,7 +259,7 @@ private class Generador(reloj: Reloj, semilla: Int) {
         val autorizadosDemo = listOf(tutorComoPersona(laura), tutorComoPersona(jorge), abuelaCarmen)
         usuarios += Usuario(id(), "familia", CONTRASENA_DEMO, laura.nombre, Rol.FAMILIAR, sanBernabe.id, tutorId = laura.id)
         usuarios += Usuario(id(), "familia.papa", CONTRASENA_DEMO, jorge.nombre, Rol.FAMILIAR, sanBernabe.id, tutorId = jorge.id)
-        usados += listOf("Sofía", "Mateo")
+        usados += listOf("Sofía", "Mateo", "Diego")
 
         sofia = Nino(
             id(), "Sofía", "Ramírez Treviño", hoy.minusMonths(29).minusDays(12), sanBernabe.id, sbMat.id,
@@ -258,6 +268,15 @@ private class Generador(reloj: Reloj, semilla: Int) {
         mateo = Nino(
             id(), "Mateo", "Ramírez Treviño", hoy.minusMonths(11).minusDays(3), sanBernabe.id, sbLac.id,
             listOf(laura.id, jorge.id), autorizadosDemo,
+        )
+
+        // segunda familia demo en maternales, para el chat de sala y los objetos reclamados
+        paola = Tutor(id(), "Paola Elizondo Garza", "Mamá", "81 3456 7812")
+        tutores += paola
+        usuarios += Usuario(id(), "familia.paola", CONTRASENA_DEMO, paola.nombre, Rol.FAMILIAR, sanBernabe.id, tutorId = paola.id)
+        diego = Nino(
+            id(), "Diego", "Cavazos Elizondo", hoy.minusMonths(31).minusDays(4), sanBernabe.id, sbMat.id,
+            listOf(paola.id), listOf(tutorComoPersona(paola)),
         )
 
         fun generarSala(sala: Sala, cantidad: Int): MutableList<Nino> = MutableList(cantidad) {
@@ -272,7 +291,7 @@ private class Generador(reloj: Reloj, semilla: Int) {
         }
 
         val lactantesSb = generarSala(sbLac, 7).apply { add(2, mateo) }
-        val maternalesSb = generarSala(sbMat, 13).apply { add(0, sofia) }
+        val maternalesSb = generarSala(sbMat, 12).apply { add(0, sofia); add(1, diego) }
         val preescolarSb = generarSala(sbPre, 13)
 
         // informacion medica y permisos de imagen repartidos a proposito
@@ -587,6 +606,39 @@ private class Generador(reloj: Reloj, semilla: Int) {
         )
     }
 
+    private fun crearObjetosPerdidos() {
+        val (sbLac, sbMat, sbPre, vvLac) = salas
+        val laura = usuarios.first { it.usuario == "familia" }
+        val cuentaPaola = usuarios.first { it.usuario == "familia.paola" }
+        fun objeto(
+            sala: Sala, descripcion: String, donde: String, haceDias: Int,
+            estado: EstadoObjeto = EstadoObjeto.DISPONIBLE, quien: Usuario? = null, reclamadoPor: String? = null, nota: String? = null,
+        ) {
+            val fecha = diaHabilAtras(haceDias)
+            val publicado = LocalDateTime.of(fecha, LocalTime.of(15, 40))
+            objetos += ObjetoPerdido(
+                id(), sala.id, descripcion, donde, fecha, null, educadoraDeSala.getValue(sala.id).id, publicado,
+                estado = estado,
+                reclamadoPorId = quien?.id,
+                reclamadoPor = reclamadoPor,
+                notaReclamo = nota,
+                reclamadoEl = quien?.let { publicado.plusHours(17) },
+                entregadoEl = if (estado == EstadoObjeto.ENTREGADO) publicado.plusHours(41) else null,
+            )
+        }
+        objeto(sbMat, "Suéter azul marino talla 3", "Perchero del salón", 1)
+        objeto(sbMat, "Termo morado con tapa de popote", "Mesa del comedor", 2)
+        objeto(
+            sbMat, "Chamarra roja con capucha", "Patio de juegos", 3, EstadoObjeto.RECLAMADO, cuentaPaola,
+            "${paola.nombre} (mamá de Diego)", "Es de Diego, tiene su nombre en la etiqueta del cuello.",
+        )
+        objeto(sbMat, "Tenis blancos con velcro", "Junto al arenero", 6, EstadoObjeto.ENTREGADO, laura, "${laura.nombre} (mamá de Sofía)")
+        objeto(sbLac, "Chupón verde con broche de osito", "Cuna 4", 1)
+        objeto(sbLac, "Cobija de franela con ositos", "Área de siesta", 5, EstadoObjeto.ENTREGADO, laura, "${laura.nombre} (mamá de Mateo)")
+        objeto(sbPre, "Lonchera de dinosaurios", "Comedor", 2)
+        objeto(vvLac, "Gorra amarilla", "Entrada principal", 1)
+    }
+
     private fun crearRegistrosRecientes() {
         val porId = usuarios.associateBy { it.id }
         val ninoPorId = ninos.associateBy { it.id }
@@ -623,6 +675,10 @@ private class Generador(reloj: Reloj, semilla: Int) {
         val familia = usuarios.first { it.usuario == "familia" }
         fotos.filter { sofia.id in it.ninoIds }.take(2).forEach { f ->
             registro(f.cuando.plusHours(5), familia.id, AccionRegistro.FOTO_CONSULTADA, "Consultó la foto \"${f.descripcion}\"", sofia.id)
+        }
+        objetos.filter { !it.publicadoEl.toLocalDate().isBefore(desde) }.forEach { o ->
+            val sala = salas.first { it.id == o.salaId }
+            registro(o.publicadoEl, o.publicadoPorId, AccionRegistro.OBJETO, "Publicó el objeto perdido \"${o.descripcion}\" en la sala ${sala.nombre}")
         }
         val baja = ninos.first { (it.estado as? EstadoExpediente.BajaTemporal)?.let { b -> b.eliminarEl.isAfter(hoy) } == true }
         registro(

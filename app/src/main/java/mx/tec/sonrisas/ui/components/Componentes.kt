@@ -20,6 +20,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Badge
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -403,6 +405,28 @@ fun BannerAlergias(
                     Text("$titulo: $valor", style = MaterialTheme.typography.bodyMedium)
                 }
             }
+        }
+    }
+}
+
+/** acceso a una seccion de la sala (objetos perdidos, material); la insignia cuenta lo nuevo */
+@Composable
+fun BotonAcceso(
+    texto: String,
+    @DrawableRes icono: Int,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    insignia: Int = 0,
+) {
+    FilledTonalButton(onClick = onClick, modifier = modifier.heightIn(min = 48.dp)) {
+        Icono(icono, null)
+        Text(texto, modifier = Modifier.padding(start = Espacio.space2))
+        if (insignia > 0) {
+            Badge(
+                modifier = Modifier.padding(start = Espacio.space2).semantics { contentDescription = if (insignia == 1) "1 nuevo" else "$insignia nuevos" },
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+            ) { Text("$insignia") }
         }
     }
 }

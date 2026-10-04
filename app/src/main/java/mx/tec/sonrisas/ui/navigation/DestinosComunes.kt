@@ -23,6 +23,9 @@ import mx.tec.sonrisas.ui.screens.familia.IncidenteDetalleScreen
 import mx.tec.sonrisas.ui.screens.familia.IncidenteDetalleViewModel
 import mx.tec.sonrisas.ui.screens.fotos.FotoDetalleScreen
 import mx.tec.sonrisas.ui.screens.fotos.FotoDetalleViewModel
+import mx.tec.sonrisas.ui.screens.sala.HojaObjetoForm
+import mx.tec.sonrisas.ui.screens.sala.ObjetosScreen
+import mx.tec.sonrisas.ui.screens.sala.ObjetosViewModel
 import mx.tec.sonrisas.ui.state.UiState
 
 fun NavGraphBuilder.destinosComunes(navController: NavHostController, onCerrarSesion: () -> Unit) {
@@ -90,6 +93,42 @@ fun NavGraphBuilder.destinoIncidente() {
             UiState.Cargando -> CargandoView()
             is UiState.Error -> ErrorView(e.mensaje, vm::reintentar)
             is UiState.Exito -> IncidenteDetalleScreen(e.datos)
+        }
+    }
+}
+
+/** al salir se marcan como vistos los objetos que la familia alcanzo a ver */
+fun NavGraphBuilder.destinoObjetos(mensajero: Mensajero) {
+    composable(Route.OBJETOS) {
+        val vm: ObjetosViewModel = viewModel(factory = AppViewModelProvider.Factory)
+        val estado by vm.uiState.collectAsStateWithLifecycle()
+        val vistos = (estado as? UiState.Exito)?.datos?.nuevos.orEmpty()
+        val ultimos by rememberUpdatedState(vistos)
+        DisposableEffect(Unit) { onDispose { vm.marcarVistos(ultimos) } }
+        when (val e = estado) {
+            UiState.Cargando -> CargandoView()
+            is UiState.Error -> ErrorView(e.mensaje, vm::reintentar)
+            is UiState.Exito -> {
+                ObjetosScreen(
+                    datos = e.datos,
+                    filtro = vm.filtro,
+                    onFiltro = vm::cambiarFiltro,
+                    onPublicar = vm::abrirPublicar,
+                    onReclamar = vm::abrirReclamo,
+                    onEntregar = { vm.entregar(it, mensajero::mostrar) },
+                    onRechazar = { vm.rechazar(it, mensajero::mostrar) },
+                )
+                vm.hoja?.let { h ->
+                    HojaObjetoForm(
+                        hoja = h,
+                        hoy = e.datos.hoy,
+                        onCambiar = vm::cambiar,
+                        onPublicar = { vm.publicar(mensajero::mostrar) },
+                        onReclamar = { vm.reclamar(mensajero::mostrar) },
+                        onCerrar = vm::cerrar,
+                    )
+                }
+            }
         }
     }
 }

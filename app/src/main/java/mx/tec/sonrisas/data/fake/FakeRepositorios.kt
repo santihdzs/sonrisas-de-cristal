@@ -68,6 +68,21 @@ internal object Visibilidad {
         // la fundacion solo ve datos consolidados, nunca expedientes individuales
         Rol.FUNDACION, null -> emptyList()
     }
+
+    /** salas cuyo contenido (objetos perdidos, material, chat) puede ver el usuario */
+    fun salas(usuario: Usuario?, salas: List<Sala>, ninos: List<Nino>): Set<String> = when (usuario?.rol) {
+        Rol.EDUCADORA -> setOfNotNull(usuario.salaId)
+        Rol.DIRECCION -> salas.filter { it.estanciaId == usuario.estanciaId }.map { it.id }.toSet()
+        Rol.FAMILIAR -> ninos(usuario, ninos).map { it.salaId }.toSet()
+        Rol.FUNDACION, null -> emptySet()
+    }
+
+    /** educadoras de la sala y direccion de su estancia */
+    fun esPersonalDe(usuario: Usuario?, sala: Sala?): Boolean = sala != null && when (usuario?.rol) {
+        Rol.EDUCADORA -> usuario.salaId == sala.id
+        Rol.DIRECCION -> usuario.estanciaId == sala.estanciaId
+        else -> false
+    }
 }
 
 class FakeSesionRepository(

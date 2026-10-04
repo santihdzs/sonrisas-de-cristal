@@ -36,6 +36,9 @@ import mx.tec.sonrisas.domain.Sala
 import mx.tec.sonrisas.domain.TipoSala
 import mx.tec.sonrisas.domain.Usuario
 import mx.tec.sonrisas.ui.components.BotonPrincipal
+import mx.tec.sonrisas.ui.components.CampoTexto
+import mx.tec.sonrisas.ui.components.tecladoNombres
+import mx.tec.sonrisas.ui.components.tecladoTelefono
 import mx.tec.sonrisas.ui.components.EstadoChip
 import mx.tec.sonrisas.ui.components.EstadoVacio
 import mx.tec.sonrisas.ui.components.EstrellaSala
@@ -69,9 +72,9 @@ fun EstanciaFormScreen(
         verticalArrangement = Arrangement.spacedBy(Espacio.space3),
     ) {
         TarjetaSeccion(titulo = "Datos de la estancia", icono = R.drawable.ic_apartment) {
-            Campo(form.nombre, { onCambiar(form.copy(nombre = it)) }, "Nombre", errores["nombre"], teclado = tecladoNombres, ayuda = "Por ejemplo: Estancia San Bernabé")
-            Campo(form.colonia, { onCambiar(form.copy(colonia = it)) }, "Colonia o dirección", errores["colonia"])
-            Campo(form.telefono, { onCambiar(form.copy(telefono = it)) }, "Teléfono", errores["telefono"], teclado = tecladoTelefono, ayuda = "10 dígitos")
+            CampoTexto(form.nombre, { onCambiar(form.copy(nombre = it)) }, "Nombre", errores["nombre"], teclado = tecladoNombres, ayuda = "Por ejemplo: Estancia San Bernabé")
+            CampoTexto(form.colonia, { onCambiar(form.copy(colonia = it)) }, "Colonia o dirección", errores["colonia"])
+            CampoTexto(form.telefono, { onCambiar(form.copy(telefono = it)) }, "Teléfono", errores["telefono"], teclado = tecladoTelefono, ayuda = "10 dígitos")
         }
         if (datos.nueva) {
             TarjetaSeccion(titulo = "Cuenta de dirección", icono = R.drawable.ic_key) {
@@ -80,7 +83,7 @@ fun EstanciaFormScreen(
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                Campo(form.direccion, { onCambiar(form.copy(direccion = it)) }, "Nombre completo", errores["direccion"], teclado = tecladoNombres)
+                CampoTexto(form.direccion, { onCambiar(form.copy(direccion = it)) }, "Nombre completo", errores["direccion"], teclado = tecladoNombres)
             }
         } else {
             TarjetaSeccion(titulo = "Cuentas de dirección", icono = R.drawable.ic_key) {
@@ -123,7 +126,7 @@ fun HojaNuevaCuenta(
         boton = { BotonPrincipal("Crear cuenta", onCrear, guardando = form.guardando) },
     ) {
         val error = if (form.intento && form.nombre.isBlank()) "Escribe el nombre." else null
-        Campo(form.nombre, { onCambiar(form.copy(nombre = it)) }, "Nombre completo", error, teclado = tecladoNombres)
+        CampoTexto(form.nombre, { onCambiar(form.copy(nombre = it)) }, "Nombre completo", error, teclado = tecladoNombres)
         form.error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium) }
     }
 }
@@ -195,7 +198,7 @@ fun HojaSalaForm(
         onCerrar = onCerrar,
         boton = { BotonPrincipal(if (hoja.id == null) "Registrar sala" else "Guardar cambios", onGuardar, guardando = hoja.guardando) },
     ) {
-        Campo(hoja.nombre, { onCambiar(hoja.copy(nombre = it)) }, "Nombre de la sala", e["nombre"], teclado = tecladoNombres)
+        CampoTexto(hoja.nombre, { onCambiar(hoja.copy(nombre = it)) }, "Nombre de la sala", e["nombre"], teclado = tecladoNombres)
         EtiquetaCampo("Tipo de sala")
         SelectorOpciones(TipoSala.entries, hoja.tipo, { onCambiar(hoja.copy(tipo = it)) }, { it.etiqueta })
         EtiquetaCampo("Color de la estrella")
@@ -312,7 +315,7 @@ fun HojaPersonalForm(
                 onCerrar = onCerrar,
                 boton = { BotonPrincipal("Registrar educadora", onRegistrar, guardando = hoja.guardando) },
             ) {
-                Campo(hoja.nombre, { onCambiar(hoja.copy(nombre = it)) }, "Nombre completo", e["nombre"], teclado = tecladoNombres)
+                CampoTexto(hoja.nombre, { onCambiar(hoja.copy(nombre = it)) }, "Nombre completo", e["nombre"], teclado = tecladoNombres)
                 EtiquetaCampo("Sala")
                 SelectorOpciones(salas.map { it.id }, hoja.salaId, { onCambiar(hoja.copy(salaId = it)) }, { id -> salas.first { it.id == id }.nombre })
                 e["sala"]?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }

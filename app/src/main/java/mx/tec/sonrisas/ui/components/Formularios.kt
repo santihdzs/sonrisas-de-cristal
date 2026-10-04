@@ -20,12 +20,16 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
@@ -177,4 +181,32 @@ fun HojaModal(
             }
         }
     }
+}
+
+val tecladoNombres = KeyboardOptions(capitalization = KeyboardCapitalization.Words)
+val tecladoOraciones = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
+val tecladoTelefono = KeyboardOptions(keyboardType = KeyboardType.Phone)
+
+@Composable
+fun CampoTexto(
+    valor: String,
+    onCambio: (String) -> Unit,
+    etiqueta: String,
+    error: String?,
+    modifier: Modifier = Modifier,
+    teclado: KeyboardOptions = tecladoOraciones,
+    ayuda: String? = null,
+    lineas: Int = 1,
+) {
+    OutlinedTextField(
+        value = valor,
+        onValueChange = onCambio,
+        label = { Text(etiqueta) },
+        isError = error != null,
+        supportingText = (error ?: ayuda)?.let { { Text(it) } },
+        singleLine = lineas == 1,
+        minLines = lineas,
+        keyboardOptions = teclado,
+        modifier = modifier.fillMaxWidth(),
+    )
 }

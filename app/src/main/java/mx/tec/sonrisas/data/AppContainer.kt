@@ -1,5 +1,6 @@
 package mx.tec.sonrisas.data
 
+import android.content.Context
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -15,17 +16,20 @@ import mx.tec.sonrisas.data.fake.FakeHorariosRepository
 import mx.tec.sonrisas.data.fake.FakeIncidentesRepository
 import mx.tec.sonrisas.data.fake.FakeJornadaRepository
 import mx.tec.sonrisas.data.fake.FakeNinosRepository
+import mx.tec.sonrisas.data.fake.FakeObjetosRepository
 import mx.tec.sonrisas.data.fake.FakeSesionRepository
 import mx.tec.sonrisas.domain.Reloj
 import mx.tec.sonrisas.domain.RelojSistema
 
 // para conectar el backend basta con cambiar las implementaciones de este archivo
-class AppContainer {
+class AppContainer(context: Context) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     val reloj: Reloj = RelojSistema
 
     private val almacen by lazy { AlmacenMemoria(DatosDePrueba.generar(reloj)) }
+
+    val archivos = AlmacenArchivos(context.filesDir)
 
     private val sesionFake by lazy { FakeSesionRepository(almacen, reloj, scope) }
 
@@ -39,6 +43,7 @@ class AppContainer {
     val horariosRepository: HorariosRepository by lazy { FakeHorariosRepository(almacen, sesionFake, reloj) }
     val actividadRepository: ActividadRepository by lazy { FakeActividadRepository(almacen, sesionFake) }
     val cuentasRepository: CuentasRepository by lazy { FakeCuentasRepository(almacen, sesionFake, reloj) }
+    val objetosRepository: ObjetosPerdidosRepository by lazy { FakeObjetosRepository(almacen, sesionFake, archivos, reloj) }
 
     fun iniciar() {
         scope.launch {

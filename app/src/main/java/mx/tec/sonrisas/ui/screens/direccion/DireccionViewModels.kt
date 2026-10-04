@@ -642,6 +642,7 @@ enum class FiltroActividad(val etiqueta: String, val acciones: Set<AccionRegistr
     FOTOS("Fotos consultadas", setOf(AccionRegistro.FOTO_CONSULTADA)),
     EXPEDIENTES("Expedientes", setOf(AccionRegistro.EXPEDIENTE)),
     AVISOS("Avisos", setOf(AccionRegistro.AVISO)),
+    OBJETOS("Objetos perdidos", setOf(AccionRegistro.OBJETO)),
     ADMINISTRACION("Salas y personal", setOf(AccionRegistro.ESTRUCTURA, AccionRegistro.CUENTA)),
 }
 

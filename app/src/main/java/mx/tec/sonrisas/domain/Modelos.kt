@@ -197,6 +197,27 @@ data class Aviso(
     val autorId: String,
 )
 
+enum class EstadoObjeto { DISPONIBLE, RECLAMADO, ENTREGADO }
+
+data class ObjetoPerdido(
+    val id: String,
+    val salaId: String,
+    val descripcion: String,
+    val dondeSeEncontro: String,
+    val fecha: LocalDate,
+    // ruta del archivo en el almacenamiento privado de la app
+    val foto: String?,
+    val publicadoPorId: String,
+    val publicadoEl: LocalDateTime,
+    val estado: EstadoObjeto = EstadoObjeto.DISPONIBLE,
+    val reclamadoPorId: String? = null,
+    // nombre y parentesco de quien reclamo; la capa de datos lo oculta a las demas familias
+    val reclamadoPor: String? = null,
+    val notaReclamo: String? = null,
+    val reclamadoEl: LocalDateTime? = null,
+    val entregadoEl: LocalDateTime? = null,
+)
+
 data class BloqueHorario(
     val id: String,
     val salaId: String,
@@ -214,7 +235,7 @@ data class ActividadEspecial(
     val titulo: String,
 )
 
-enum class AccionRegistro { CAPTURA, EDICION, BORRADO, FOTO_CONSULTADA, EXPEDIENTE, AVISO, SESION, ESTRUCTURA, CUENTA }
+enum class AccionRegistro { CAPTURA, EDICION, BORRADO, FOTO_CONSULTADA, EXPEDIENTE, AVISO, SESION, ESTRUCTURA, CUENTA, OBJETO }
 
 data class RegistroActividad(
     val id: String,

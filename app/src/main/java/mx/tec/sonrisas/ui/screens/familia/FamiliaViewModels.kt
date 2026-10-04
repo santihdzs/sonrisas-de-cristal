@@ -19,9 +19,11 @@ import mx.tec.sonrisas.data.HorariosRepository
 import mx.tec.sonrisas.data.IncidentesRepository
 import mx.tec.sonrisas.data.JornadaRepository
 import mx.tec.sonrisas.data.NinosRepository
+import mx.tec.sonrisas.data.ObjetosPerdidosRepository
 import mx.tec.sonrisas.domain.ActividadActual
 import mx.tec.sonrisas.domain.ActividadEspecial
 import mx.tec.sonrisas.domain.BloqueHorario
+import mx.tec.sonrisas.domain.EstadoObjeto
 import mx.tec.sonrisas.domain.Incidente
 import mx.tec.sonrisas.domain.Nino
 import mx.tec.sonrisas.domain.Reloj
@@ -48,6 +50,7 @@ data class HoyDatos(
     val bloques: List<BloqueHorario>,
     val especiales: List<ActividadEspecial>,
     val ahora: LocalDateTime,
+    val objetosNuevos: Int = 0,
 )
 
 data class SemanaDatos(val hijos: Hijos, val semana: ResumenSemana, val hoy: LocalDate)
@@ -63,6 +66,7 @@ class FamiliaViewModel(
     private val incidentesRepository: IncidentesRepository,
     private val fotosRepository: FotosRepository,
     private val horariosRepository: HorariosRepository,
+    private val objetosRepository: ObjetosPerdidosRepository,
     private val reloj: Reloj,
 ) : ViewModel() {
     private val reintentos = MutableStateFlow(0)
@@ -90,9 +94,12 @@ class FamiliaViewModel(
                 jornadaRepository.eventosDe(n.id, reloj.hoy(), reloj.hoy()),
                 incidentesRepository.incidentesDe(n.id, reloj.hoy(), reloj.hoy()),
             ) { a, e, i -> ResumenDia.de(a.firstOrNull(), e, i) }
-            combine(base, horariosRepository.bloques(n.salaId), horariosRepository.especiales(n.salaId), ahora) { resumen, bloques, especiales, t ->
+            val nuevos = combine(objetosRepository.objetos(n.salaId), objetosRepository.vistos()) { objetos, vistos ->
+                objetos.count { it.estado == EstadoObjeto.DISPONIBLE && it.id !in vistos }
+            }
+            combine(base, horariosRepository.bloques(n.salaId), horariosRepository.especiales(n.salaId), ahora, nuevos) { resumen, bloques, especiales, t, objetos ->
                 val deHoy = especiales.filter { it.fecha == t.toLocalDate() }
-                HoyDatos(h, resumen, ActividadActual.de(bloques, especiales, t), bloques, deHoy, t)
+                HoyDatos(h, resumen, ActividadActual.de(bloques, especiales, t), bloques, deHoy, t, objetos)
             }
         }
     }

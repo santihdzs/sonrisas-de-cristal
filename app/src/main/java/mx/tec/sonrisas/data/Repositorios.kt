@@ -11,6 +11,7 @@ import mx.tec.sonrisas.domain.EventoBitacora
 import mx.tec.sonrisas.domain.Foto
 import mx.tec.sonrisas.domain.Incidente
 import mx.tec.sonrisas.domain.Nino
+import mx.tec.sonrisas.domain.ObjetoPerdido
 import mx.tec.sonrisas.domain.RegistroActividad
 import mx.tec.sonrisas.domain.ReporteAsistencia
 import mx.tec.sonrisas.domain.Sala
@@ -105,6 +106,17 @@ interface AvisosRepository {
     fun leidos(): Flow<Set<String>>
     suspend fun marcarLeidos(ids: Collection<String>)
     suspend fun publicar(tipo: TipoAviso, titulo: String, cuerpo: String, fechaEvento: LocalDateTime?): Aviso
+}
+
+interface ObjetosPerdidosRepository {
+    /** el personal ve los de su sala o estancia; la familia, solo los de las salas de sus hijos */
+    fun objetos(salaId: String): Flow<List<ObjetoPerdido>>
+    fun vistos(): Flow<Set<String>>
+    suspend fun marcarVistos(ids: Collection<String>)
+    suspend fun publicar(salaId: String, descripcion: String, dondeSeEncontro: String, fecha: LocalDate, foto: ArchivoEntrada?): ObjetoPerdido
+    suspend fun reclamar(id: String, nota: String?)
+    suspend fun entregar(id: String)
+    suspend fun rechazarReclamo(id: String)
 }
 
 interface HorariosRepository {

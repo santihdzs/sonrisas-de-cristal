@@ -31,6 +31,7 @@ import mx.tec.sonrisas.domain.Nino
 import mx.tec.sonrisas.domain.Sala
 import mx.tec.sonrisas.domain.TipoSala
 import mx.tec.sonrisas.ui.components.AvatarNino
+import mx.tec.sonrisas.ui.components.BotonAcceso
 import mx.tec.sonrisas.ui.components.EstadoChip
 import mx.tec.sonrisas.ui.components.EstadoVacio
 import mx.tec.sonrisas.ui.components.EstrellaSala
@@ -73,6 +74,7 @@ fun SalaScreen(
     onLlegada: (Nino) -> Unit,
     onSalida: (Nino, Asistencia) -> Unit,
     onRegistroGrupal: () -> Unit,
+    onObjetos: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val visibles = datos.ninos.filter { filtro.aplica(it) }
@@ -97,6 +99,11 @@ fun SalaScreen(
                     EstrellaSala("Sala ${datos.sala.nombre}", datos.sala.estrella)
                     Text(datos.fecha.formatoLargo(), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text("${datos.presentes} de ${datos.ninos.size} presentes", style = MaterialTheme.typography.headlineSmall)
+                }
+            }
+            item {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(Espacio.space2), verticalArrangement = Arrangement.spacedBy(Espacio.space2)) {
+                    BotonAcceso("Objetos perdidos", R.drawable.ic_checkroom, onObjetos)
                 }
             }
             item {
@@ -178,6 +185,6 @@ private fun SalaPreview() {
         ),
     )
     SonrisasTheme {
-        SalaScreen(datos, FiltroSala.TODOS, {}, {}, {}, { _, _ -> }, {})
+        SalaScreen(datos, FiltroSala.TODOS, {}, {}, {}, { _, _ -> }, {}, {})
     }
 }

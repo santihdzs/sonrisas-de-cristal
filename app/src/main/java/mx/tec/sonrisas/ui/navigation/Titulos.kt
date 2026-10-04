@@ -6,5 +6,6 @@ fun tituloComun(ruta: String?): String? = when (ruta) {
     Route.AVISOS -> "Avisos"
     Route.FOTO -> "Foto"
     Route.INCIDENTE_DETALLE -> "Incidente"
+    Route.OBJETOS -> "Objetos perdidos"
     else -> null
 }

@@ -25,6 +25,8 @@ class AlmacenMemoria(datos: DatosDePrueba) {
     val registros = MutableStateFlow(datos.registros)
     val avisosLeidos = MutableStateFlow(datos.avisosLeidos)
     val desbloqueoHuella = MutableStateFlow<Set<String>>(emptySet())
+    val objetos = MutableStateFlow(datos.objetos)
+    val objetosVistos = MutableStateFlow(datos.objetosVistos)
     var siguienteFolio = datos.siguienteFolio
 
     fun registrar(

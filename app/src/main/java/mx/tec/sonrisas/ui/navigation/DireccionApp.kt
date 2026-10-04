@@ -75,6 +75,7 @@ fun DireccionApp(onCerrarSesion: () -> Unit) {
                         onInscribir = { navController.navigate(Route.inscripcion()) },
                         onPublicarAviso = { navController.navigate(Route.PUBLICAR_AVISO) },
                         onVerAvisos = { navController.irAPestana(Route.AVISOS) },
+                        onObjetos = { navController.navigate(Route.objetos(it.id)) },
                     )
                 }
             }
@@ -247,6 +248,7 @@ fun DireccionApp(onCerrarSesion: () -> Unit) {
             }
             destinoAvisos(alSalir = avisosVm::marcarLeidos, onPublicar = { navController.navigate(Route.PUBLICAR_AVISO) })
             destinoIncidente()
+            destinoObjetos(mensajero)
             destinosComunes(navController, onCerrarSesion)
         }
     }

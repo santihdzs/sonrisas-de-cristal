@@ -155,6 +155,7 @@ val AccionRegistro.etiqueta: String
         AccionRegistro.SESION -> "Sesión"
         AccionRegistro.ESTRUCTURA -> "Estancias y salas"
         AccionRegistro.CUENTA -> "Cuentas"
+        AccionRegistro.OBJETO -> "Objetos perdidos"
     }
 
 val AccionRegistro.icono: Int
@@ -168,4 +169,5 @@ val AccionRegistro.icono: Int
         AccionRegistro.SESION -> R.drawable.ic_login
         AccionRegistro.ESTRUCTURA -> R.drawable.ic_meeting_room
         AccionRegistro.CUENTA -> R.drawable.ic_key
+        AccionRegistro.OBJETO -> R.drawable.ic_checkroom
     }

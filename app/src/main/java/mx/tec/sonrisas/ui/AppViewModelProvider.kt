@@ -33,6 +33,7 @@ import mx.tec.sonrisas.ui.screens.familia.IncidenteDetalleViewModel
 import mx.tec.sonrisas.ui.screens.fotos.AgregarFotoViewModel
 import mx.tec.sonrisas.ui.screens.fotos.FotoDetalleViewModel
 import mx.tec.sonrisas.ui.screens.fotos.FotosSalaViewModel
+import mx.tec.sonrisas.ui.screens.sala.ObjetosViewModel
 import mx.tec.sonrisas.ui.state.CredencialesViewModel
 import mx.tec.sonrisas.ui.state.SesionViewModel
 
@@ -84,7 +85,7 @@ object AppViewModelProvider {
             val c = contenedor()
             FamiliaViewModel(
                 c.estanciasRepository, c.ninosRepository, c.jornadaRepository, c.incidentesRepository,
-                c.fotosRepository, c.horariosRepository, c.reloj,
+                c.fotosRepository, c.horariosRepository, c.objetosRepository, c.reloj,
             )
         }
         initializer {
@@ -122,6 +123,10 @@ object AppViewModelProvider {
         }
         initializer { FundacionViewModel(contenedor().estanciasRepository) }
         initializer { CredencialesViewModel() }
+        initializer {
+            val c = contenedor()
+            ObjetosViewModel(createSavedStateHandle(), c.sesionRepository, c.estanciasRepository, c.objetosRepository, c.reloj)
+        }
         initializer {
             val c = contenedor()
             EstanciaViewModel(createSavedStateHandle(), c.estanciasRepository, c.cuentasRepository)
