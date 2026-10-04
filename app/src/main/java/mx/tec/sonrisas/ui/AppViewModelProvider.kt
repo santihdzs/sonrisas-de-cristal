@@ -101,11 +101,11 @@ object AppViewModelProvider {
         }
         initializer {
             val c = contenedor()
-            ExpedienteViewModel(createSavedStateHandle(), c.estanciasRepository, c.ninosRepository, c.reloj)
+            ExpedienteViewModel(createSavedStateHandle(), c.estanciasRepository, c.ninosRepository, c.cuentasRepository, c.reloj)
         }
         initializer {
             val c = contenedor()
-            InscripcionViewModel(createSavedStateHandle(), c.estanciasRepository, c.ninosRepository, c.reloj)
+            InscripcionViewModel(createSavedStateHandle(), c.estanciasRepository, c.ninosRepository, c.cuentasRepository, c.reloj)
         }
         initializer { PublicarAvisoViewModel(contenedor().avisosRepository) }
         initializer {

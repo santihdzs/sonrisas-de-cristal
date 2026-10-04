@@ -224,6 +224,13 @@ class FakeNinosRepository(
     override fun tutoresDe(ninoId: String): Flow<List<Tutor>> =
         combine(nino(ninoId), almacen.tutores) { n, t -> if (n == null) emptyList() else t.filter { it.id in n.tutorIds } }
 
+    override fun tutoresDeEstancia(): Flow<List<Tutor>> =
+        combine(sesion.usuario, almacen.ninos, almacen.tutores) { u, ninos, tutores ->
+            if (u?.rol != Rol.DIRECCION) return@combine emptyList()
+            val ids = ninos.filter { it.estanciaId == u.estanciaId }.flatMap { it.tutorIds }.toSet()
+            tutores.filter { it.id in ids }.sortedBy { it.nombre }
+        }
+
     private fun direccion(): Usuario {
         val u = sesion.usuarioActual()
         if (u?.rol != Rol.DIRECCION) throw AccesoDenegado()
@@ -239,6 +246,10 @@ class FakeNinosRepository(
         val existente = almacen.ninos.value.firstOrNull { it.id == nino.id }
         if (existente != null && existente.estanciaId != u.estanciaId) throw AccesoDenegado()
         val sala = almacen.salas.value.firstOrNull { it.id == nino.salaId && it.estanciaId == u.estanciaId } ?: throw AccesoDenegado()
+        // un tutor que ya existe solo se puede reusar si pertenece a esta estancia
+        val deMiEstancia = almacen.ninos.value.filter { it.estanciaId == u.estanciaId }.flatMap { it.tutorIds }.toSet()
+        val ajenos = tutores.filter { t -> almacen.tutores.value.any { it.id == t.id } && t.id !in deMiEstancia }
+        if (ajenos.isNotEmpty()) throw AccesoDenegado()
         val guardado = nino.copy(estanciaId = sala.estanciaId, tutorIds = tutores.map { it.id })
         almacen.tutores.update { actuales -> actuales.filter { t -> tutores.none { it.id == t.id } } + tutores }
         almacen.ninos.update { lista -> if (existente == null) lista + guardado else lista.map { if (it.id == guardado.id) guardado else it } }

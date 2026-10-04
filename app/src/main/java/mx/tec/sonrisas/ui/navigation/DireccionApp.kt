@@ -131,9 +131,11 @@ fun DireccionApp(onCerrarSesion: () -> Unit) {
                         datos = e.datos,
                         form = vm.form,
                         onCambiar = vm::cambiar,
+                        onElegirRegistrado = vm::elegirRegistrado,
                         onGuardar = {
-                            vm.guardar { mensaje, id ->
+                            vm.guardar { mensaje, id, nuevas ->
                                 mensajero.mostrar(mensaje)
+                                credenciales.mostrar(nuevas)
                                 navController.popBackStack()
                                 if (!e.datos.editando) navController.navigate(Route.expediente(id))
                             }

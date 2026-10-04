@@ -54,6 +54,9 @@ interface NinosRepository {
     fun ninos(): Flow<List<Nino>>
     fun nino(id: String): Flow<Nino?>
     fun tutoresDe(ninoId: String): Flow<List<Tutor>>
+
+    /** tutores ya registrados en la estancia, para que los hermanos compartan una sola cuenta (solo direccion) */
+    fun tutoresDeEstancia(): Flow<List<Tutor>>
     suspend fun guardar(nino: Nino, tutores: List<Tutor>): Nino
     suspend fun darDeBaja(id: String)
     suspend fun reactivar(id: String)
@@ -126,6 +129,9 @@ interface CuentasRepository {
 
     /** la cuenta deja de poder entrar, pero su historial se conserva */
     suspend fun retirarAcceso(usuarioId: String)
+
+    /** cuenta de familia para un tutor de la estancia que todavia no tiene acceso */
+    suspend fun crearCuentaFamilia(tutorId: String): Credenciales
 }
 
 interface ActividadRepository {

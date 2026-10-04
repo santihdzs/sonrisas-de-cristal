@@ -76,6 +76,17 @@ class FakeCuentasRepository(
         almacen.registrar(u, reloj.ahora(), AccionRegistro.CUENTA, "Retiró el acceso a la app de ${e.nombre}")
     }
 
+    override suspend fun crearCuentaFamilia(tutorId: String): Credenciales {
+        latencia()
+        val u = direccion()
+        val deMiEstancia = almacen.ninos.value.filter { it.estanciaId == u.estanciaId && tutorId in it.tutorIds }
+        val tutor = almacen.tutores.value.firstOrNull { it.id == tutorId }
+        if (tutor == null || deMiEstancia.isEmpty()) throw AccesoDenegado()
+        if (almacen.usuarios.value.any { it.tutorId == tutorId && it.activo }) throw IllegalStateException("Este tutor ya tiene acceso a la app.")
+        val hijos = deMiEstancia.joinToString(", ") { it.nombre }
+        return crear(u, tutor.nombre, Rol.FAMILIAR, u.estanciaId!!, "Dio acceso a la app a ${tutor.nombre} (${tutor.parentesco.lowercase()} de $hijos)", tutorId = tutor.id)
+    }
+
     private fun crear(
         autor: Usuario,
         nombre: String,

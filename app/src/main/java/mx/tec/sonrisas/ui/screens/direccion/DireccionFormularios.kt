@@ -1,5 +1,19 @@
 package mx.tec.sonrisas.ui.screens.direccion
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.draw.clip
+import mx.tec.sonrisas.domain.Tutor
+import mx.tec.sonrisas.ui.components.EstadoChip
+import mx.tec.sonrisas.ui.components.HojaModal
+import mx.tec.sonrisas.ui.components.TipoEstado
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -70,15 +84,18 @@ internal fun Campo(
     )
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun InscripcionScreen(
     datos: InscripcionDatos,
     form: InscripcionForm,
     onCambiar: (InscripcionForm) -> Unit,
+    onElegirRegistrado: (Tutor) -> Unit,
     onGuardar: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val errores = if (form.intento) form.errores(datos.hoy) else emptyMap()
+    var eligiendo by rememberSaveable { mutableStateOf(false) }
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -112,15 +129,43 @@ fun InscripcionScreen(
                     }
                 }
                 fun cambiar(nuevo: FilaTutor) = onCambiar(form.copy(tutores = form.tutores.map { if (it.id == t.id) nuevo else it }))
+                val hermanos = datos.hijosDe[t.id].orEmpty()
+                if (t.existente && hermanos.isNotEmpty()) {
+                    Text(
+                        "Tutor registrado. También es tutor de ${hermanos.joinToString(", ")}; los cambios aplican para todos.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
                 Campo(t.nombre, { cambiar(t.copy(nombre = it)) }, "Nombre completo", errores["tutor.nombre.${t.id}"], teclado = tecladoNombres)
                 Campo(t.parentesco, { cambiar(t.copy(parentesco = it)) }, "Parentesco", errores["tutor.parentesco.${t.id}"], teclado = tecladoNombres, ayuda = "Por ejemplo: Mamá, Papá, Abuela")
                 Campo(t.telefono, { cambiar(t.copy(telefono = it)) }, "Teléfono", errores["tutor.telefono.${t.id}"], teclado = tecladoTelefono, ayuda = "10 dígitos")
                 FilaSwitch("Puede recogerlo", t.puedeRecoger, { cambiar(t.copy(puedeRecoger = it)) })
+                val cuenta = datos.cuentas[t.id]
+                if (cuenta != null) {
+                    EstadoChip("Con acceso a la app · ${cuenta.usuario}", TipoEstado.EXITO, R.drawable.ic_check_circle_fill)
+                } else {
+                    FilaSwitch(
+                        "Dar acceso a la app",
+                        t.darAcceso,
+                        { cambiar(t.copy(darAcceso = it)) },
+                        descripcion = "Creamos una cuenta de familia con usuario y contraseña temporal.",
+                    )
+                }
             }
             errores["tutores"]?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
-            OutlinedButton(onClick = { onCambiar(form.copy(tutores = form.tutores + FilaTutor())) }, modifier = Modifier.heightIn(min = 48.dp)) {
-                Icono(R.drawable.ic_add, null)
-                Text("Agregar tutor", modifier = Modifier.padding(start = Espacio.space2))
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(Espacio.space2), verticalArrangement = Arrangement.spacedBy(Espacio.space2)) {
+                OutlinedButton(onClick = { onCambiar(form.copy(tutores = form.tutores + FilaTutor())) }, modifier = Modifier.heightIn(min = 48.dp)) {
+                    Icono(R.drawable.ic_add, null)
+                    Text("Agregar tutor", modifier = Modifier.padding(start = Espacio.space2))
+                }
+                val disponibles = datos.registrados.filter { r -> form.tutores.none { it.id == r.id } }
+                if (disponibles.isNotEmpty()) {
+                    OutlinedButton(onClick = { eligiendo = true }, modifier = Modifier.heightIn(min = 48.dp)) {
+                        Icono(R.drawable.ic_family_restroom, null)
+                        Text("Elegir tutor registrado", modifier = Modifier.padding(start = Espacio.space2))
+                    }
+                }
             }
         }
         TarjetaSeccion(titulo = "Otras personas autorizadas", icono = R.drawable.ic_person) {
@@ -174,6 +219,49 @@ fun InscripcionScreen(
         form.error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium) }
         BotonPrincipal("Guardar expediente", onGuardar, guardando = form.guardando)
     }
+    if (eligiendo) {
+        HojaTutoresRegistrados(
+            tutores = datos.registrados.filter { r -> form.tutores.none { it.id == r.id } },
+            hijosDe = datos.hijosDe,
+            onElegir = {
+                onElegirRegistrado(it)
+                eligiendo = false
+            },
+            onCerrar = { eligiendo = false },
+        )
+    }
+}
+
+/** para inscribir a un hermano: el tutor se reusa y su cuenta de familia ve a ambos niños */
+@Composable
+private fun HojaTutoresRegistrados(
+    tutores: List<Tutor>,
+    hijosDe: Map<String, List<String>>,
+    onElegir: (Tutor) -> Unit,
+    onCerrar: () -> Unit,
+) {
+    var busqueda by rememberSaveable { mutableStateOf("") }
+    HojaModal(titulo = "Elegir tutor registrado", subtitulo = "Tutores de otros niños de esta estancia.", onCerrar = onCerrar) {
+        OutlinedTextField(
+            value = busqueda,
+            onValueChange = { busqueda = it },
+            label = { Text("Buscar por nombre") },
+            leadingIcon = { Icono(R.drawable.ic_search, null) },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        val filtrados = tutores.filter { busqueda.isBlank() || it.nombre.contains(busqueda.trim(), ignoreCase = true) }
+        if (filtrados.isEmpty()) Text("No encontramos tutores con ese nombre.", style = MaterialTheme.typography.bodyLarge)
+        filtrados.forEach { t ->
+            val hijos = hijosDe[t.id].orEmpty()
+            ListItem(
+                headlineContent = { Text(t.nombre, style = MaterialTheme.typography.titleMedium) },
+                supportingContent = { Text(listOfNotNull(t.parentesco, hijos.takeIf { it.isNotEmpty() }?.let { "de ${it.joinToString(", ")}" }).joinToString(" ")) },
+                colors = ListItemDefaults.colors(containerColor = SonrisasTheme.colors.superficieElevada),
+                modifier = Modifier.clip(MaterialTheme.shapes.medium).clickable { onElegir(t) },
+            )
+        }
+    }
 }
 
 @Composable
@@ -211,7 +299,7 @@ private fun InscripcionPreview() {
         Sala("b", "e", "Maternales", TipoSala.MATERNALES, ColorEstrella.ROJO),
     )
     SonrisasTheme {
-        InscripcionScreen(InscripcionDatos(salas, false, LocalDate.of(2026, 9, 30)), InscripcionForm(intento = true), {}, {})
+        InscripcionScreen(InscripcionDatos(salas, false, LocalDate.of(2026, 9, 30)), InscripcionForm(intento = true), {}, {}, {})
     }
 }
 

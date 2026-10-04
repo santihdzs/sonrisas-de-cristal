@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import mx.tec.sonrisas.data.ActividadRepository
+import mx.tec.sonrisas.data.CuentasRepository
 import mx.tec.sonrisas.data.AvisosRepository
 import mx.tec.sonrisas.data.EstanciasRepository
 import mx.tec.sonrisas.data.HorariosRepository
@@ -28,6 +29,7 @@ import mx.tec.sonrisas.domain.AccionRegistro
 import mx.tec.sonrisas.domain.ActividadEspecial
 import mx.tec.sonrisas.domain.Aviso
 import mx.tec.sonrisas.domain.BloqueHorario
+import mx.tec.sonrisas.domain.Credenciales
 import mx.tec.sonrisas.domain.DIAS_PERIODO_BAJA
 import mx.tec.sonrisas.domain.EstadoExpediente
 import mx.tec.sonrisas.domain.Estancia
@@ -136,12 +138,19 @@ class NinosViewModel(estanciasRepository: EstanciasRepository, ninosRepository: 
     }
 }
 
-data class ExpedienteDatos(val nino: Nino, val sala: Sala?, val tutores: List<Tutor>, val hoy: LocalDate)
+data class ExpedienteDatos(
+    val nino: Nino,
+    val sala: Sala?,
+    val tutores: List<Tutor>,
+    val hoy: LocalDate,
+    val cuentas: Map<String, Usuario> = emptyMap(),
+)
 
 class ExpedienteViewModel(
     savedStateHandle: SavedStateHandle,
     estanciasRepository: EstanciasRepository,
     private val ninosRepository: NinosRepository,
+    cuentasRepository: CuentasRepository,
     reloj: Reloj,
 ) : ViewModel() {
     private val ninoId: String = checkNotNull(savedStateHandle[Route.ARG_NINO])
@@ -151,8 +160,16 @@ class ExpedienteViewModel(
         private set
 
     val uiState: StateFlow<UiState<ExpedienteDatos?>> = comoUiState(reintentos) {
-        combine(ninosRepository.nino(ninoId), estanciasRepository.salas(), ninosRepository.tutoresDe(ninoId)) { n, salas, tutores ->
-            n?.let { ExpedienteDatos(it, salas.firstOrNull { s -> s.id == it.salaId }, tutores, reloj.hoy()) }
+        combine(
+            ninosRepository.nino(ninoId),
+            estanciasRepository.salas(),
+            ninosRepository.tutoresDe(ninoId),
+            cuentasRepository.cuentas(),
+        ) { n, salas, tutores, cuentas ->
+            n?.let {
+                val familia = cuentas.filter { c -> c.rol == Rol.FAMILIAR && c.activo && c.tutorId != null }.associateBy { c -> c.tutorId!! }
+                ExpedienteDatos(it, salas.firstOrNull { s -> s.id == it.salaId }, tutores, reloj.hoy(), familia)
+            }
         }
     }
 
@@ -191,6 +208,9 @@ data class FilaTutor(
     val parentesco: String = "",
     val telefono: String = "",
     val puedeRecoger: Boolean = true,
+    // tutor que ya existia en la estancia; asi los hermanos comparten una sola cuenta
+    val existente: Boolean = false,
+    val darAcceso: Boolean = false,
 )
 
 data class FilaPersona(
@@ -238,12 +258,20 @@ data class InscripcionForm(
     }
 }
 
-data class InscripcionDatos(val salas: List<Sala>, val editando: Boolean, val hoy: LocalDate)
+data class InscripcionDatos(
+    val salas: List<Sala>,
+    val editando: Boolean,
+    val hoy: LocalDate,
+    val registrados: List<Tutor> = emptyList(),
+    val hijosDe: Map<String, List<String>> = emptyMap(),
+    val cuentas: Map<String, Usuario> = emptyMap(),
+)
 
 class InscripcionViewModel(
     savedStateHandle: SavedStateHandle,
     estanciasRepository: EstanciasRepository,
     private val ninosRepository: NinosRepository,
+    private val cuentasRepository: CuentasRepository,
     private val reloj: Reloj,
 ) : ViewModel() {
     private val ninoId: String? = savedStateHandle[Route.ARG_NINO]
@@ -251,7 +279,29 @@ class InscripcionViewModel(
     private var original: Nino? = null
 
     val uiState: StateFlow<UiState<InscripcionDatos>> = comoUiState(reintentos) {
-        estanciasRepository.salas().map { salas -> InscripcionDatos(salas, ninoId != null, reloj.hoy()) }
+        combine(
+            estanciasRepository.salas(),
+            ninosRepository.tutoresDeEstancia(),
+            ninosRepository.ninos(),
+            cuentasRepository.cuentas(),
+        ) { salas, tutores, ninos, cuentas ->
+            val otros = ninos.filter { it.id != ninoId }
+            InscripcionDatos(
+                salas = salas,
+                editando = ninoId != null,
+                hoy = reloj.hoy(),
+                registrados = tutores,
+                hijosDe = tutores.associate { t -> t.id to otros.filter { t.id in it.tutorIds }.map { it.nombre } },
+                cuentas = cuentas.filter { it.rol == Rol.FAMILIAR && it.activo && it.tutorId != null }.associateBy { it.tutorId!! },
+            )
+        }
+    }
+
+    fun elegirRegistrado(t: Tutor) {
+        if (form.tutores.any { it.id == t.id }) return
+        // si solo esta la fila vacia inicial, se reemplaza por el tutor elegido
+        val base = form.tutores.filterNot { it.nombre.isBlank() && it.parentesco.isBlank() && it.telefono.isBlank() && !it.existente }
+        cambiar(form.copy(tutores = base + FilaTutor(t.id, t.nombre, t.parentesco, t.telefono, existente = true)))
     }
 
     var form by mutableStateOf(InscripcionForm())
@@ -272,7 +322,7 @@ class InscripcionViewModel(
                     alergias = n.alergias,
                     padecimientos = n.padecimientos,
                     medicamentos = n.medicamentos,
-                    tutores = tutores.map { t -> FilaTutor(t.id, t.nombre, t.parentesco, t.telefono, n.persona(t.id) != null) },
+                    tutores = tutores.map { t -> FilaTutor(t.id, t.nombre, t.parentesco, t.telefono, n.persona(t.id) != null, existente = true) },
                     otras = n.personasAutorizadas.filter { it.id !in idsTutores }.map { FilaPersona(it.id, it.nombre, it.parentesco, it.telefono) },
                     permisoInterna = n.permisoImagenInterna,
                     permisoRedes = n.permisoImagenRedes,
@@ -289,7 +339,7 @@ class InscripcionViewModel(
         reintentos.value++
     }
 
-    fun guardar(onListo: (String, String) -> Unit) {
+    fun guardar(onListo: (String, String, List<Credenciales>) -> Unit) {
         val f = form.copy(intento = true)
         form = f
         if (f.errores(reloj.hoy()).isNotEmpty() || f.guardando) return
@@ -315,12 +365,28 @@ class InscripcionViewModel(
             estado = base?.estado ?: EstadoExpediente.Activo,
         )
         viewModelScope.launch {
-            try {
-                val guardado = ninosRepository.guardar(nino, tutores)
-                onListo(if (base == null) "Inscribimos a ${guardado.nombre}." else "Guardamos los cambios del expediente.", guardado.id)
+            val guardado = try {
+                ninosRepository.guardar(nino, tutores)
             } catch (e: Exception) {
                 form = form.copy(guardando = false, error = "No pudimos guardar el expediente. Revisa tu conexión e inténtalo de nuevo.")
+                return@launch
             }
+            val mensaje = if (base == null) "Inscribimos a ${guardado.nombre}." else "Guardamos los cambios del expediente."
+            val conCuenta = cuentasRepository.cuentas().first().mapNotNull { it.tutorId }.toSet()
+            val credenciales = mutableListOf<Credenciales>()
+            var fallo = false
+            f.tutores.filter { it.darAcceso && it.id !in conCuenta }.forEach { t ->
+                try {
+                    credenciales += cuentasRepository.crearCuentaFamilia(t.id)
+                } catch (e: Exception) {
+                    fallo = true
+                }
+            }
+            onListo(
+                if (fallo) "$mensaje No pudimos crear todas las cuentas de familia; inténtalo de nuevo desde Editar expediente." else mensaje,
+                guardado.id,
+                credenciales,
+            )
         }
     }
 }

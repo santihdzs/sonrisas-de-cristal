@@ -306,6 +306,9 @@ fun ExpedienteScreen(
             datos.tutores.forEachIndexed { i, t ->
                 if (i > 0) HorizontalDivider()
                 Persona(t.nombre, t.parentesco, t.telefono)
+                val cuenta = datos.cuentas[t.id]
+                if (cuenta != null) EstadoChip("Con acceso a la app · ${cuenta.usuario}", TipoEstado.EXITO, R.drawable.ic_check_circle_fill)
+                else EstadoChip("Sin acceso a la app", TipoEstado.NEUTRO, R.drawable.ic_lock)
             }
         }
         TarjetaSeccion(titulo = "Personas autorizadas para recogerlo", icono = R.drawable.ic_person) {
