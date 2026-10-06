@@ -7,5 +7,7 @@ fun tituloComun(ruta: String?): String? = when (ruta) {
     Route.FOTO -> "Foto"
     Route.INCIDENTE_DETALLE -> "Incidente"
     Route.OBJETOS -> "Objetos perdidos"
+    Route.MENSAJES -> "Mensajes"
+    Route.CHAT -> "Conversación"
     else -> null
 }

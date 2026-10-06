@@ -3,6 +3,7 @@ package mx.tec.sonrisas.ui.navigation
 import android.content.Context
 import android.content.Intent
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -23,6 +24,10 @@ import mx.tec.sonrisas.ui.screens.familia.IncidenteDetalleScreen
 import mx.tec.sonrisas.ui.screens.familia.IncidenteDetalleViewModel
 import mx.tec.sonrisas.ui.screens.fotos.FotoDetalleScreen
 import mx.tec.sonrisas.ui.screens.fotos.FotoDetalleViewModel
+import mx.tec.sonrisas.ui.screens.mensajes.ChatScreen
+import mx.tec.sonrisas.ui.screens.mensajes.ChatViewModel
+import mx.tec.sonrisas.ui.screens.mensajes.ConversacionesScreen
+import mx.tec.sonrisas.ui.screens.mensajes.ConversacionesViewModel
 import mx.tec.sonrisas.ui.screens.sala.HojaObjetoForm
 import mx.tec.sonrisas.ui.screens.sala.ObjetosScreen
 import mx.tec.sonrisas.ui.screens.sala.ObjetosViewModel
@@ -129,6 +134,39 @@ fun NavGraphBuilder.destinoObjetos(mensajero: Mensajero) {
                     )
                 }
             }
+        }
+    }
+}
+
+fun NavGraphBuilder.destinoMensajes(navController: NavHostController, mensajero: Mensajero, onNuevo: (() -> Unit)? = null) {
+    composable(Route.MENSAJES) {
+        val vm: ConversacionesViewModel = viewModel(factory = AppViewModelProvider.Factory)
+        val estado by vm.uiState.collectAsStateWithLifecycle()
+        when (val e = estado) {
+            UiState.Cargando -> CargandoView()
+            is UiState.Error -> ErrorView(e.mensaje, vm::reintentar)
+            is UiState.Exito -> ConversacionesScreen(e.datos, onAbrir = { navController.navigate(Route.chat(it.conversacion.id)) }, onNuevo = onNuevo)
+        }
+    }
+    composable(Route.CHAT) { entrada ->
+        val vm: ChatViewModel = viewModel(factory = AppViewModelProvider.Factory)
+        val estado by vm.uiState.collectAsStateWithLifecycle()
+        val datos = (estado as? UiState.Exito)?.datos
+        val titulo = datos?.resumen?.titulo
+        LaunchedEffect(titulo) { if (titulo != null) entrada.savedStateHandle[TITULO_DINAMICO] = titulo }
+        // mientras la pantalla esta abierta, lo que llega se da por leido
+        val ultimo = datos?.mensajes?.lastOrNull()?.mensaje?.id
+        LaunchedEffect(ultimo) { if (ultimo != null) vm.marcarLeida() }
+        when (val e = estado) {
+            UiState.Cargando -> CargandoView()
+            is UiState.Error -> ErrorView(e.mensaje, vm::reintentar)
+            is UiState.Exito -> ChatScreen(
+                datos = e.datos,
+                borrador = vm.borrador,
+                enviando = vm.enviando,
+                onBorrador = vm::cambiarBorrador,
+                onEnviar = { vm.enviar(mensajero::mostrar) },
+            )
         }
     }
 }

@@ -6,6 +6,7 @@ import mx.tec.sonrisas.domain.Asistencia
 import mx.tec.sonrisas.domain.Aviso
 import mx.tec.sonrisas.domain.BloqueHorario
 import mx.tec.sonrisas.domain.ColorEstrella
+import mx.tec.sonrisas.domain.Conversacion
 import mx.tec.sonrisas.domain.ControlEsfinteres
 import mx.tec.sonrisas.domain.DIAS_PERIODO_BAJA
 import mx.tec.sonrisas.domain.EstadoAnimo
@@ -15,6 +16,7 @@ import mx.tec.sonrisas.domain.Estancia
 import mx.tec.sonrisas.domain.EventoBitacora
 import mx.tec.sonrisas.domain.Foto
 import mx.tec.sonrisas.domain.Incidente
+import mx.tec.sonrisas.domain.Mensaje
 import mx.tec.sonrisas.domain.Nino
 import mx.tec.sonrisas.domain.ObjetoPerdido
 import mx.tec.sonrisas.domain.PersonaAutorizada
@@ -66,6 +68,9 @@ data class DatosDePrueba(
     val siguienteFolio: Int,
     val objetos: List<ObjetoPerdido>,
     val objetosVistos: Map<String, Set<String>>,
+    val conversaciones: List<Conversacion>,
+    val mensajes: List<Mensaje>,
+    val lecturas: Map<String, Map<String, LocalDateTime>>,
 ) {
     companion object {
         fun generar(reloj: Reloj, semilla: Int = 2026): DatosDePrueba = Generador(reloj, semilla).generar()
@@ -96,6 +101,9 @@ private class Generador(reloj: Reloj, semilla: Int) {
     private val especiales = mutableListOf<ActividadEspecial>()
     private val registros = mutableListOf<RegistroActividad>()
     private val objetos = mutableListOf<ObjetoPerdido>()
+    private val conversaciones = mutableListOf<Conversacion>()
+    private val mensajes = mutableListOf<Mensaje>()
+    private val lecturas = mutableMapOf<String, MutableMap<String, LocalDateTime>>()
 
     private val nombresNina = listOf(
         "Valentina", "Regina", "Camila", "Ximena", "María José", "Renata", "Victoria", "Isabella",
@@ -144,6 +152,7 @@ private class Generador(reloj: Reloj, semilla: Int) {
         crearFotos()
         crearAvisos()
         crearObjetosPerdidos()
+        crearMensajes()
         crearRegistrosRecientes()
         val numerados = incidentes.sortedBy { it.cuando }.mapIndexed { i, inc -> inc.copy(folio = folioIncidente(i + 1)) }
         val familia = usuarios.first { it.usuario == "familia" }
@@ -169,6 +178,9 @@ private class Generador(reloj: Reloj, semilla: Int) {
             siguienteFolio = numerados.size + 1,
             objetos = objetos,
             objetosVistos = emptyMap(),
+            conversaciones = conversaciones,
+            mensajes = mensajes,
+            lecturas = lecturas,
         )
     }
 
@@ -637,6 +649,39 @@ private class Generador(reloj: Reloj, semilla: Int) {
         objeto(sbLac, "Cobija de franela con ositos", "Área de siesta", 5, EstadoObjeto.ENTREGADO, laura, "${laura.nombre} (mamá de Mateo)")
         objeto(sbPre, "Lonchera de dinosaurios", "Comedor", 2)
         objeto(vvLac, "Gorra amarilla", "Entrada principal", 1)
+    }
+
+    private fun crearMensajes() {
+        val (sbLac, sbMat) = salas
+        val laura = usuarios.first { it.usuario == "familia" }
+        val cuentaPaola = usuarios.first { it.usuario == "familia.paola" }
+        val mariana = educadoraDeSala.getValue(sbMat.id)
+        val rosa = educadoraDeSala.getValue(sbLac.id)
+        val claudia = directoraDeEstancia.getValue(sanBernabe.id)
+        val ayer = diaHabilAtras(1)
+        val antier = diaHabilAtras(2)
+        fun mensaje(conversacion: String, autor: Usuario, fecha: LocalDate, hora: String, texto: String): LocalDateTime {
+            val cuando = LocalDateTime.of(fecha, LocalTime.parse(hora))
+            mensajes += Mensaje(id(), conversacion, autor.id, texto, cuando)
+            return cuando
+        }
+        fun leyo(u: Usuario, conversacion: String, hasta: LocalDateTime) {
+            lecturas.getOrPut(u.id) { mutableMapOf() }[conversacion] = hasta
+        }
+
+        val grupoMat = idChatSala(sbMat.id)
+        mensaje(grupoMat, claudia, antier, "17:05", "Buenas tardes. Les recordamos que la junta de padres de familia es el viernes de la próxima semana a las 5:30 en el salón de usos múltiples.")
+        mensaje(grupoMat, cuentaPaola, ayer, "08:40", "Buenos días. ¿Los viernes también llevan uniforme o pueden ir con ropa cómoda?")
+        val respuesta = mensaje(grupoMat, mariana, ayer, "09:15", "Buenos días, Paola. Los viernes pueden venir con ropa cómoda; solo manden tenis para educación física.")
+        val gracias = mensaje(grupoMat, laura, ayer, "09:32", "Gracias por el recordatorio de la junta, ahí estaremos.")
+        leyo(laura, grupoMat, gracias)
+        leyo(mariana, grupoMat, gracias)
+        leyo(cuentaPaola, grupoMat, respuesta)
+        leyo(claudia, grupoMat, gracias)
+
+        val grupoLac = idChatSala(sbLac.id)
+        val aviso = mensaje(grupoLac, rosa, ayer, "16:10", "Les recuerdo mandar dos cambios de ropa y pañales suficientes para toda la semana. Gracias.")
+        leyo(rosa, grupoLac, aviso)
     }
 
     private fun crearRegistrosRecientes() {

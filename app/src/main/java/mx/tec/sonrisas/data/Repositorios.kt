@@ -3,6 +3,7 @@ package mx.tec.sonrisas.data
 import kotlinx.coroutines.flow.Flow
 import mx.tec.sonrisas.domain.ActividadEspecial
 import mx.tec.sonrisas.domain.Asistencia
+import mx.tec.sonrisas.domain.Conversacion
 import mx.tec.sonrisas.domain.Credenciales
 import mx.tec.sonrisas.domain.Aviso
 import mx.tec.sonrisas.domain.BloqueHorario
@@ -10,6 +11,7 @@ import mx.tec.sonrisas.domain.Estancia
 import mx.tec.sonrisas.domain.EventoBitacora
 import mx.tec.sonrisas.domain.Foto
 import mx.tec.sonrisas.domain.Incidente
+import mx.tec.sonrisas.domain.Mensaje
 import mx.tec.sonrisas.domain.Nino
 import mx.tec.sonrisas.domain.ObjetoPerdido
 import mx.tec.sonrisas.domain.RegistroActividad
@@ -117,6 +119,30 @@ interface ObjetosPerdidosRepository {
     suspend fun reclamar(id: String, nota: String?)
     suspend fun entregar(id: String)
     suspend fun rechazarReclamo(id: String)
+}
+
+const val LIMITE_MENSAJE = 1000
+
+/** "Laura · mamá de Sofía", "Mariana · educadora" */
+data class MensajeChat(val mensaje: Mensaje, val autor: String, val propio: Boolean)
+
+data class ResumenConversacion(
+    val conversacion: Conversacion,
+    val titulo: String,
+    val subtitulo: String,
+    val sala: Sala?,
+    val ultimo: MensajeChat?,
+    val noLeidos: Int,
+)
+
+interface MensajesRepository {
+    /** solo las conversaciones de las que el usuario es miembro, la mas reciente primero */
+    fun conversaciones(): Flow<List<ResumenConversacion>>
+    fun conversacion(id: String): Flow<ResumenConversacion?>
+    fun mensajes(conversacionId: String): Flow<List<MensajeChat>>
+    fun noLeidos(): Flow<Int>
+    suspend fun enviar(conversacionId: String, texto: String)
+    suspend fun marcarLeida(conversacionId: String)
 }
 
 interface HorariosRepository {

@@ -218,6 +218,24 @@ data class ObjetoPerdido(
     val entregadoEl: LocalDateTime? = null,
 )
 
+enum class TipoConversacion { SALA, DIRECTA }
+
+/** el chat de sala es uno por sala; quienes participan se calcula en la capa de datos */
+data class Conversacion(
+    val id: String,
+    val tipo: TipoConversacion,
+    val salaId: String,
+    val participantes: List<String> = emptyList(),
+)
+
+data class Mensaje(
+    val id: String,
+    val conversacionId: String,
+    val autorId: String,
+    val texto: String,
+    val enviado: LocalDateTime,
+)
+
 data class BloqueHorario(
     val id: String,
     val salaId: String,

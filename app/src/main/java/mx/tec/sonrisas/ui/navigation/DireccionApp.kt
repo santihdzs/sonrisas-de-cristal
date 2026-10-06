@@ -20,6 +20,7 @@ import mx.tec.sonrisas.ui.AppViewModelProvider
 import mx.tec.sonrisas.ui.components.CargandoView
 import mx.tec.sonrisas.ui.components.ErrorView
 import mx.tec.sonrisas.ui.screens.comun.AvisosViewModel
+import mx.tec.sonrisas.ui.screens.mensajes.ConversacionesViewModel
 import mx.tec.sonrisas.ui.screens.direccion.ActividadScreen
 import mx.tec.sonrisas.ui.screens.direccion.ActividadViewModel
 import mx.tec.sonrisas.ui.screens.direccion.ExpedienteScreen
@@ -55,9 +56,12 @@ fun DireccionApp(onCerrarSesion: () -> Unit) {
     val avisosVm: AvisosViewModel = viewModel(factory = AppViewModelProvider.Factory)
     val credenciales: CredencialesViewModel = viewModel(factory = AppViewModelProvider.Factory)
     val noLeidos by avisosVm.noLeidos.collectAsStateWithLifecycle()
+    val mensajesVm: ConversacionesViewModel = viewModel(factory = AppViewModelProvider.Factory)
+    val mensajesNoLeidos by mensajesVm.noLeidos.collectAsStateWithLifecycle()
     val pestanas = listOf(
         Pestana(Route.INICIO, "Inicio", R.drawable.ic_home, R.drawable.ic_home_fill),
         Pestana(Route.NINOS, "Niños", R.drawable.ic_child_care, R.drawable.ic_child_care_fill),
+        Pestana(Route.MENSAJES, "Mensajes", R.drawable.ic_chat, R.drawable.ic_chat_fill, insignia = mensajesNoLeidos),
         Pestana(Route.AVISOS, "Avisos", R.drawable.ic_campaign, R.drawable.ic_campaign_fill, insignia = noLeidos),
         Pestana(Route.MAS, "Más", R.drawable.ic_more_horiz, R.drawable.ic_more_horiz_fill),
     )
@@ -249,6 +253,7 @@ fun DireccionApp(onCerrarSesion: () -> Unit) {
             destinoAvisos(alSalir = avisosVm::marcarLeidos, onPublicar = { navController.navigate(Route.PUBLICAR_AVISO) })
             destinoIncidente()
             destinoObjetos(mensajero)
+            destinoMensajes(navController, mensajero)
             destinosComunes(navController, onCerrarSesion)
         }
     }

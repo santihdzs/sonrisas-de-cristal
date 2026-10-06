@@ -16,6 +16,7 @@ import mx.tec.sonrisas.ui.AppViewModelProvider
 import mx.tec.sonrisas.ui.components.CargandoView
 import mx.tec.sonrisas.ui.components.ErrorView
 import mx.tec.sonrisas.ui.screens.comun.AvisosViewModel
+import mx.tec.sonrisas.ui.screens.mensajes.ConversacionesViewModel
 import mx.tec.sonrisas.ui.screens.educadora.AsistenciaViewModel
 import mx.tec.sonrisas.ui.screens.fotos.AgregarFotoScreen
 import mx.tec.sonrisas.ui.screens.fotos.AgregarFotoViewModel
@@ -39,9 +40,12 @@ fun EducadoraApp(onCerrarSesion: () -> Unit) {
     val mensajero = rememberMensajero(snackbar)
     val avisosVm: AvisosViewModel = viewModel(factory = AppViewModelProvider.Factory)
     val noLeidos by avisosVm.noLeidos.collectAsStateWithLifecycle()
+    val mensajesVm: ConversacionesViewModel = viewModel(factory = AppViewModelProvider.Factory)
+    val mensajesNoLeidos by mensajesVm.noLeidos.collectAsStateWithLifecycle()
     val pestanas = listOf(
         Pestana(Route.SALA, "Sala", R.drawable.ic_groups, R.drawable.ic_groups_fill),
         Pestana(Route.FOTOS_SALA, "Fotos", R.drawable.ic_photo_library, R.drawable.ic_photo_library_fill),
+        Pestana(Route.MENSAJES, "Mensajes", R.drawable.ic_chat, R.drawable.ic_chat_fill, insignia = mensajesNoLeidos),
         Pestana(Route.AVISOS, "Avisos", R.drawable.ic_campaign, R.drawable.ic_campaign_fill, insignia = noLeidos),
     )
     ScaffoldRol(navController, pestanas, snackbar, titulo = ::tituloEducadora) { padding ->
@@ -182,6 +186,7 @@ fun EducadoraApp(onCerrarSesion: () -> Unit) {
             }
             destinoFoto(navController, mensajero)
             destinoObjetos(mensajero)
+            destinoMensajes(navController, mensajero)
             destinoAvisos(alSalir = avisosVm::marcarLeidos)
             destinosComunes(navController, onCerrarSesion)
         }

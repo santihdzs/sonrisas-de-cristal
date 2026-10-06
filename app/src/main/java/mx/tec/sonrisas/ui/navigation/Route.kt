@@ -6,6 +6,7 @@ object Route {
     const val ARG_INCIDENTE = "incidenteId"
     const val ARG_ESTANCIA = "estanciaId"
     const val ARG_SALA = "salaId"
+    const val ARG_CONVERSACION = "conversacionId"
 
     const val PERFIL = "perfil"
     const val ACERCA = "acerca"
@@ -13,6 +14,8 @@ object Route {
     const val FOTO = "foto/{$ARG_FOTO}"
     const val INCIDENTE_DETALLE = "incidente_detalle/{$ARG_INCIDENTE}"
     const val OBJETOS = "objetos/{$ARG_SALA}"
+    const val MENSAJES = "mensajes"
+    const val CHAT = "chat/{$ARG_CONVERSACION}"
 
     // educadora
     const val SALA = "sala"
@@ -47,6 +50,7 @@ object Route {
 
     fun foto(id: String) = "foto/$id"
     fun objetos(salaId: String) = "objetos/$salaId"
+    fun chat(conversacionId: String) = "chat/$conversacionId"
     fun incidenteDetalle(id: String) = "incidente_detalle/$id"
     fun ficha(ninoId: String) = "ficha/$ninoId"
     fun incidente(ninoId: String) = "incidente/$ninoId"

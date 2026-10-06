@@ -18,6 +18,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -30,9 +31,13 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import mx.tec.sonrisas.R
 import mx.tec.sonrisas.ui.components.Icono
+
+/** un destino puede poner aqui su titulo cuando depende de los datos, como el nombre de una conversacion */
+const val TITULO_DINAMICO = "titulo"
 
 data class Pestana(
     val ruta: String,
@@ -86,11 +91,13 @@ fun ScaffoldRol(
     val destino = entrada?.destination
     val ruta = destino?.route
     val esPestana = pestanas.any { it.ruta == ruta }
+    val flujoTitulo = remember(entrada) { entrada?.savedStateHandle?.getStateFlow<String?>(TITULO_DINAMICO, null) ?: MutableStateFlow(null) }
+    val tituloDinamico by flujoTitulo.collectAsState()
     Scaffold(
         modifier = modifier,
         topBar = {
             TopAppBar(
-                title = { Text(titulo(ruta), maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                title = { Text(tituloDinamico ?: titulo(ruta), maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 navigationIcon = {
                     if (!esPestana && navController.previousBackStackEntry != null) {
                         IconButton(onClick = { navController.navigateUp() }) {
