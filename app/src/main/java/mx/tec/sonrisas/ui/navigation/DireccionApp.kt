@@ -253,7 +253,7 @@ fun DireccionApp(onCerrarSesion: () -> Unit) {
             destinoAvisos(alSalir = avisosVm::marcarLeidos, onPublicar = { navController.navigate(Route.PUBLICAR_AVISO) })
             destinoIncidente()
             destinoObjetos(mensajero)
-            destinoMensajes(navController, mensajero)
+            destinoMensajes(navController, mensajero, directos = false)
             destinosComunes(navController, onCerrarSesion)
         }
     }

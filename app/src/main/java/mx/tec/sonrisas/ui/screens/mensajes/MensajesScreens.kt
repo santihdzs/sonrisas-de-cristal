@@ -41,6 +41,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import mx.tec.sonrisas.R
+import mx.tec.sonrisas.data.Contacto
 import mx.tec.sonrisas.data.MensajeChat
 import mx.tec.sonrisas.data.ResumenConversacion
 import mx.tec.sonrisas.domain.ColorEstrella
@@ -141,6 +142,29 @@ private fun FilaConversacion(c: ResumenConversacion, hoy: LocalDate, onClick: ()
         colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),
         modifier = Modifier.clickable(onClick = onClick),
     )
+}
+
+@Composable
+fun NuevoMensajeScreen(contactos: List<Contacto>, abriendo: Boolean, onElegir: (Contacto) -> Unit, modifier: Modifier = Modifier) {
+    if (contactos.isEmpty()) {
+        EstadoVacio(
+            R.drawable.ic_person, "No hay con quién iniciar una conversación", modifier,
+            mensaje = "Puedes escribir a las educadoras de la sala de tus hijos o, si eres educadora, a las familias de tu sala que tienen acceso a la app.",
+        )
+        return
+    }
+    LazyColumn(modifier.fillMaxSize(), contentPadding = PaddingValues(vertical = Espacio.space2)) {
+        items(contactos, key = { it.usuarioId + it.sala.id }) { c ->
+            ListItem(
+                headlineContent = { Text(c.nombre, style = MaterialTheme.typography.titleMedium) },
+                supportingContent = { Text(c.etiqueta) },
+                leadingContent = { AvatarNino(c.nombre.substringBefore(" "), c.nombre.substringAfter(" ", ""), c.sala.estrella) },
+                trailingContent = { Icono(R.drawable.ic_chevron_right, null) },
+                colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),
+                modifier = Modifier.clickable(enabled = !abriendo) { onElegir(c) },
+            )
+        }
+    }
 }
 
 private sealed interface ElementoChat {

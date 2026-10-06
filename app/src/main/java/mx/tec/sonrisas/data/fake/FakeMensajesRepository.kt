@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import mx.tec.sonrisas.data.AccesoDenegado
+import mx.tec.sonrisas.data.Contacto
 import mx.tec.sonrisas.data.LIMITE_MENSAJE
 import mx.tec.sonrisas.data.MensajeChat
 import mx.tec.sonrisas.data.MensajesRepository
@@ -52,6 +53,22 @@ internal data class ContextoChat(
         val educadora = personas.firstOrNull { it.rol == Rol.EDUCADORA } ?: return false
         val tutor = personas.firstOrNull { it.rol == Rol.FAMILIAR } ?: return false
         return educadora.salaId == c.salaId && hijosEn(tutor, c.salaId).isNotEmpty()
+    }
+
+    fun contactos(): List<Contacto> {
+        val u = usuario ?: return emptyList()
+        return when (u.rol) {
+            Rol.FAMILIAR -> salas.filter { hijosEn(u, it.id).isNotEmpty() }.flatMap { sala ->
+                usuarios.filter { it.activo && it.rol == Rol.EDUCADORA && it.salaId == sala.id }
+                    .map { Contacto(it.id, it.nombre, "Educadora de la sala ${sala.nombre}", sala) }
+            }
+            Rol.EDUCADORA -> {
+                val sala = salas.firstOrNull { it.id == u.salaId } ?: return emptyList()
+                usuarios.filter { it.activo && it.rol == Rol.FAMILIAR && hijosEn(it, sala.id).isNotEmpty() }
+                    .map { Contacto(it.id, it.nombre, etiqueta(it.id, sala.id).substringAfter(" · ").replaceFirstChar { c -> c.uppercase() }, sala) }
+            }
+            else -> emptyList()
+        }.sortedBy { it.nombre }
     }
 
     fun visibles(): List<Conversacion> {
@@ -110,8 +127,10 @@ class FakeMensajesRepository(
             TipoConversacion.SALA -> "Sala ${sala?.nombre.orEmpty()}" to "Chat de la sala"
             TipoConversacion.DIRECTA -> {
                 val otro = conv.participantes.firstOrNull { it != u.id }.orEmpty()
-                val nombre = c.usuarios.firstOrNull { it.id == otro }?.nombre.orEmpty()
-                nombre to c.etiqueta(otro, conv.salaId).substringAfter(" · ").replaceFirstChar { it.uppercase() }
+                val persona = c.usuarios.firstOrNull { it.id == otro }
+                val detalle = if (persona?.rol == Rol.EDUCADORA) "Educadora de la sala ${sala?.nombre.orEmpty()}"
+                else c.etiqueta(otro, conv.salaId).substringAfter(" · ").replaceFirstChar { it.uppercase() }
+                persona?.nombre.orEmpty() to detalle
             }
         }
         return ResumenConversacion(
@@ -162,6 +181,19 @@ class FakeMensajesRepository(
         val u = c.usuario ?: return
         if (c.visibles().none { it.id == conversacionId }) return
         marcar(u, conversacionId, reloj.ahora())
+    }
+
+    override fun contactos(): Flow<List<Contacto>> = contexto.map { it.contactos() }
+
+    override suspend fun abrirDirecta(usuarioId: String, salaId: String): String {
+        val c = contextoActual()
+        val u = c.usuario ?: throw AccesoDenegado()
+        if (c.contactos().none { it.usuarioId == usuarioId && it.sala.id == salaId }) throw AccesoDenegado()
+        val participantes = setOf(u.id, usuarioId)
+        c.directas.firstOrNull { it.salaId == salaId && it.participantes.toSet() == participantes }?.let { return it.id }
+        val nueva = Conversacion(UUID.randomUUID().toString(), TipoConversacion.DIRECTA, salaId, participantes.toList())
+        almacen.conversaciones.update { it + nueva }
+        return nueva.id
     }
 
     private fun marcar(u: Usuario, conversacionId: String, cuando: LocalDateTime) {

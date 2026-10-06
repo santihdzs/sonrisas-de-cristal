@@ -28,6 +28,7 @@ import mx.tec.sonrisas.domain.Sala
 import mx.tec.sonrisas.domain.TemaFoto
 import mx.tec.sonrisas.domain.TiempoComida
 import mx.tec.sonrisas.domain.TipoAviso
+import mx.tec.sonrisas.domain.TipoConversacion
 import mx.tec.sonrisas.domain.TipoEvacuacion
 import mx.tec.sonrisas.domain.TipoIncidente
 import mx.tec.sonrisas.domain.TipoSala
@@ -678,6 +679,23 @@ private class Generador(reloj: Reloj, semilla: Int) {
         leyo(mariana, grupoMat, gracias)
         leyo(cuentaPaola, grupoMat, respuesta)
         leyo(claudia, grupoMat, gracias)
+
+        fun directa(sala: Sala, a: Usuario, b: Usuario) =
+            Conversacion(id(), TipoConversacion.DIRECTA, sala.id, listOf(a.id, b.id)).also { conversaciones += it }.id
+
+        val lauraMariana = directa(sbMat, laura, mariana)
+        mensaje(lauraMariana, laura, ayer, "07:55", "Buenos días, Mariana. Hoy la recoge su abuela Carmen a la salida.")
+        val anotado = mensaje(lauraMariana, mariana, ayer, "08:10", "Gracias por avisar, Laura. Queda anotado.")
+        leyo(laura, lauraMariana, anotado)
+        leyo(mariana, lauraMariana, anotado)
+
+        val paolaMariana = directa(sbMat, cuentaPaola, mariana)
+        val tos = mensaje(paolaMariana, cuentaPaola, ayer, "07:48", "Buenos días. Diego amaneció con un poco de tos; si lo ven decaído, por favor avísenme.")
+        leyo(cuentaPaola, paolaMariana, tos)
+
+        val lauraRosa = directa(sbLac, laura, rosa)
+        val panales = mensaje(lauraRosa, rosa, ayer, "14:20", "Hola, Laura. A Mateo ya casi se le terminan los pañales, ¿puedes mandar más mañana?")
+        leyo(rosa, lauraRosa, panales)
 
         val grupoLac = idChatSala(sbLac.id)
         val aviso = mensaje(grupoLac, rosa, ayer, "16:10", "Les recuerdo mandar dos cambios de ropa y pañales suficientes para toda la semana. Gracias.")

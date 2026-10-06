@@ -16,6 +16,7 @@ object Route {
     const val OBJETOS = "objetos/{$ARG_SALA}"
     const val MENSAJES = "mensajes"
     const val CHAT = "chat/{$ARG_CONVERSACION}"
+    const val NUEVO_MENSAJE = "nuevo_mensaje"
 
     // educadora
     const val SALA = "sala"

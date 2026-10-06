@@ -36,6 +36,7 @@ import mx.tec.sonrisas.ui.screens.fotos.FotosSalaViewModel
 import mx.tec.sonrisas.ui.screens.sala.ObjetosViewModel
 import mx.tec.sonrisas.ui.screens.mensajes.ChatViewModel
 import mx.tec.sonrisas.ui.screens.mensajes.ConversacionesViewModel
+import mx.tec.sonrisas.ui.screens.mensajes.NuevoMensajeViewModel
 import mx.tec.sonrisas.ui.state.CredencialesViewModel
 import mx.tec.sonrisas.ui.state.SesionViewModel
 
@@ -126,6 +127,7 @@ object AppViewModelProvider {
         initializer { FundacionViewModel(contenedor().estanciasRepository) }
         initializer { CredencialesViewModel() }
         initializer { ConversacionesViewModel(contenedor().mensajesRepository, contenedor().reloj) }
+        initializer { NuevoMensajeViewModel(contenedor().mensajesRepository) }
         initializer {
             val c = contenedor()
             ChatViewModel(createSavedStateHandle(), c.mensajesRepository, c.reloj)

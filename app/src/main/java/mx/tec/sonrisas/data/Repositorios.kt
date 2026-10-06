@@ -135,6 +135,9 @@ data class ResumenConversacion(
     val noLeidos: Int,
 )
 
+/** con quien se puede abrir un chat directo: tutor con educadora de la sala de su hijo, y al reves */
+data class Contacto(val usuarioId: String, val nombre: String, val etiqueta: String, val sala: Sala)
+
 interface MensajesRepository {
     /** solo las conversaciones de las que el usuario es miembro, la mas reciente primero */
     fun conversaciones(): Flow<List<ResumenConversacion>>
@@ -143,6 +146,11 @@ interface MensajesRepository {
     fun noLeidos(): Flow<Int>
     suspend fun enviar(conversacionId: String, texto: String)
     suspend fun marcarLeida(conversacionId: String)
+
+    fun contactos(): Flow<List<Contacto>>
+
+    /** devuelve la conversacion directa existente o crea una nueva */
+    suspend fun abrirDirecta(usuarioId: String, salaId: String): String
 }
 
 interface HorariosRepository {

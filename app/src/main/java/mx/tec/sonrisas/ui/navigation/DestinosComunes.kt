@@ -28,6 +28,8 @@ import mx.tec.sonrisas.ui.screens.mensajes.ChatScreen
 import mx.tec.sonrisas.ui.screens.mensajes.ChatViewModel
 import mx.tec.sonrisas.ui.screens.mensajes.ConversacionesScreen
 import mx.tec.sonrisas.ui.screens.mensajes.ConversacionesViewModel
+import mx.tec.sonrisas.ui.screens.mensajes.NuevoMensajeScreen
+import mx.tec.sonrisas.ui.screens.mensajes.NuevoMensajeViewModel
 import mx.tec.sonrisas.ui.screens.sala.HojaObjetoForm
 import mx.tec.sonrisas.ui.screens.sala.ObjetosScreen
 import mx.tec.sonrisas.ui.screens.sala.ObjetosViewModel
@@ -138,7 +140,22 @@ fun NavGraphBuilder.destinoObjetos(mensajero: Mensajero) {
     }
 }
 
-fun NavGraphBuilder.destinoMensajes(navController: NavHostController, mensajero: Mensajero, onNuevo: (() -> Unit)? = null) {
+/** la direccion participa en los chats de sala pero no inicia mensajes directos */
+fun NavGraphBuilder.destinoMensajes(navController: NavHostController, mensajero: Mensajero, directos: Boolean = true) {
+    val onNuevo: (() -> Unit)? = if (directos) ({ navController.navigate(Route.NUEVO_MENSAJE) }) else null
+    composable(Route.NUEVO_MENSAJE) {
+        val vm: NuevoMensajeViewModel = viewModel(factory = AppViewModelProvider.Factory)
+        val estado by vm.uiState.collectAsStateWithLifecycle()
+        when (val e = estado) {
+            UiState.Cargando -> CargandoView()
+            is UiState.Error -> ErrorView(e.mensaje, vm::reintentar)
+            is UiState.Exito -> NuevoMensajeScreen(e.datos, vm.abriendo, onElegir = { c ->
+                vm.abrir(c, onListo = { id ->
+                    navController.navigate(Route.chat(id)) { popUpTo(Route.NUEVO_MENSAJE) { inclusive = true } }
+                }, onError = mensajero::mostrar)
+            })
+        }
+    }
     composable(Route.MENSAJES) {
         val vm: ConversacionesViewModel = viewModel(factory = AppViewModelProvider.Factory)
         val estado by vm.uiState.collectAsStateWithLifecycle()
