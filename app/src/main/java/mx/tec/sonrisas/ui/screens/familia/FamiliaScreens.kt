@@ -110,6 +110,7 @@ fun HoyScreen(
     onSeleccion: (String) -> Unit,
     onIncidente: (Incidente) -> Unit,
     onObjetos: (Sala) -> Unit,
+    onMaterial: (Sala) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val n = datos.hijos.seleccionado
@@ -132,7 +133,7 @@ fun HoyScreen(
         items(r.incidentes.sortedByDescending { it.cuando }, key = { it.id }) { BannerIncidente(it, onIncidente) }
         item { TarjetaAhora(datos) }
         datos.hijos.sala?.let { sala ->
-            item { TarjetaSalaFamilia(n, sala, datos.objetosNuevos, onObjetos = { onObjetos(sala) }) }
+            item { TarjetaSalaFamilia(n, sala, datos.objetosNuevos, onObjetos = { onObjetos(sala) }, onMaterial = { onMaterial(sala) }) }
         }
         if (r.asistencia == null) {
             item {
@@ -157,11 +158,12 @@ fun HoyScreen(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun TarjetaSalaFamilia(nino: Nino, sala: Sala, objetosNuevos: Int, onObjetos: () -> Unit) {
+private fun TarjetaSalaFamilia(nino: Nino, sala: Sala, objetosNuevos: Int, onObjetos: () -> Unit, onMaterial: () -> Unit) {
     TarjetaSeccion {
         EstrellaSala("Sala ${sala.nombre}", sala.estrella, tamano = 24.dp)
         Text("Lo que comparte la sala de ${nino.nombre}.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(Espacio.space2), verticalArrangement = Arrangement.spacedBy(Espacio.space2)) {
+            BotonAcceso("Material de clase", R.drawable.ic_folder, onMaterial)
             BotonAcceso("Objetos perdidos", R.drawable.ic_checkroom, onObjetos, insignia = objetosNuevos)
         }
     }
@@ -509,7 +511,7 @@ private fun HoyPreview() {
         ResumenDia.de(asistencia, eventos, listOf(incidenteEjemplo)),
         ActividadActual.Regular(bloque), listOf(bloque), emptyList(), LocalDateTime.of(hoyEjemplo, LocalTime.of(10, 50)),
     )
-    SonrisasTheme { HoyScreen(datos, {}, {}, {}) }
+    SonrisasTheme { HoyScreen(datos, {}, {}, {}, {}) }
 }
 
 @Preview(showBackground = true, heightDp = 1000)

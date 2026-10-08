@@ -90,6 +90,7 @@ fun InicioScreen(
     onPublicarAviso: () -> Unit,
     onVerAvisos: () -> Unit,
     onObjetos: (Sala) -> Unit,
+    onMaterial: (Sala) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -132,6 +133,10 @@ fun InicioScreen(
                     drawStopIndicator = {},
                 )
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(Espacio.space1)) {
+                    TextButton(onClick = { onMaterial(s.sala) }, modifier = Modifier.heightIn(min = 48.dp)) {
+                        Icono(R.drawable.ic_folder, null)
+                        Text("Material", modifier = Modifier.padding(start = Espacio.space2))
+                    }
                     TextButton(onClick = { onObjetos(s.sala) }, modifier = Modifier.heightIn(min = 48.dp)) {
                         Icono(R.drawable.ic_checkroom, null)
                         Text("Objetos perdidos", modifier = Modifier.padding(start = Espacio.space2))
@@ -499,7 +504,7 @@ private fun InicioPreview() {
     SonrisasTheme {
         InicioScreen(
             InicioDatos(Estancia("e", "Estancia San Bernabé", "San Bernabé"), listOf(SalaResumen(salaEj, "Mariana López", 12, 14)), listOf(inc to sofiaEj), listOf(aviso), LocalDate.of(2026, 9, 30)),
-            {}, {}, {}, {}, {},
+            {}, {}, {}, {}, {}, {},
         )
     }
 }

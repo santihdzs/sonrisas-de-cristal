@@ -30,7 +30,17 @@ import mx.tec.sonrisas.ui.screens.mensajes.ConversacionesScreen
 import mx.tec.sonrisas.ui.screens.mensajes.ConversacionesViewModel
 import mx.tec.sonrisas.ui.screens.mensajes.NuevoMensajeScreen
 import mx.tec.sonrisas.ui.screens.mensajes.NuevoMensajeViewModel
+import mx.tec.sonrisas.ui.screens.sala.HojaMaterialForm
 import mx.tec.sonrisas.ui.screens.sala.HojaObjetoForm
+import mx.tec.sonrisas.ui.screens.sala.MaterialScreen
+import mx.tec.sonrisas.ui.screens.sala.MaterialViewModel
+import mx.tec.sonrisas.data.TIPOS_MATERIAL
+import mx.tec.sonrisas.ui.components.abrirArchivo
+import mx.tec.sonrisas.ui.components.archivoDesde
+import mx.tec.sonrisas.ui.components.compartirArchivo
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
 import mx.tec.sonrisas.ui.screens.sala.ObjetosScreen
 import mx.tec.sonrisas.ui.screens.sala.ObjetosViewModel
 import mx.tec.sonrisas.ui.state.UiState
@@ -135,6 +145,36 @@ fun NavGraphBuilder.destinoObjetos(mensajero: Mensajero) {
                         onCerrar = vm::cerrar,
                     )
                 }
+            }
+        }
+    }
+}
+
+fun NavGraphBuilder.destinoMaterial(mensajero: Mensajero) {
+    composable(Route.MATERIAL) {
+        val vm: MaterialViewModel = viewModel(factory = AppViewModelProvider.Factory)
+        val estado by vm.uiState.collectAsStateWithLifecycle()
+        val context = LocalContext.current
+        val selector = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+            if (uri != null) vm.elegido(context.archivoDesde(uri), mensajero::mostrar)
+        }
+        when (val e = estado) {
+            UiState.Cargando -> CargandoView()
+            is UiState.Error -> ErrorView(e.mensaje, vm::reintentar)
+            is UiState.Exito -> {
+                MaterialScreen(
+                    datos = e.datos,
+                    onSubir = { selector.launch(TIPOS_MATERIAL) },
+                    onAbrir = { m ->
+                        if (!context.abrirArchivo(m.ruta, m.tipo)) {
+                            mensajero.mostrar("No hay una app para abrir este archivo. Instala un visor de PDF o de documentos e inténtalo de nuevo.")
+                        }
+                    },
+                    onCompartir = { m -> context.compartirArchivo(m.ruta, m.tipo, m.titulo) },
+                    onEditar = vm::editar,
+                    onBorrar = vm::pedirBorrar,
+                )
+                vm.hoja?.let { HojaMaterialForm(it, vm::cambiar, onGuardar = { vm.guardar(mensajero::mostrar) }, onCerrar = vm::cerrar) }
             }
         }
     }

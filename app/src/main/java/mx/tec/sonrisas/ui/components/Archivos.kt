@@ -1,10 +1,14 @@
 package mx.tec.sonrisas.ui.components
 
+import android.content.ActivityNotFoundException
+import android.content.ClipData
 import android.content.Context
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.provider.OpenableColumns
+import androidx.core.content.FileProvider
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -41,6 +45,39 @@ fun Context.archivoDesde(uri: Uri): ArchivoEntrada {
     }
     val tipo = resolver.getType(uri) ?: "application/octet-stream"
     return ArchivoEntrada(nombre, tipo, tamano) { requireNotNull(resolver.openInputStream(uri)) { "No se pudo leer el archivo." } }
+}
+
+private fun Context.uriCompartida(ruta: String): Uri = FileProvider.getUriForFile(this, "$packageName.archivos", File(ruta))
+
+/** abre el archivo con la app que el telefono tenga para ese tipo; devuelve false si no hay ninguna */
+fun Context.abrirArchivo(ruta: String, tipo: String): Boolean {
+    val intent = Intent(Intent.ACTION_VIEW)
+        .setDataAndType(uriCompartida(ruta), tipo)
+        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    return try {
+        startActivity(intent)
+        true
+    } catch (e: ActivityNotFoundException) {
+        false
+    }
+}
+
+fun Context.compartirArchivo(ruta: String, tipo: String, titulo: String) {
+    val uri = uriCompartida(ruta)
+    val envio = Intent(Intent.ACTION_SEND).apply {
+        type = tipo
+        putExtra(Intent.EXTRA_STREAM, uri)
+        putExtra(Intent.EXTRA_SUBJECT, titulo)
+        clipData = ClipData.newRawUri(titulo, uri)
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
+    startActivity(Intent.createChooser(envio, titulo))
+}
+
+fun tamanoTexto(bytes: Long): String = when {
+    bytes < 1024 -> "$bytes B"
+    bytes < 1024 * 1024 -> "${bytes / 1024} KB"
+    else -> String.format(LocaleMx, "%.1f MB", bytes / (1024.0 * 1024.0))
 }
 
 private const val LADO_MAXIMO = 1024

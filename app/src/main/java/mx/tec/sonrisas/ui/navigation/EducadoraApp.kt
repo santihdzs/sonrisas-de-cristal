@@ -66,6 +66,7 @@ fun EducadoraApp(onCerrarSesion: () -> Unit) {
                         onSalida = asistenciaVm::abrirSalida,
                         onRegistroGrupal = { navController.navigate(Route.REGISTRO_GRUPAL) },
                         onObjetos = { navController.navigate(Route.objetos(e.datos.sala.id)) },
+                        onMaterial = { navController.navigate(Route.material(e.datos.sala.id)) },
                     )
                 }
                 HojasAsistencia(
@@ -186,6 +187,7 @@ fun EducadoraApp(onCerrarSesion: () -> Unit) {
             }
             destinoFoto(navController, mensajero)
             destinoObjetos(mensajero)
+            destinoMaterial(mensajero)
             destinoMensajes(navController, mensajero)
             destinoAvisos(alSalir = avisosVm::marcarLeidos)
             destinosComunes(navController, onCerrarSesion)

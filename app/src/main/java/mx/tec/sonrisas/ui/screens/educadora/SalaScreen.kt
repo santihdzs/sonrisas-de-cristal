@@ -75,6 +75,7 @@ fun SalaScreen(
     onSalida: (Nino, Asistencia) -> Unit,
     onRegistroGrupal: () -> Unit,
     onObjetos: () -> Unit,
+    onMaterial: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val visibles = datos.ninos.filter { filtro.aplica(it) }
@@ -103,6 +104,7 @@ fun SalaScreen(
             }
             item {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(Espacio.space2), verticalArrangement = Arrangement.spacedBy(Espacio.space2)) {
+                    BotonAcceso("Material de clase", R.drawable.ic_folder, onMaterial)
                     BotonAcceso("Objetos perdidos", R.drawable.ic_checkroom, onObjetos)
                 }
             }
@@ -185,6 +187,6 @@ private fun SalaPreview() {
         ),
     )
     SonrisasTheme {
-        SalaScreen(datos, FiltroSala.TODOS, {}, {}, {}, { _, _ -> }, {}, {})
+        SalaScreen(datos, FiltroSala.TODOS, {}, {}, {}, { _, _ -> }, {}, {}, {})
     }
 }

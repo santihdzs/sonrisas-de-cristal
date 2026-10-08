@@ -218,6 +218,20 @@ data class ObjetoPerdido(
     val entregadoEl: LocalDateTime? = null,
 )
 
+data class MaterialClase(
+    val id: String,
+    val salaId: String,
+    val titulo: String,
+    val descripcion: String,
+    val nombreArchivo: String,
+    val tipo: String,
+    val tamano: Long,
+    // ruta del archivo en el almacenamiento privado de la app
+    val ruta: String,
+    val subidoPorId: String,
+    val subidoEl: LocalDateTime,
+)
+
 enum class TipoConversacion { SALA, DIRECTA }
 
 /** el chat de sala es uno por sala; quienes participan se calcula en la capa de datos */
@@ -253,7 +267,7 @@ data class ActividadEspecial(
     val titulo: String,
 )
 
-enum class AccionRegistro { CAPTURA, EDICION, BORRADO, FOTO_CONSULTADA, EXPEDIENTE, AVISO, SESION, ESTRUCTURA, CUENTA, OBJETO }
+enum class AccionRegistro { CAPTURA, EDICION, BORRADO, FOTO_CONSULTADA, EXPEDIENTE, AVISO, SESION, ESTRUCTURA, CUENTA, OBJETO, MATERIAL }
 
 data class RegistroActividad(
     val id: String,

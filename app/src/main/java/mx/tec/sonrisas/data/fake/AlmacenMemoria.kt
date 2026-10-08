@@ -27,6 +27,7 @@ class AlmacenMemoria(datos: DatosDePrueba) {
     val desbloqueoHuella = MutableStateFlow<Set<String>>(emptySet())
     val objetos = MutableStateFlow(datos.objetos)
     val objetosVistos = MutableStateFlow(datos.objetosVistos)
+    val material = MutableStateFlow(datos.material)
     val conversaciones = MutableStateFlow(datos.conversaciones)
     val mensajes = MutableStateFlow(datos.mensajes)
     // usuario -> conversacion -> hasta cuando leyo

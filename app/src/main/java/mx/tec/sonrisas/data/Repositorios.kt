@@ -11,6 +11,7 @@ import mx.tec.sonrisas.domain.Estancia
 import mx.tec.sonrisas.domain.EventoBitacora
 import mx.tec.sonrisas.domain.Foto
 import mx.tec.sonrisas.domain.Incidente
+import mx.tec.sonrisas.domain.MaterialClase
 import mx.tec.sonrisas.domain.Mensaje
 import mx.tec.sonrisas.domain.Nino
 import mx.tec.sonrisas.domain.ObjetoPerdido
@@ -122,6 +123,31 @@ interface ObjetosPerdidosRepository {
 }
 
 const val LIMITE_MENSAJE = 1000
+
+// pdf, imagenes y documentos de office; se valida aqui y no solo en el selector de archivos
+val TIPOS_MATERIAL = arrayOf(
+    "application/pdf",
+    "image/*",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "application/vnd.ms-powerpoint",
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+)
+
+fun tipoMaterialPermitido(tipo: String): Boolean =
+    TIPOS_MATERIAL.any { if (it.endsWith("/*")) tipo.startsWith(it.removeSuffix("*")) else it == tipo }
+
+interface MaterialRepository {
+    /** el personal ve el de su sala o estancia; la familia, solo el de las salas de sus hijos */
+    fun material(salaId: String): Flow<List<MaterialClase>>
+    suspend fun subir(salaId: String, titulo: String, descripcion: String, archivo: ArchivoEntrada): MaterialClase
+
+    /** quien lo subio o la direccion */
+    suspend fun editar(id: String, titulo: String, descripcion: String)
+    suspend fun borrar(id: String)
+}
 
 /** "Laura · mamá de Sofía", "Mariana · educadora" */
 data class MensajeChat(val mensaje: Mensaje, val autor: String, val propio: Boolean)

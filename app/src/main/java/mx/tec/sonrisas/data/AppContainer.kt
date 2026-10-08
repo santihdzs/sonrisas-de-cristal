@@ -6,6 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import mx.tec.sonrisas.data.fake.AlmacenMemoria
+import mx.tec.sonrisas.data.fake.ArchivosDePrueba
 import mx.tec.sonrisas.data.fake.DatosDePrueba
 import mx.tec.sonrisas.data.fake.FakeActividadRepository
 import mx.tec.sonrisas.data.fake.FakeAvisosRepository
@@ -15,6 +16,7 @@ import mx.tec.sonrisas.data.fake.FakeFotosRepository
 import mx.tec.sonrisas.data.fake.FakeHorariosRepository
 import mx.tec.sonrisas.data.fake.FakeIncidentesRepository
 import mx.tec.sonrisas.data.fake.FakeJornadaRepository
+import mx.tec.sonrisas.data.fake.FakeMaterialRepository
 import mx.tec.sonrisas.data.fake.FakeMensajesRepository
 import mx.tec.sonrisas.data.fake.FakeNinosRepository
 import mx.tec.sonrisas.data.fake.FakeObjetosRepository
@@ -28,9 +30,9 @@ class AppContainer(context: Context) {
 
     val reloj: Reloj = RelojSistema
 
-    private val almacen by lazy { AlmacenMemoria(DatosDePrueba.generar(reloj)) }
-
     val archivos = AlmacenArchivos(context.filesDir)
+
+    private val almacen by lazy { AlmacenMemoria(DatosDePrueba.generar(reloj, ArchivosDePrueba.crear(archivos))) }
 
     private val sesionFake by lazy { FakeSesionRepository(almacen, reloj, scope) }
 
@@ -46,6 +48,7 @@ class AppContainer(context: Context) {
     val cuentasRepository: CuentasRepository by lazy { FakeCuentasRepository(almacen, sesionFake, reloj) }
     val objetosRepository: ObjetosPerdidosRepository by lazy { FakeObjetosRepository(almacen, sesionFake, archivos, reloj) }
     val mensajesRepository: MensajesRepository by lazy { FakeMensajesRepository(almacen, sesionFake, reloj) }
+    val materialRepository: MaterialRepository by lazy { FakeMaterialRepository(almacen, sesionFake, archivos, reloj) }
 
     fun iniciar() {
         scope.launch {

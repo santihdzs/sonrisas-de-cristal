@@ -49,6 +49,10 @@ class AlmacenArchivos(private val raiz: File) {
         return destino.path
     }
 
+    fun vaciar(carpeta: String) {
+        File(raiz, carpeta).deleteRecursively()
+    }
+
     fun borrar(ruta: String) {
         File(ruta).delete()
     }

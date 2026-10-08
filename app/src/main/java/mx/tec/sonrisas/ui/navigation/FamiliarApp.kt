@@ -61,6 +61,7 @@ fun FamiliarApp(onCerrarSesion: () -> Unit) {
                                 onSeleccion = vm::seleccionar,
                                 onIncidente = { navController.navigate(Route.incidenteDetalle(it.id)) },
                                 onObjetos = { navController.navigate(Route.objetos(it.id)) },
+                                onMaterial = { navController.navigate(Route.material(it.id)) },
                             )
                         } ?: SinHijos()
                     }
@@ -104,6 +105,7 @@ fun FamiliarApp(onCerrarSesion: () -> Unit) {
             destinoFoto(navController, mensajero)
             destinoIncidente()
             destinoObjetos(mensajero)
+            destinoMaterial(mensajero)
             destinoMensajes(navController, mensajero)
             destinosComunes(navController, onCerrarSesion)
         }

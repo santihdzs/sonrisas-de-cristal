@@ -16,6 +16,7 @@ import mx.tec.sonrisas.domain.Estancia
 import mx.tec.sonrisas.domain.EventoBitacora
 import mx.tec.sonrisas.domain.Foto
 import mx.tec.sonrisas.domain.Incidente
+import mx.tec.sonrisas.domain.MaterialClase
 import mx.tec.sonrisas.domain.Mensaje
 import mx.tec.sonrisas.domain.Nino
 import mx.tec.sonrisas.domain.ObjetoPerdido
@@ -72,13 +73,15 @@ data class DatosDePrueba(
     val conversaciones: List<Conversacion>,
     val mensajes: List<Mensaje>,
     val lecturas: Map<String, Map<String, LocalDateTime>>,
+    val material: List<MaterialClase>,
 ) {
     companion object {
-        fun generar(reloj: Reloj, semilla: Int = 2026): DatosDePrueba = Generador(reloj, semilla).generar()
+        fun generar(reloj: Reloj, archivos: List<ArchivoDemo> = emptyList(), semilla: Int = 2026): DatosDePrueba =
+            Generador(reloj, archivos, semilla).generar()
     }
 }
 
-private class Generador(reloj: Reloj, semilla: Int) {
+private class Generador(reloj: Reloj, private val archivosDemo: List<ArchivoDemo>, semilla: Int) {
     private val r = Random(semilla)
     private val ahora: LocalDateTime = reloj.ahora()
     private val hoy: LocalDate = ahora.toLocalDate()
@@ -103,6 +106,7 @@ private class Generador(reloj: Reloj, semilla: Int) {
     private val registros = mutableListOf<RegistroActividad>()
     private val objetos = mutableListOf<ObjetoPerdido>()
     private val conversaciones = mutableListOf<Conversacion>()
+    private val material = mutableListOf<MaterialClase>()
     private val mensajes = mutableListOf<Mensaje>()
     private val lecturas = mutableMapOf<String, MutableMap<String, LocalDateTime>>()
 
@@ -154,6 +158,7 @@ private class Generador(reloj: Reloj, semilla: Int) {
         crearAvisos()
         crearObjetosPerdidos()
         crearMensajes()
+        crearMaterial()
         crearRegistrosRecientes()
         val numerados = incidentes.sortedBy { it.cuando }.mapIndexed { i, inc -> inc.copy(folio = folioIncidente(i + 1)) }
         val familia = usuarios.first { it.usuario == "familia" }
@@ -182,6 +187,7 @@ private class Generador(reloj: Reloj, semilla: Int) {
             conversaciones = conversaciones,
             mensajes = mensajes,
             lecturas = lecturas,
+            material = material,
         )
     }
 
@@ -702,6 +708,18 @@ private class Generador(reloj: Reloj, semilla: Int) {
         leyo(rosa, grupoLac, aviso)
     }
 
+    private fun crearMaterial() {
+        val (sbLac, sbMat) = salas
+        fun subir(sala: Sala, clave: String, titulo: String, descripcion: String, haceDias: Int) {
+            val a = archivosDemo.firstOrNull { it.clave == clave } ?: return
+            val cuando = LocalDateTime.of(diaHabilAtras(haceDias), LocalTime.of(13, 30))
+            material += MaterialClase(id(), sala.id, titulo, descripcion, a.nombre, a.tipo, a.tamano, a.ruta, educadoraDeSala.getValue(sala.id).id, cuando)
+        }
+        subir(sbMat, "cancion", "Canción de los días de la semana", "La letra que cantamos en el círculo de la mañana. Practíquenla en casa.", 3)
+        subir(sbMat, "colores", "Actividad de colores para casa", "Imprime la hoja o dibújala en un papel. Tráiganla el viernes.", 1)
+        subir(sbLac, "rutina", "Rutina de sueño en casa", "Recomendaciones para que la siesta y la noche sean más tranquilas.", 4)
+    }
+
     private fun crearRegistrosRecientes() {
         val porId = usuarios.associateBy { it.id }
         val ninoPorId = ninos.associateBy { it.id }
@@ -742,6 +760,10 @@ private class Generador(reloj: Reloj, semilla: Int) {
         objetos.filter { !it.publicadoEl.toLocalDate().isBefore(desde) }.forEach { o ->
             val sala = salas.first { it.id == o.salaId }
             registro(o.publicadoEl, o.publicadoPorId, AccionRegistro.OBJETO, "Publicó el objeto perdido \"${o.descripcion}\" en la sala ${sala.nombre}")
+        }
+        material.filter { !it.subidoEl.toLocalDate().isBefore(desde) }.forEach { m ->
+            val sala = salas.first { it.id == m.salaId }
+            registro(m.subidoEl, m.subidoPorId, AccionRegistro.MATERIAL, "Subió el material \"${m.titulo}\" a la sala ${sala.nombre}")
         }
         val baja = ninos.first { (it.estado as? EstadoExpediente.BajaTemporal)?.let { b -> b.eliminarEl.isAfter(hoy) } == true }
         registro(

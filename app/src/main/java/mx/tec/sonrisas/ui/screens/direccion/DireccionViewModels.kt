@@ -643,6 +643,7 @@ enum class FiltroActividad(val etiqueta: String, val acciones: Set<AccionRegistr
     EXPEDIENTES("Expedientes", setOf(AccionRegistro.EXPEDIENTE)),
     AVISOS("Avisos", setOf(AccionRegistro.AVISO)),
     OBJETOS("Objetos perdidos", setOf(AccionRegistro.OBJETO)),
+    MATERIAL("Material de clase", setOf(AccionRegistro.MATERIAL)),
     ADMINISTRACION("Salas y personal", setOf(AccionRegistro.ESTRUCTURA, AccionRegistro.CUENTA)),
 }
 
