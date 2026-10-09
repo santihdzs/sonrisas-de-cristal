@@ -400,7 +400,8 @@ class FakeJornadaRepository(
         latencia()
         val (u, n) = educadoraCon(asistencia.ninoId)
         if (n.persona(asistencia.recogidoPorId) == null) throw IllegalArgumentException("Elige a una persona autorizada.")
-        almacen.asistencias.update { lista -> lista.map { if (it.id == asistencia.id) asistencia else it } }
+        val guardada = asistencia.copy(entregoSalidaId = u.id)
+        almacen.asistencias.update { lista -> lista.map { if (it.id == guardada.id) guardada else it } }
         almacen.registrar(u, reloj.ahora(), AccionRegistro.CAPTURA, describirSalida(n, asistencia), n.id)
     }
 
@@ -423,6 +424,14 @@ class FakeJornadaRepository(
         val terminada = siesta.copy(fin = fin, cuando = LocalDateTime.of(siesta.cuando.toLocalDate(), fin))
         almacen.eventos.update { lista -> lista.map { if (it.id == id) terminada else it } }
         almacen.registrar(u, reloj.ahora(), AccionRegistro.EDICION, describirEvento(n, terminada), n.id)
+    }
+
+    override suspend fun registrarExportacion(ninoIds: List<String>, detalle: String) {
+        val u = sesion.usuarioActual() ?: throw AccesoDenegado()
+        val visibles = Visibilidad.ninos(u, almacen.ninos.value).associateBy { it.id }
+        if (ninoIds.isEmpty() || ninoIds.any { it !in visibles }) throw AccesoDenegado()
+        val estancia = visibles.getValue(ninoIds.first()).estanciaId
+        almacen.registrar(u, reloj.ahora(), AccionRegistro.IMPRESION, detalle, ninoIds.singleOrNull(), estanciaId = estancia)
     }
 
     override suspend fun borrarEvento(id: String) {

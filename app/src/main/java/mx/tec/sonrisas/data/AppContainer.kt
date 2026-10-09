@@ -32,6 +32,9 @@ class AppContainer(context: Context) {
 
     val archivos = AlmacenArchivos(context.filesDir)
 
+    // los pdf de la bitacora son temporales: se regeneran en cada impresion
+    val carpetaBitacoras = java.io.File(context.cacheDir, "bitacoras")
+
     private val almacen by lazy { AlmacenMemoria(DatosDePrueba.generar(reloj, ArchivosDePrueba.crear(archivos))) }
 
     private val sesionFake by lazy { FakeSesionRepository(almacen, reloj, scope) }

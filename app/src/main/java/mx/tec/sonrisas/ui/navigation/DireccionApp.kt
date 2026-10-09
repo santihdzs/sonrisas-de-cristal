@@ -20,6 +20,9 @@ import mx.tec.sonrisas.ui.AppViewModelProvider
 import mx.tec.sonrisas.ui.components.CargandoView
 import mx.tec.sonrisas.ui.components.ErrorView
 import mx.tec.sonrisas.ui.screens.comun.AvisosViewModel
+import mx.tec.sonrisas.ui.screens.bitacora.BitacoraViewModel
+import mx.tec.sonrisas.ui.screens.bitacora.ImpresionBitacora
+import mx.tec.sonrisas.ui.screens.bitacora.Objetivo
 import mx.tec.sonrisas.ui.screens.mensajes.ConversacionesViewModel
 import mx.tec.sonrisas.ui.screens.direccion.ActividadScreen
 import mx.tec.sonrisas.ui.screens.direccion.ActividadViewModel
@@ -69,6 +72,7 @@ fun DireccionApp(onCerrarSesion: () -> Unit) {
         NavHost(navController, startDestination = Route.INICIO, modifier = Modifier.padding(padding)) {
             composable(Route.INICIO) {
                 val vm: InicioViewModel = viewModel(factory = AppViewModelProvider.Factory)
+                val bitacoraVm: BitacoraViewModel = viewModel(factory = AppViewModelProvider.Factory)
                 val estado by vm.uiState.collectAsStateWithLifecycle()
                 when (val e = estado) {
                     UiState.Cargando -> CargandoView()
@@ -81,8 +85,10 @@ fun DireccionApp(onCerrarSesion: () -> Unit) {
                         onVerAvisos = { navController.irAPestana(Route.AVISOS) },
                         onObjetos = { navController.navigate(Route.objetos(it.id)) },
                         onMaterial = { navController.navigate(Route.material(it.id)) },
+                        onImprimir = { bitacoraVm.abrir(Objetivo.Sala(it.id, it.nombre)) },
                     )
                 }
+                ImpresionBitacora(bitacoraVm)
             }
             composable(Route.NINOS) {
                 val vm: NinosViewModel = viewModel(factory = AppViewModelProvider.Factory)
@@ -105,6 +111,7 @@ fun DireccionApp(onCerrarSesion: () -> Unit) {
             }
             composable(Route.EXPEDIENTE) {
                 val vm: ExpedienteViewModel = viewModel(factory = AppViewModelProvider.Factory)
+                val bitacoraVm: BitacoraViewModel = viewModel(factory = AppViewModelProvider.Factory)
                 val estado by vm.uiState.collectAsStateWithLifecycle()
                 when (val e = estado) {
                     UiState.Cargando -> CargandoView()
@@ -121,8 +128,10 @@ fun DireccionApp(onCerrarSesion: () -> Unit) {
                                 navController.popBackStack()
                             }
                         },
+                        onImprimir = { e.datos?.nino?.let { n -> bitacoraVm.abrir(Objetivo.UnNino(n.id, n.nombreCompleto)) } },
                     )
                 }
+                ImpresionBitacora(bitacoraVm)
             }
             composable(
                 Route.INSCRIPCION,

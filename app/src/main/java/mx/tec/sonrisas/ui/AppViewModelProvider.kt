@@ -34,6 +34,7 @@ import mx.tec.sonrisas.ui.screens.fotos.AgregarFotoViewModel
 import mx.tec.sonrisas.ui.screens.fotos.FotoDetalleViewModel
 import mx.tec.sonrisas.ui.screens.fotos.FotosSalaViewModel
 import mx.tec.sonrisas.ui.screens.sala.ObjetosViewModel
+import mx.tec.sonrisas.ui.screens.bitacora.BitacoraViewModel
 import mx.tec.sonrisas.ui.screens.sala.MaterialViewModel
 import mx.tec.sonrisas.ui.screens.mensajes.ChatViewModel
 import mx.tec.sonrisas.ui.screens.mensajes.ConversacionesViewModel
@@ -129,6 +130,10 @@ object AppViewModelProvider {
         initializer { CredencialesViewModel() }
         initializer { ConversacionesViewModel(contenedor().mensajesRepository, contenedor().reloj) }
         initializer { NuevoMensajeViewModel(contenedor().mensajesRepository) }
+        initializer {
+            val c = contenedor()
+            BitacoraViewModel(c.estanciasRepository, c.ninosRepository, c.jornadaRepository, c.incidentesRepository, c.carpetaBitacoras, c.reloj)
+        }
         initializer {
             val c = contenedor()
             MaterialViewModel(createSavedStateHandle(), c.sesionRepository, c.estanciasRepository, c.materialRepository, c.reloj)

@@ -20,6 +20,9 @@ import mx.tec.sonrisas.ui.AppViewModelProvider
 import mx.tec.sonrisas.ui.components.CargandoView
 import mx.tec.sonrisas.ui.components.ErrorView
 import mx.tec.sonrisas.ui.screens.comun.AvisosViewModel
+import mx.tec.sonrisas.ui.screens.bitacora.BitacoraViewModel
+import mx.tec.sonrisas.ui.screens.bitacora.ImpresionBitacora
+import mx.tec.sonrisas.ui.screens.bitacora.Objetivo
 import mx.tec.sonrisas.ui.screens.mensajes.ConversacionesViewModel
 import mx.tec.sonrisas.ui.screens.familia.FamiliaViewModel
 import mx.tec.sonrisas.ui.screens.familia.HoyScreen
@@ -68,6 +71,7 @@ fun FamiliarApp(onCerrarSesion: () -> Unit) {
                 }
                 composable(Route.SEMANA) { entrada ->
                     val vm = familiaViewModel(navController, entrada)
+                    val bitacoraVm: BitacoraViewModel = viewModel(factory = AppViewModelProvider.Factory)
                     val estado by vm.semanaState.collectAsStateWithLifecycle()
                     val context = LocalContext.current
                     when (val e = estado) {
@@ -80,9 +84,11 @@ fun FamiliarApp(onCerrarSesion: () -> Unit) {
                                 onCompartir = {
                                     compartirTexto(context, "Resumen semanal de ${datos.hijos.seleccionado.nombre}", datos.semana.comoTexto())
                                 },
+                                onImprimir = { datos.hijos.seleccionado.let { n -> bitacoraVm.abrir(Objetivo.UnNino(n.id, n.nombreCompleto)) } },
                             )
                         } ?: SinHijos()
                     }
+                    ImpresionBitacora(bitacoraVm)
                 }
                 composable(Route.FOTOS_FAMILIA) { entrada ->
                     val vm = familiaViewModel(navController, entrada)

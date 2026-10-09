@@ -16,6 +16,9 @@ import mx.tec.sonrisas.ui.AppViewModelProvider
 import mx.tec.sonrisas.ui.components.CargandoView
 import mx.tec.sonrisas.ui.components.ErrorView
 import mx.tec.sonrisas.ui.screens.comun.AvisosViewModel
+import mx.tec.sonrisas.ui.screens.bitacora.BitacoraViewModel
+import mx.tec.sonrisas.ui.screens.bitacora.ImpresionBitacora
+import mx.tec.sonrisas.ui.screens.bitacora.Objetivo
 import mx.tec.sonrisas.ui.screens.mensajes.ConversacionesViewModel
 import mx.tec.sonrisas.ui.screens.educadora.AsistenciaViewModel
 import mx.tec.sonrisas.ui.screens.fotos.AgregarFotoScreen
@@ -52,6 +55,7 @@ fun EducadoraApp(onCerrarSesion: () -> Unit) {
         NavHost(navController, startDestination = Route.SALA, modifier = Modifier.padding(padding)) {
             composable(Route.SALA) {
                 val vm: SalaViewModel = viewModel(factory = AppViewModelProvider.Factory)
+                val bitacoraVm: BitacoraViewModel = viewModel(factory = AppViewModelProvider.Factory)
                 val asistenciaVm: AsistenciaViewModel = viewModel(factory = AppViewModelProvider.Factory)
                 val estado by vm.uiState.collectAsStateWithLifecycle()
                 when (val e = estado) {
@@ -67,8 +71,10 @@ fun EducadoraApp(onCerrarSesion: () -> Unit) {
                         onRegistroGrupal = { navController.navigate(Route.REGISTRO_GRUPAL) },
                         onObjetos = { navController.navigate(Route.objetos(e.datos.sala.id)) },
                         onMaterial = { navController.navigate(Route.material(e.datos.sala.id)) },
+                        onImprimir = { bitacoraVm.abrir(Objetivo.Sala(e.datos.sala.id, e.datos.sala.nombre)) },
                     )
                 }
+                ImpresionBitacora(bitacoraVm)
                 HojasAsistencia(
                     hoja = asistenciaVm.hoja,
                     onCambiarLlegada = asistenciaVm::cambiarLlegada,
@@ -79,6 +85,7 @@ fun EducadoraApp(onCerrarSesion: () -> Unit) {
             }
             composable(Route.FICHA) {
                 val vm: FichaViewModel = viewModel(factory = AppViewModelProvider.Factory)
+                val bitacoraVm: BitacoraViewModel = viewModel(factory = AppViewModelProvider.Factory)
                 val asistenciaVm: AsistenciaViewModel = viewModel(factory = AppViewModelProvider.Factory)
                 val estado by vm.uiState.collectAsStateWithLifecycle()
                 val ahora by vm.ahora.collectAsStateWithLifecycle()
@@ -102,8 +109,10 @@ fun EducadoraApp(onCerrarSesion: () -> Unit) {
                         onIncidente = { navController.navigate(Route.incidente(e.datos.nino.id)) },
                         onLlegada = { asistenciaVm.abrirLlegada(e.datos.nino) },
                         onSalida = { asistenciaVm.abrirSalida(e.datos.nino, it) },
+                        onImprimir = { bitacoraVm.abrir(Objetivo.UnNino(e.datos.nino.id, e.datos.nino.nombreCompleto)) },
                     )
                 }
+                ImpresionBitacora(bitacoraVm)
                 HojasAsistencia(
                     hoja = asistenciaVm.hoja,
                     onCambiarLlegada = asistenciaVm::cambiarLlegada,

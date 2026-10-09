@@ -91,6 +91,8 @@ data class Asistencia(
     val buenEstadoSalida: Boolean? = null,
     val lesionSalida: String? = null,
     val observacionesSalida: String? = null,
+    // personal de la estancia que entrego al nino a la salida
+    val entregoSalidaId: String? = null,
 ) {
     val salio: Boolean get() = horaSalida != null
 }
@@ -267,7 +269,7 @@ data class ActividadEspecial(
     val titulo: String,
 )
 
-enum class AccionRegistro { CAPTURA, EDICION, BORRADO, FOTO_CONSULTADA, EXPEDIENTE, AVISO, SESION, ESTRUCTURA, CUENTA, OBJETO, MATERIAL }
+enum class AccionRegistro { CAPTURA, EDICION, BORRADO, FOTO_CONSULTADA, EXPEDIENTE, AVISO, SESION, ESTRUCTURA, CUENTA, OBJETO, MATERIAL, IMPRESION }
 
 data class RegistroActividad(
     val id: String,

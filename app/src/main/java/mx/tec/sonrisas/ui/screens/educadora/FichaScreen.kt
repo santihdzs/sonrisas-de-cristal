@@ -93,6 +93,7 @@ fun FichaScreen(
     onIncidente: () -> Unit,
     onLlegada: () -> Unit,
     onSalida: (Asistencia) -> Unit,
+    onImprimir: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var aBorrar by remember { mutableStateOf<String?>(null) }
@@ -107,7 +108,7 @@ fun FichaScreen(
             contentPadding = PaddingValues(Espacio.space4),
             verticalArrangement = Arrangement.spacedBy(Espacio.space3),
         ) {
-            item { Column { EncabezadoFicha(datos, onLlegada, onSalida) } }
+            item { Column { EncabezadoFicha(datos, onLlegada, onSalida, onImprimir) } }
             if (datos.nino.tieneInfoMedica) {
                 item { BannerAlergias(datos.nino.alergias, datos.nino.padecimientos, datos.nino.medicamentos) }
             }
@@ -146,7 +147,7 @@ fun FichaScreen(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun EncabezadoFicha(datos: FichaDatos, onLlegada: () -> Unit, onSalida: (Asistencia) -> Unit) {
+private fun EncabezadoFicha(datos: FichaDatos, onLlegada: () -> Unit, onSalida: (Asistencia) -> Unit, onImprimir: () -> Unit) {
     val n = datos.nino
     Row(horizontalArrangement = Arrangement.spacedBy(Espacio.space3), verticalAlignment = Alignment.CenterVertically) {
         AvatarNino(n.nombre, n.apellidos, datos.sala.estrella, tamano = 64.dp)
@@ -173,6 +174,10 @@ private fun EncabezadoFicha(datos: FichaDatos, onLlegada: () -> Unit, onSalida: 
                 Icono(R.drawable.ic_logout, null)
                 Text("Registrar salida", modifier = Modifier.padding(start = Espacio.space2))
             }
+        }
+        TextButton(onClick = onImprimir, modifier = Modifier.heightIn(min = 48.dp)) {
+            Icono(R.drawable.ic_print, null)
+            Text("Imprimir bitácora", modifier = Modifier.padding(start = Espacio.space2))
         }
     }
 }
@@ -429,6 +434,6 @@ private fun FichaPreview() {
         animo = AnimoForm(h), nota = NotaForm(h),
     )
     SonrisasTheme {
-        FichaScreen(datos, form, h, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})
+        FichaScreen(datos, form, h, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})
     }
 }

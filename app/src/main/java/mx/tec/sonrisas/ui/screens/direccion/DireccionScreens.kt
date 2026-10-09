@@ -91,6 +91,7 @@ fun InicioScreen(
     onVerAvisos: () -> Unit,
     onObjetos: (Sala) -> Unit,
     onMaterial: (Sala) -> Unit,
+    onImprimir: (Sala) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
@@ -136,6 +137,10 @@ fun InicioScreen(
                     TextButton(onClick = { onMaterial(s.sala) }, modifier = Modifier.heightIn(min = 48.dp)) {
                         Icono(R.drawable.ic_folder, null)
                         Text("Material", modifier = Modifier.padding(start = Espacio.space2))
+                    }
+                    TextButton(onClick = { onImprimir(s.sala) }, modifier = Modifier.heightIn(min = 48.dp)) {
+                        Icono(R.drawable.ic_print, null)
+                        Text("Bitácora", modifier = Modifier.padding(start = Espacio.space2))
                     }
                     TextButton(onClick = { onObjetos(s.sala) }, modifier = Modifier.heightIn(min = 48.dp)) {
                         Icono(R.drawable.ic_checkroom, null)
@@ -275,6 +280,7 @@ fun ExpedienteScreen(
     onBaja: () -> Unit,
     onReactivar: () -> Unit,
     onEliminar: () -> Unit,
+    onImprimir: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     if (datos == null) {
@@ -332,6 +338,10 @@ fun ExpedienteScreen(
         TarjetaSeccion(titulo = "Autorizaciones de imagen", icono = R.drawable.ic_image) {
             Autorizacion("Actividades internas de la estancia", n.permisoImagenInterna)
             Autorizacion("Redes sociales de la fundación", n.permisoImagenRedes)
+        }
+        OutlinedButton(onClick = onImprimir, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+            Icono(R.drawable.ic_print, null)
+            Text("Imprimir bitácora", modifier = Modifier.padding(start = Espacio.space2))
         }
         if (baja == null) {
             BotonPrincipal("Editar expediente", onEditar, guardando = false)
@@ -504,7 +514,7 @@ private fun InicioPreview() {
     SonrisasTheme {
         InicioScreen(
             InicioDatos(Estancia("e", "Estancia San Bernabé", "San Bernabé"), listOf(SalaResumen(salaEj, "Mariana López", 12, 14)), listOf(inc to sofiaEj), listOf(aviso), LocalDate.of(2026, 9, 30)),
-            {}, {}, {}, {}, {}, {},
+            {}, {}, {}, {}, {}, {}, {},
         )
     }
 }
@@ -519,7 +529,7 @@ private fun NinosPreview() {
 @Composable
 private fun ExpedientePreview() {
     val tutor = Tutor("p1", "Laura Treviño Garza", "Mamá", "81 2345 6789")
-    SonrisasTheme { ExpedienteScreen(ExpedienteDatos(sofiaEj, salaEj, listOf(tutor), LocalDate.of(2026, 9, 30)), false, {}, {}, {}, {}) }
+    SonrisasTheme { ExpedienteScreen(ExpedienteDatos(sofiaEj, salaEj, listOf(tutor), LocalDate.of(2026, 9, 30)), false, {}, {}, {}, {}, {}) }
 }
 
 @Preview(showBackground = true)

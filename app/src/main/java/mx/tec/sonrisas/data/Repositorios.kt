@@ -79,6 +79,9 @@ interface JornadaRepository {
     suspend fun agregarEventos(eventos: List<EventoBitacora>)
     suspend fun terminarSiesta(id: String, fin: LocalTime)
     suspend fun borrarEvento(id: String)
+
+    /** deja constancia de cada bitacora impresa o compartida; falla si algun nino no es visible para el usuario */
+    suspend fun registrarExportacion(ninoIds: List<String>, detalle: String)
 }
 
 interface IncidentesRepository {

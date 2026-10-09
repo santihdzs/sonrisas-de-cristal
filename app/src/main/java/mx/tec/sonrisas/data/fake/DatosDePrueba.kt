@@ -431,6 +431,7 @@ private class Generador(reloj: Reloj, private val archivosDemo: List<ArchivoDemo
             salioLimpio = salida?.let { true },
             pertenenciasCompletas = salida?.let { true },
             buenEstadoSalida = salida?.let { true },
+            entregoSalidaId = salida?.let { educadora.id },
         )
         val quien = educadora.id
         fun en(h: LocalTime) = LocalDateTime.of(fecha, h)

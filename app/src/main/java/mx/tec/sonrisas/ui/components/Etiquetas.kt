@@ -157,6 +157,7 @@ val AccionRegistro.etiqueta: String
         AccionRegistro.CUENTA -> "Cuentas"
         AccionRegistro.OBJETO -> "Objetos perdidos"
         AccionRegistro.MATERIAL -> "Material de clase"
+        AccionRegistro.IMPRESION -> "Bitácora exportada"
     }
 
 val AccionRegistro.icono: Int
@@ -172,4 +173,5 @@ val AccionRegistro.icono: Int
         AccionRegistro.CUENTA -> R.drawable.ic_key
         AccionRegistro.OBJETO -> R.drawable.ic_checkroom
         AccionRegistro.MATERIAL -> R.drawable.ic_folder
+        AccionRegistro.IMPRESION -> R.drawable.ic_print
     }

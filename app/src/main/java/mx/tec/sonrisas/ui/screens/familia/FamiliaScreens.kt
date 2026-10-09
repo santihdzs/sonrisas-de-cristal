@@ -369,6 +369,7 @@ fun SemanaScreen(
     datos: SemanaDatos,
     onSeleccion: (String) -> Unit,
     onCompartir: () -> Unit,
+    onImprimir: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -394,6 +395,10 @@ fun SemanaScreen(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                    TextButton(onClick = onImprimir, modifier = Modifier.heightIn(min = 48.dp)) {
+                        Icono(R.drawable.ic_print, null)
+                        Text("Imprimir bitácora", modifier = Modifier.padding(start = Espacio.space2))
+                    }
                 }
             }
             items(datos.semana.dias, key = { it.fecha.toString() }) { dia -> FilaDia(dia, datos.hoy) }
@@ -519,7 +524,7 @@ private fun HoyPreview() {
 private fun SemanaPreview() {
     val asistencia = Asistencia("a", "1", hoyEjemplo.minusDays(2), LocalTime.of(8, 5), "p1", "u", horaSalida = LocalTime.of(15, 10))
     val semana = ResumenSemana.de("Sofía", hoyEjemplo, listOf(asistencia), emptyList(), emptyList())
-    SonrisasTheme { SemanaScreen(SemanaDatos(Hijos(listOf(sofia), sofia, mapOf("s" to salaEjemplo)), semana, hoyEjemplo), {}, {}) }
+    SonrisasTheme { SemanaScreen(SemanaDatos(Hijos(listOf(sofia), sofia, mapOf("s" to salaEjemplo)), semana, hoyEjemplo), {}, {}, {}) }
 }
 
 @Preview(showBackground = true)
