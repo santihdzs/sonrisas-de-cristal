@@ -19,6 +19,7 @@ import mx.tec.sonrisas.R
 import mx.tec.sonrisas.ui.AppViewModelProvider
 import mx.tec.sonrisas.ui.components.CargandoView
 import mx.tec.sonrisas.ui.components.ErrorView
+import mx.tec.sonrisas.ui.components.EstadoVacio
 import mx.tec.sonrisas.ui.screens.comun.AvisosViewModel
 import mx.tec.sonrisas.ui.screens.bitacora.BitacoraViewModel
 import mx.tec.sonrisas.ui.screens.bitacora.ImpresionBitacora
@@ -236,19 +237,21 @@ fun DireccionApp(onCerrarSesion: () -> Unit) {
                 when (val e = estado) {
                     UiState.Cargando -> CargandoView()
                     is UiState.Error -> ErrorView(e.mensaje, vm::reintentar)
-                    is UiState.Exito -> HorariosScreen(
-                        datos = e.datos,
-                        hoja = vm.hoja,
-                        onSala = vm::elegirSala,
-                        onNuevoBloque = vm::nuevoBloque,
-                        onEditarBloque = vm::editarBloque,
-                        onBorrarBloque = { vm.borrarBloque(it, mensajero::mostrar) },
-                        onNuevaEspecial = vm::nuevaEspecial,
-                        onBorrarEspecial = { vm.borrarEspecial(it, mensajero::mostrar) },
-                        onCambiarHoja = vm::cambiar,
-                        onGuardar = { vm.guardar(mensajero::mostrar) },
-                        onCerrar = vm::cerrar,
-                    )
+                    is UiState.Exito -> e.datos?.let { datos ->
+                        HorariosScreen(
+                            datos = datos,
+                            hoja = vm.hoja,
+                            onSala = vm::elegirSala,
+                            onNuevoBloque = vm::nuevoBloque,
+                            onEditarBloque = vm::editarBloque,
+                            onBorrarBloque = { vm.borrarBloque(it, mensajero::mostrar) },
+                            onNuevaEspecial = vm::nuevaEspecial,
+                            onBorrarEspecial = { vm.borrarEspecial(it, mensajero::mostrar) },
+                            onCambiarHoja = vm::cambiar,
+                            onGuardar = { vm.guardar(mensajero::mostrar) },
+                            onCerrar = vm::cerrar,
+                        )
+                    } ?: EstadoVacio(R.drawable.ic_calendar_month, "Todavía no hay salas", mensaje = "Registra una sala en Más > Salas para configurar su horario.")
                 }
             }
             composable(Route.ACTIVIDAD) {

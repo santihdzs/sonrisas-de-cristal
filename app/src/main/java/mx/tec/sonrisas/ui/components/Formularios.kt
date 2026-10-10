@@ -200,7 +200,8 @@ fun CampoTexto(
 ) {
     OutlinedTextField(
         value = valor,
-        onValueChange = onCambio,
+        // en telefonos solo se aceptan digitos y espacios, aunque el teclado permita otros simbolos
+        onValueChange = { if (teclado == tecladoTelefono) onCambio(it.filter { c -> c.isDigit() || c == ' ' }) else onCambio(it) },
         label = { Text(etiqueta) },
         isError = error != null,
         supportingText = (error ?: ayuda)?.let { { Text(it) } },

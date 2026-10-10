@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import mx.tec.sonrisas.data.ActividadRepository
@@ -521,9 +522,11 @@ class HorariosViewModel(
     private var bloquesActuales: List<BloqueHorario> = emptyList()
     private var salaActual: String? = null
 
-    val uiState: StateFlow<UiState<HorariosDatos>> = comoUiState(reintentos) {
-        combine(estanciasRepository.salas(), seleccion) { salas, sel -> salas to (salas.firstOrNull { it.id == sel } ?: salas.first()) }
+    // una estancia recien registrada todavia no tiene salas; en ese caso no hay horario que mostrar
+    val uiState: StateFlow<UiState<HorariosDatos?>> = comoUiState(reintentos) {
+        combine(estanciasRepository.salas(), seleccion) { salas, sel -> salas to (salas.firstOrNull { it.id == sel } ?: salas.firstOrNull()) }
             .flatMapLatest { (salas, sala) ->
+                if (sala == null) return@flatMapLatest flowOf(null)
                 combine(horariosRepository.bloques(sala.id), horariosRepository.especiales(sala.id)) { b, e ->
                     bloquesActuales = b
                     salaActual = sala.id

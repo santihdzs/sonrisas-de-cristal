@@ -81,6 +81,9 @@ fun InscripcionScreen(
             CampoTexto(form.apellidos, { onCambiar(form.copy(apellidos = it)) }, "Apellidos", errores["apellidos"], teclado = tecladoNombres)
             CampoFecha("Fecha de nacimiento", form.fechaNacimiento, { onCambiar(form.copy(fechaNacimiento = it)) }, error = errores["fecha"])
             EtiquetaCampo("Sala")
+            if (datos.salas.isEmpty()) {
+                Text("Primero registra una sala en Más > Salas.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
             SelectorOpciones(datos.salas.map { it.id }, form.salaId, { onCambiar(form.copy(salaId = it)) }, { id -> datos.salas.first { it.id == id }.nombre })
             errores["sala"]?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
         }

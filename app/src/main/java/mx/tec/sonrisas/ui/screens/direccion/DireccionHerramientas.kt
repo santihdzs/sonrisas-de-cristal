@@ -330,8 +330,9 @@ fun ActividadScreen(
         verticalArrangement = Arrangement.spacedBy(Espacio.space2),
     ) {
         item {
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(Espacio.space2)) {
-                FiltroActividad.entries.forEach { f ->
+            // con tantas categorias, una sola fila deslizable ocupa menos que varias filas de chips
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(Espacio.space2)) {
+                items(FiltroActividad.entries) { f ->
                     FilterChip(f == filtro, { onFiltro(f) }, { Text(f.etiqueta) }, Modifier.heightIn(min = 48.dp))
                 }
             }

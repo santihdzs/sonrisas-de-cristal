@@ -175,6 +175,9 @@ fun InicioScreen(
                 TextButton(onClick = onVerAvisos, modifier = Modifier.heightIn(min = 48.dp)) { Text("Ver todos") }
             }
         }
+        if (datos.avisos.isEmpty()) {
+            item { Text("Todavía no hay avisos publicados.", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+        }
         items(datos.avisos, key = { it.id }) { a ->
             TarjetaSeccion {
                 EstadoChip(a.tipo.etiqueta, TipoEstado.NEUTRO, a.tipo.icono)
