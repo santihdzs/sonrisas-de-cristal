@@ -194,7 +194,6 @@ private fun BannerIncidente(incidente: Incidente, onVer: (Incidente) -> Unit) {
 @Composable
 private fun TarjetaAhora(datos: HoyDatos) {
     var abierto by rememberSaveable { mutableStateOf(false) }
-    val sala = datos.hijos.sala
     TarjetaSeccion(titulo = "Ahora mismo", icono = R.drawable.ic_schedule) {
         when (val a = datos.actividad) {
             is ActividadActual.Especial -> {
@@ -213,7 +212,6 @@ private fun TarjetaAhora(datos: HoyDatos) {
                 Text("La estancia no tiene actividades en este momento.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
-        sala?.let { EstrellaSala("Sala ${it.nombre}", it.estrella, tamano = 24.dp) }
         TextButton(onClick = { abierto = !abierto }, modifier = Modifier.heightIn(min = 48.dp)) {
             Text(if (abierto) "Ocultar horario de hoy" else "Ver horario de hoy")
             Icono(if (abierto) R.drawable.ic_expand_less else R.drawable.ic_expand_more, null, Modifier.padding(start = Espacio.space1))
