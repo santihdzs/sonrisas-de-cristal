@@ -93,7 +93,7 @@ fun ConversacionesScreen(
         }
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(top = Espacio.space2, bottom = 96.dp),
+            contentPadding = PaddingValues(top = Espacio.space2, bottom = 128.dp),
         ) {
             items(datos.conversaciones, key = { it.conversacion.id }) { c ->
                 FilaConversacion(c, datos.hoy, onClick = { onAbrir(c) })
@@ -186,7 +186,7 @@ private fun elementos(mensajes: List<MensajeChat>): List<ElementoChat> {
         val anterior = mensajes.getOrNull(i - 1)
         val nuevoDia = anterior == null || anterior.mensaje.enviado.toLocalDate() != m.mensaje.enviado.toLocalDate()
         if (nuevoDia) salida += ElementoChat.Dia(m.mensaje.enviado.toLocalDate())
-        salida += ElementoChat.Burbuja(m, conAutor = !m.propio && (nuevoDia || anterior?.mensaje?.autorId != m.mensaje.autorId))
+        salida += ElementoChat.Burbuja(m, conAutor = !m.propio && (nuevoDia || anterior.mensaje.autorId != m.mensaje.autorId))
     }
     return salida.asReversed()
 }
