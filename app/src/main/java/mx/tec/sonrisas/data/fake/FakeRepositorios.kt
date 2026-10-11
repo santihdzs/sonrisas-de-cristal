@@ -107,6 +107,17 @@ class FakeSesionRepository(
             delay(700)
             _estado.value = SesionEstado.Anonima
         }
+        // si la direccion cambia la sala o retira el acceso, la sesion abierta se actualiza o se cierra
+        scope.launch {
+            almacen.usuarios.collect { usuarios ->
+                val actual = (_estado.value as? SesionEstado.Activa)?.sesion ?: return@collect
+                val vigente = usuarios.firstOrNull { it.id == actual.usuario.id }
+                when {
+                    vigente == null || !vigente.activo -> _estado.value = SesionEstado.Anonima
+                    vigente != actual.usuario -> _estado.value = SesionEstado.Activa(actual.copy(usuario = vigente))
+                }
+            }
+        }
     }
 
     override suspend fun iniciar(usuario: String, contrasena: String): ResultadoInicio {
