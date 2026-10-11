@@ -1,7 +1,14 @@
 package mx.tec.sonrisas.ui.navigation
 
 import androidx.annotation.DrawableRes
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.unit.dp
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -18,6 +25,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -38,6 +48,8 @@ import mx.tec.sonrisas.ui.components.Icono
 
 /** un destino puede poner aqui su titulo cuando depende de los datos, como el nombre de una conversacion */
 const val TITULO_DINAMICO = "titulo"
+
+private val ANCHO_MAXIMO = 840.dp
 
 data class Pestana(
     val ruta: String,
@@ -132,13 +144,23 @@ fun ScaffoldRol(
                                     Icono(if (seleccionada) p.iconoLleno else p.icono, null)
                                 }
                             },
-                            label = { Text(p.etiqueta, maxLines = 1) },
+                            label = {
+                                // con cinco pestanas y letra al 200 % las etiquetas se cortan; se limitan a 130 %
+                                val densidad = LocalDensity.current
+                                CompositionLocalProvider(LocalDensity provides Density(densidad.density, minOf(densidad.fontScale, 1.3f))) {
+                                    Text(p.etiqueta, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                }
+                            },
                         )
                     }
                 }
             }
         },
         snackbarHost = { SnackbarHost(snackbar) },
-        content = content,
-    )
+    ) { padding ->
+        // en una tableta compartida en horizontal, las tarjetas no se estiran de lado a lado
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+            Box(Modifier.fillMaxHeight().widthIn(max = ANCHO_MAXIMO).fillMaxWidth()) { content(padding) }
+        }
+    }
 }

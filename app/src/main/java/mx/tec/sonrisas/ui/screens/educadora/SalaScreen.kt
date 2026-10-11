@@ -93,7 +93,7 @@ fun SalaScreen(
     ) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(start = Espacio.space4, end = Espacio.space4, bottom = 96.dp),
+            contentPadding = PaddingValues(start = Espacio.space4, end = Espacio.space4, bottom = 128.dp),
             verticalArrangement = Arrangement.spacedBy(Espacio.space3),
         ) {
             item {
