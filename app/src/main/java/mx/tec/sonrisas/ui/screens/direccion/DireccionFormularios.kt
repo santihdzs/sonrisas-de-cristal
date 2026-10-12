@@ -41,6 +41,7 @@ import mx.tec.sonrisas.domain.TipoAviso
 import mx.tec.sonrisas.domain.TipoSala
 import mx.tec.sonrisas.ui.components.BotonPrincipal
 import mx.tec.sonrisas.ui.components.CampoTexto
+import mx.tec.sonrisas.ui.components.coincideCon
 import mx.tec.sonrisas.ui.components.tecladoNombres
 import mx.tec.sonrisas.ui.components.tecladoTelefono
 import mx.tec.sonrisas.ui.components.CampoFecha
@@ -225,7 +226,7 @@ private fun HojaTutoresRegistrados(
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
         )
-        val filtrados = tutores.filter { busqueda.isBlank() || it.nombre.contains(busqueda.trim(), ignoreCase = true) }
+        val filtrados = tutores.filter { it.nombre.coincideCon(busqueda) }
         if (filtrados.isEmpty()) Text("No encontramos tutores con ese nombre.", style = MaterialTheme.typography.bodyLarge)
         filtrados.forEach { t ->
             val hijos = hijosDe[t.id].orEmpty()

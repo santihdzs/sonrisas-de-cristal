@@ -69,6 +69,7 @@ import mx.tec.sonrisas.ui.components.Icono
 import mx.tec.sonrisas.ui.components.TarjetaSeccion
 import mx.tec.sonrisas.ui.components.TipoEstado
 import mx.tec.sonrisas.ui.components.TituloSeccion
+import mx.tec.sonrisas.ui.components.coincideCon
 import mx.tec.sonrisas.ui.components.edadTexto
 import mx.tec.sonrisas.ui.components.etiqueta
 import mx.tec.sonrisas.ui.components.formatoCorto
@@ -205,7 +206,7 @@ fun NinosScreen(
     val filtrados = datos.ninos
         .filter { if (bajas) it.estado is EstadoExpediente.BajaTemporal else it.activo }
         .filter { salaId == null || it.salaId == salaId }
-        .filter { busqueda.isBlank() || it.nombreCompleto.contains(busqueda.trim(), ignoreCase = true) }
+        .filter { it.nombreCompleto.coincideCon(busqueda) }
     Scaffold(
         modifier = modifier,
         contentWindowInsets = WindowInsets(0),

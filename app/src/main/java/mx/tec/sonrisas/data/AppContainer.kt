@@ -58,6 +58,8 @@ class AppContainer(context: Context) {
             sesionRepository
             // al abrir la app se borran los expedientes cuya baja ya vencio (RF-18)
             ninosRepository.purgarVencidos()
+            // los pdf de bitacoras de la sesion anterior ya se imprimieron o compartieron
+            carpetaBitacoras.deleteRecursively()
         }
     }
 }

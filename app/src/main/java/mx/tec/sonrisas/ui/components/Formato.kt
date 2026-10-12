@@ -16,6 +16,14 @@ private val formatoDiaMes = DateTimeFormatter.ofPattern("d 'de' MMMM", LocaleMx)
 private val formatoMes = DateTimeFormatter.ofPattern("MMMM yyyy", LocaleMx)
 private val formatoDiaSemana = DateTimeFormatter.ofPattern("EEEE", LocaleMx)
 
+private val acentos = Regex("\\p{Mn}+")
+
+/** para buscar "Sofia" y encontrar "Sofía" */
+fun String.coincideCon(busqueda: String): Boolean {
+    fun normal(t: String) = java.text.Normalizer.normalize(t.lowercase(LocaleMx), java.text.Normalizer.Form.NFD).replace(acentos, "")
+    return busqueda.isBlank() || normal(this).contains(normal(busqueda.trim()))
+}
+
 fun String.conMayuscula(): String = replaceFirstChar { if (it.isLowerCase()) it.titlecase(LocaleMx) else it.toString() }
 
 fun LocalTime.formatoHora(): String = format(formatoHora)
