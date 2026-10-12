@@ -6,7 +6,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import android.app.Application
@@ -49,7 +48,7 @@ fun SonrisasApp(sesionViewModel: SesionViewModel, onDesbloquear: () -> Unit) {
             val bloqueada = sesionViewModel.bloqueada
             // la app sigue compuesta debajo para no perder la navegacion, pero sin semantica mientras esta bloqueada
             Box(if (bloqueada) Modifier.clearAndSetSemantics { } else Modifier) {
-                SesionActiva(e.sesion, onCerrarSesion = sesionViewModel::cerrarSesion)
+                SesionActiva(e.sesion, sesionViewModel.tiendaPara(e.sesion.usuario.id), onCerrarSesion = sesionViewModel::cerrarSesion)
             }
             if (bloqueada) {
                 val contexto by sesionViewModel.contextoBloqueo.collectAsStateWithLifecycle()
@@ -67,19 +66,17 @@ fun SonrisasApp(sesionViewModel: SesionViewModel, onDesbloquear: () -> Unit) {
     }
 }
 
-private class AlmacenDeSesion(app: Application) : ViewModelStoreOwner, HasDefaultViewModelProviderFactory {
-    override val viewModelStore = ViewModelStore()
+private class AlmacenDeSesion(app: Application, override val viewModelStore: ViewModelStore) : ViewModelStoreOwner, HasDefaultViewModelProviderFactory {
     override val defaultViewModelProviderFactory: ViewModelProvider.Factory = AppViewModelProvider.Factory
     override val defaultViewModelCreationExtras: CreationExtras =
         MutableCreationExtras().apply { set(ViewModelProvider.AndroidViewModelFactory.APPLICATION_KEY, app) }
 }
 
 @Composable
-private fun SesionActiva(sesion: Sesion, onCerrarSesion: () -> Unit) {
-    // cada sesion tiene sus propios viewmodels; al salir se descartan y no queda nada del usuario anterior
+private fun SesionActiva(sesion: Sesion, tienda: ViewModelStore, onCerrarSesion: () -> Unit) {
+    // cada sesion tiene sus propios viewmodels; SesionViewModel los descarta al cambiar de usuario
     val app = LocalContext.current.applicationContext as Application
-    val almacen = remember(sesion.usuario.id) { AlmacenDeSesion(app) }
-    DisposableEffect(almacen) { onDispose { almacen.viewModelStore.clear() } }
+    val almacen = remember(tienda) { AlmacenDeSesion(app, tienda) }
     CompositionLocalProvider(LocalViewModelStoreOwner provides almacen) {
         when (sesion.usuario.rol) {
             Rol.EDUCADORA -> EducadoraApp(onCerrarSesion)

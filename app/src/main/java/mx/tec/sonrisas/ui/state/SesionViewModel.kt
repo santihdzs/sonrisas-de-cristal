@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
@@ -46,12 +47,38 @@ class SesionViewModel(
             )
         }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
+    // los viewmodels de cada sesion viven aqui y no en un remember, para que sobrevivan a la rotacion
+    private var tiendaDe: String? = null
+    private var tienda = ViewModelStore()
+
+    fun tiendaPara(usuarioId: String): ViewModelStore {
+        if (tiendaDe != usuarioId) {
+            tienda.clear()
+            tienda = ViewModelStore()
+            tiendaDe = usuarioId
+        }
+        return tienda
+    }
+
+    override fun onCleared() {
+        tienda.clear()
+    }
+
     private var ultimaInteraccion = System.currentTimeMillis()
 
     private val huellaActiva: Boolean
         get() = (estado.value as? SesionEstado.Activa)?.sesion?.desbloqueoHuella == true
 
     init {
+        // al cerrar sesion, o si la direccion retira el acceso, no queda nada del usuario anterior
+        viewModelScope.launch {
+            estado.collect {
+                if (it !is SesionEstado.Activa) {
+                    tienda.clear()
+                    tiendaDe = null
+                }
+            }
+        }
         // revisa cada 15 segundos si ya pasaron 5 minutos sin tocar la pantalla (RF-13)
         viewModelScope.launch {
             while (isActive) {
