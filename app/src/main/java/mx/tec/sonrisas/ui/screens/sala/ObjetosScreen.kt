@@ -141,8 +141,9 @@ private fun TarjetaObjeto(
 ) {
     TarjetaSeccion {
         Row(horizontalArrangement = Arrangement.spacedBy(Espacio.space3)) {
-            if (o.foto != null) {
-                ImagenArchivo(o.foto, "Foto de ${o.descripcion.lowercase()}", Modifier.size(88.dp))
+            val foto = o.foto
+            if (foto != null) {
+                ImagenArchivo(foto, "Foto de ${o.descripcion.lowercase()}", Modifier.size(88.dp))
             } else {
                 Box(
                     Modifier.size(88.dp).clip(MaterialTheme.shapes.medium).background(MaterialTheme.colorScheme.surfaceContainer),

@@ -13,6 +13,8 @@ class AlmacenMemoria(datos: DatosDePrueba) {
     val estancias = MutableStateFlow(datos.estancias)
     val salas = MutableStateFlow(datos.salas)
     val usuarios = MutableStateFlow(datos.usuarios)
+    // usuario -> contrasena; fuera del modelo para que nunca viaje con el usuario
+    val contrasenas = MutableStateFlow(datos.usuarios.associate { it.id to CONTRASENA_DEMO })
     val tutores = MutableStateFlow(datos.tutores)
     val ninos = MutableStateFlow(datos.ninos)
     val asistencias = MutableStateFlow(datos.asistencias)

@@ -144,7 +144,7 @@ object ArmadoBitacora {
                 fila("Tiempo de siesta") { _, _, r ->
                     if (r.siestas.isEmpty()) SIN_REGISTRO
                     else r.siestas.joinToString("; ") { s ->
-                        if (s.fin == null) "Desde ${s.inicio.format(hora)}" else "${s.minutos} min (${s.inicio.format(hora)} a ${s.fin.format(hora)})"
+                        s.fin?.let { fin -> "${s.minutos} min (${s.inicio.format(hora)} a ${fin.format(hora)})" } ?: "Desde ${s.inicio.format(hora)}"
                     }
                 },
             ),

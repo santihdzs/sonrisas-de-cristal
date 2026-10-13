@@ -99,8 +99,9 @@ class FakeCuentasRepository(
         if (nombre.isBlank()) throw IllegalArgumentException("Escribe el nombre.")
         val usuario = usuarioSugerido(nombre, almacen.usuarios.value.map { it.usuario })
         val contrasena = contrasenaTemporal()
-        val nuevo = Usuario(UUID.randomUUID().toString(), usuario, contrasena, nombre.trim(), rol, estanciaId, salaId, tutorId)
+        val nuevo = Usuario(UUID.randomUUID().toString(), usuario, nombre.trim(), rol, estanciaId, salaId, tutorId)
         almacen.usuarios.update { it + nuevo }
+        almacen.contrasenas.update { it + (nuevo.id to contrasena) }
         almacen.registrar(autor, reloj.ahora(), AccionRegistro.CUENTA, detalle, estanciaId = estanciaId)
         return Credenciales(nuevo.nombre, usuario, contrasena, rol)
     }

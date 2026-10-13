@@ -3,13 +3,8 @@ package mx.tec.sonrisas.data
 import java.io.File
 import java.io.InputStream
 
-const val LIMITE_ARCHIVO_MB = 10
-private const val LIMITE_BYTES = LIMITE_ARCHIVO_MB * 1024L * 1024L
-
 /** lo que la pantalla entrega a la capa de datos; abrir() se llama una sola vez */
 class ArchivoEntrada(val nombre: String, val tipo: String, val tamano: Long?, val abrir: () -> InputStream)
-
-class ArchivoMuyGrande : IllegalArgumentException("El archivo pesa más de $LIMITE_ARCHIVO_MB MB.")
 
 /** copias en el almacenamiento privado de la app; ni la galeria ni otras apps las ven */
 class AlmacenArchivos(private val raiz: File) {

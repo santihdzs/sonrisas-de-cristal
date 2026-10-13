@@ -1,4 +1,9 @@
+@file:UseSerializers(MesSerializer::class)
+
 package mx.tec.sonrisas.domain
+
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.UseSerializers
 
 import java.text.Normalizer
 import java.time.DayOfWeek
@@ -163,12 +168,15 @@ sealed interface ActividadActual {
     }
 }
 
+@Serializable
 data class FilaReporte(val ninoId: String, val nombre: String, val salaId: String, val asistidos: Int, val habiles: Int) {
     val porcentaje: Int get() = if (habiles == 0) 0 else (asistidos * 100.0 / habiles).roundToInt()
 }
 
+@Serializable
 data class FilaSala(val salaId: String, val nombre: String, val inscritos: Int, val promedio: Int)
 
+@Serializable
 data class ReporteAsistencia(
     val mes: YearMonth,
     val diasHabiles: Int,

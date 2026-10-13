@@ -27,15 +27,6 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.YearMonth
 
-class AccesoDenegado(mensaje: String = "No tienes permiso para hacer esto.") : IllegalStateException(mensaje)
-
-data class ResumenEstancia(
-    val estancia: Estancia,
-    val inscritos: Int,
-    val presentesHoy: Int,
-    val promedioMes: Int,
-)
-
 interface EstanciasRepository {
     /** la fundacion ve todas; el personal y las familias solo la suya */
     fun estancias(): Flow<List<Estancia>>
@@ -125,23 +116,6 @@ interface ObjetosPerdidosRepository {
     suspend fun rechazarReclamo(id: String)
 }
 
-const val LIMITE_MENSAJE = 1000
-
-// pdf, imagenes y documentos de office; se valida aqui y no solo en el selector de archivos
-val TIPOS_MATERIAL = arrayOf(
-    "application/pdf",
-    "image/*",
-    "application/msword",
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-    "application/vnd.ms-excel",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    "application/vnd.ms-powerpoint",
-    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-)
-
-fun tipoMaterialPermitido(tipo: String): Boolean =
-    TIPOS_MATERIAL.any { if (it.endsWith("/*")) tipo.startsWith(it.removeSuffix("*")) else it == tipo }
-
 interface MaterialRepository {
     /** el personal ve el de su sala o estancia; la familia, solo el de las salas de sus hijos */
     fun material(salaId: String): Flow<List<MaterialClase>>
@@ -151,21 +125,6 @@ interface MaterialRepository {
     suspend fun editar(id: String, titulo: String, descripcion: String)
     suspend fun borrar(id: String)
 }
-
-/** "Laura · mamá de Sofía", "Mariana · educadora" */
-data class MensajeChat(val mensaje: Mensaje, val autor: String, val propio: Boolean)
-
-data class ResumenConversacion(
-    val conversacion: Conversacion,
-    val titulo: String,
-    val subtitulo: String,
-    val sala: Sala?,
-    val ultimo: MensajeChat?,
-    val noLeidos: Int,
-)
-
-/** con quien se puede abrir un chat directo: tutor con educadora de la sala de su hijo, y al reves */
-data class Contacto(val usuarioId: String, val nombre: String, val etiqueta: String, val sala: Sala)
 
 interface MensajesRepository {
     /** solo las conversaciones de las que el usuario es miembro, la mas reciente primero */

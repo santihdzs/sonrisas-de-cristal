@@ -36,6 +36,11 @@ import mx.tec.sonrisas.domain.TipoSala
 import mx.tec.sonrisas.domain.Tutor
 import mx.tec.sonrisas.domain.UsoFoto
 import mx.tec.sonrisas.domain.Usuario
+import mx.tec.sonrisas.domain.describirEvento
+import mx.tec.sonrisas.domain.describirIncidente
+import mx.tec.sonrisas.domain.describirLlegada
+import mx.tec.sonrisas.domain.describirSalida
+import mx.tec.sonrisas.data.idChatSala
 import mx.tec.sonrisas.domain.esDiaHabil
 import mx.tec.sonrisas.domain.folioIncidente
 import mx.tec.sonrisas.domain.lunesDeLaSemana
@@ -51,6 +56,9 @@ import java.util.UUID
 import kotlin.random.Random
 
 const val CONTRASENA_DEMO = "demo1234"
+
+/** archivo real de los datos de prueba; ruta es donde quedo guardado (archivo local en la app, id en el servidor) */
+data class ArchivoDemo(val clave: String, val nombre: String, val tipo: String, val ruta: String, val tamano: Long)
 
 data class DatosDePrueba(
     val estancias: List<Estancia>,
@@ -207,7 +215,7 @@ private class Generador(reloj: Reloj, private val archivosDemo: List<ArchivoDemo
         salas += Sala(id(), valleVerde.id, "Preescolar", TipoSala.PREESCOLAR, ColorEstrella.AZUL)
 
         fun personal(usuario: String, nombre: String, rol: Rol, estancia: Estancia?, sala: Sala?) =
-            Usuario(id(), usuario, CONTRASENA_DEMO, nombre, rol, estancia?.id, sala?.id).also { usuarios += it }
+            Usuario(id(), usuario, nombre, rol, estancia?.id, sala?.id).also { usuarios += it }
 
         val (sbLac, sbMat, sbPre, vvLac, vvMat, vvPre) = salas
         educadoraDeSala[sbMat.id] = personal("educadora", "Mariana López Hernández", Rol.EDUCADORA, sanBernabe, sbMat)
@@ -276,8 +284,8 @@ private class Generador(reloj: Reloj, private val archivosDemo: List<ArchivoDemo
         tutores += listOf(laura, jorge)
         val abuelaCarmen = PersonaAutorizada(id(), "Carmen Garza Leal", "Abuela", "81 1122 3344")
         val autorizadosDemo = listOf(tutorComoPersona(laura), tutorComoPersona(jorge), abuelaCarmen)
-        usuarios += Usuario(id(), "familia", CONTRASENA_DEMO, laura.nombre, Rol.FAMILIAR, sanBernabe.id, tutorId = laura.id)
-        usuarios += Usuario(id(), "familia.papa", CONTRASENA_DEMO, jorge.nombre, Rol.FAMILIAR, sanBernabe.id, tutorId = jorge.id)
+        usuarios += Usuario(id(), "familia", laura.nombre, Rol.FAMILIAR, sanBernabe.id, tutorId = laura.id)
+        usuarios += Usuario(id(), "familia.papa", jorge.nombre, Rol.FAMILIAR, sanBernabe.id, tutorId = jorge.id)
         usados += listOf("Sofía", "Mateo", "Diego")
 
         sofia = Nino(
@@ -292,7 +300,7 @@ private class Generador(reloj: Reloj, private val archivosDemo: List<ArchivoDemo
         // segunda familia demo en maternales, para el chat de sala y los objetos reclamados
         paola = Tutor(id(), "Paola Elizondo Garza", "Mamá", "81 3456 7812")
         tutores += paola
-        usuarios += Usuario(id(), "familia.paola", CONTRASENA_DEMO, paola.nombre, Rol.FAMILIAR, sanBernabe.id, tutorId = paola.id)
+        usuarios += Usuario(id(), "familia.paola", paola.nombre, Rol.FAMILIAR, sanBernabe.id, tutorId = paola.id)
         diego = Nino(
             id(), "Diego", "Cavazos Elizondo", hoy.minusMonths(31).minusDays(4), sanBernabe.id, sbMat.id,
             listOf(paola.id), listOf(tutorComoPersona(paola)),

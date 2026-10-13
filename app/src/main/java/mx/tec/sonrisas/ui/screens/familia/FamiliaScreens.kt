@@ -135,7 +135,8 @@ fun HoyScreen(
         datos.hijos.sala?.let { sala ->
             item { TarjetaSalaFamilia(n, sala, datos.objetosNuevos, onObjetos = { onObjetos(sala) }, onMaterial = { onMaterial(sala) }) }
         }
-        if (r.asistencia == null) {
+        val asistencia = r.asistencia
+        if (asistencia == null) {
             item {
                 TarjetaSeccion {
                     EstadoVacio(
@@ -146,7 +147,7 @@ fun HoyScreen(
                 }
             }
         } else {
-            item { TarjetaAsistencia(n, r.asistencia) }
+            item { TarjetaAsistencia(n, asistencia) }
             item { TarjetaComidas(r) }
             item { TarjetaSiesta(r, datos.ahora.toLocalTime()) }
             item { TarjetaBano(r) }
@@ -267,10 +268,11 @@ private fun TarjetaAsistencia(n: Nino, a: Asistencia) {
             "Llegó a las ${a.horaEntrada.formatoHora()}" + (entrega?.let { " con ${it.parentesco} (${primerNombre(it.nombre)})" } ?: ""),
             style = MaterialTheme.typography.bodyLarge,
         )
-        if (a.horaSalida != null) {
+        val salida = a.horaSalida
+        if (salida != null) {
             val recoge = n.persona(a.recogidoPorId)
             Text(
-                "Salió a las ${a.horaSalida.formatoHora()}" + (recoge?.let { " con ${it.parentesco} (${primerNombre(it.nombre)})" } ?: ""),
+                "Salió a las ${salida.formatoHora()}" + (recoge?.let { " con ${it.parentesco} (${primerNombre(it.nombre)})" } ?: ""),
                 style = MaterialTheme.typography.bodyLarge,
             )
             a.observacionesSalida?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
@@ -310,8 +312,8 @@ private fun TarjetaSiesta(r: ResumenDia, ahora: LocalTime) {
         } else {
             if (r.minutosSiesta > 0) Text("Durmió ${minutosTexto(r.minutosSiesta)} en total", style = MaterialTheme.typography.titleMedium)
             r.siestas.forEach { s ->
-                val texto = if (s.fin == null) "Duerme desde las ${s.inicio.formatoHora()}"
-                else "De ${s.inicio.formatoHora()} a ${s.fin.formatoHora()}"
+                val texto = s.fin?.let { "De ${s.inicio.formatoHora()} a ${it.formatoHora()}" }
+                    ?: "Duerme desde las ${s.inicio.formatoHora()}"
                 Text(texto, style = MaterialTheme.typography.bodyLarge)
             }
         }
