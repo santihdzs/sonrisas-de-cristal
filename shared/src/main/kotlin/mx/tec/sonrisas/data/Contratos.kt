@@ -1,12 +1,16 @@
 package mx.tec.sonrisas.data
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import mx.tec.sonrisas.domain.Conversacion
 import mx.tec.sonrisas.domain.Estancia
 import mx.tec.sonrisas.domain.Mensaje
 import mx.tec.sonrisas.domain.Sala
 
 // lo que comparten la app y el servidor: errores, limites y respuestas armadas por la capa de datos
+
+/** el mismo formato en la app, el api y la base de datos */
+val JsonApi = Json { ignoreUnknownKeys = true; encodeDefaults = true }
 
 class AccesoDenegado(mensaje: String = "No tienes permiso para hacer esto.") : IllegalStateException(mensaje)
 

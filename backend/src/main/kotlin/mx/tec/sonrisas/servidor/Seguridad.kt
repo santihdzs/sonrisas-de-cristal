@@ -1,0 +1,70 @@
+package mx.tec.sonrisas.servidor
+
+import mx.tec.sonrisas.domain.Usuario
+import java.security.MessageDigest
+import java.security.SecureRandom
+import java.util.Base64
+import javax.crypto.SecretKeyFactory
+import javax.crypto.spec.PBEKeySpec
+import kotlin.time.Duration.Companion.days
+
+val azarSeguro = SecureRandom()
+
+private val b64 = Base64.getEncoder().withoutPadding()
+private val b64url = Base64.getUrlEncoder().withoutPadding()
+private val b64Leer = Base64.getDecoder()
+
+/** contrasenas con pbkdf2 de la jdk: "pbkdf2$iteraciones$sal$hash" */
+object Claves {
+    private const val ITERACIONES = 210_000
+
+    private fun derivar(clave: String, sal: ByteArray, iteraciones: Int): ByteArray =
+        SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
+            .generateSecret(PBEKeySpec(clave.toCharArray(), sal, iteraciones, 256))
+            .encoded
+
+    fun hash(clave: String): String {
+        val sal = ByteArray(16).also(azarSeguro::nextBytes)
+        return "pbkdf2$$ITERACIONES$${b64.encodeToString(sal)}$${b64.encodeToString(derivar(clave, sal, ITERACIONES))}"
+    }
+
+    fun verificar(clave: String, guardado: String): Boolean {
+        val partes = guardado.split("$")
+        if (partes.size != 4 || partes[0] != "pbkdf2") return false
+        val esperado = b64Leer.decode(partes[3])
+        return MessageDigest.isEqual(esperado, derivar(clave, b64Leer.decode(partes[2]), partes[1].toInt()))
+    }
+
+    // se verifica contra este hash cuando el usuario no existe, para que tarde lo mismo y no delate que cuentas existen
+    val falso: String by lazy { hash("sin-cuenta") }
+}
+
+/** tokens opacos: el telefono guarda el token y la base solo su sha-256, asi que una copia de la base no sirve para entrar */
+object Sesiones {
+    val DURACION = 30.days
+
+    fun nuevoToken(): String = b64url.encodeToString(ByteArray(32).also(azarSeguro::nextBytes))
+
+    fun huella(token: String): String = b64.encodeToString(MessageDigest.getInstance("SHA-256").digest(token.toByteArray()))
+
+    fun crear(c: Conexion, usuarioId: String): String {
+        val token = nuevoToken()
+        c.ejecutar(
+            "INSERT INTO sesiones (token_hash, usuario_id, expira) VALUES (?, ?, ?)",
+            huella(token), usuarioId, System.currentTimeMillis() + DURACION.inWholeMilliseconds,
+        )
+        return token
+    }
+
+    /** el usuario vigente del token; una cuenta sin acceso deja de entrar aunque su token no haya vencido */
+    fun usuario(c: Conexion, token: String): Usuario? {
+        val id = c.consultar(
+            "SELECT usuario_id FROM sesiones WHERE token_hash = ? AND expira > ?", huella(token), System.currentTimeMillis(),
+        ) { it.getString(1) }.firstOrNull() ?: return null
+        return with(c) { Tablas.usuarios.porId(id) }?.takeIf { it.activo }
+    }
+
+    fun cerrar(c: Conexion, token: String) = c.ejecutar("DELETE FROM sesiones WHERE token_hash = ?", huella(token))
+
+    fun cerrarTodas(c: Conexion, usuarioId: String) = c.ejecutar("DELETE FROM sesiones WHERE usuario_id = ?", usuarioId)
+}

@@ -14,4 +14,4 @@ build/
 *.jks
 *.keystore
 /DEMO.md
-/backend/
+/backend/datos/
