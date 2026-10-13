@@ -1,0 +1,33 @@
+# servidor + postgres en cualquier maquina con docker: docker compose up -d
+services:
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: sonrisas
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sonrisas}
+      POSTGRES_DB: sonrisas
+    volumes:
+      - datos:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sonrisas"]
+      interval: 3s
+      retries: 20
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://sonrisas:${POSTGRES_PASSWORD:-sonrisas}@db:5432/sonrisas
+      DATOS_DEMO: ${DATOS_DEMO:-true}
+      CLAVE_FUNDACION: ${CLAVE_FUNDACION:-}
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+volumes:
+  datos:

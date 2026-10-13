@@ -46,18 +46,19 @@ import java.time.LocalDateTime
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 
-fun main() {
+/** sin argumentos arranca el servidor; "reiniciar-demo" borra todo, vuelve a cargar los datos de prueba con la fecha de hoy y termina */
+fun main(args: Array<String>) {
     val env = System.getenv()
+    val demo = env["DATOS_DEMO"] != "false"
+    val reiniciar = args.firstOrNull() == "reiniciar-demo"
+    // una base de produccion nunca se borra
+    if (reiniciar && !demo) error("reiniciar-demo solo funciona con DATOS_DEMO distinto de false.")
     val db = Db.desde(env["DATABASE_URL"])
-    val mensaje = runBlocking {
-        Semilla.preparar(
-            db,
-            demo = env["DATOS_DEMO"] != "false",
-            reiniciar = env["REINICIAR_DEMO"] == "true",
-            claveFundacion = env["CLAVE_FUNDACION"],
-        )
+    println(runBlocking { Semilla.preparar(db, demo, reiniciar, env["CLAVE_FUNDACION"]) })
+    if (reiniciar) {
+        db.cerrar()
+        return
     }
-    println(mensaje)
     embeddedServer(Netty, port = env["PORT"]?.toIntOrNull() ?: 8080) {
         modulo(db, proxyConfiable = env["PROXY_CONFIABLE"] == "true")
     }.start(wait = true)
