@@ -50,7 +50,7 @@ import java.time.LocalTime
 fun ChipAsistencia(asistencia: Asistencia?, modifier: Modifier = Modifier) {
     when {
         asistencia == null -> EstadoChip("Sin llegar", TipoEstado.NEUTRO, R.drawable.ic_schedule, modifier)
-        asistencia.horaSalida != null -> EstadoChip("Salió ${asistencia.horaSalida.formatoHora()}", TipoEstado.INFO, R.drawable.ic_logout, modifier)
+        asistencia.horaSalida != null -> EstadoChip("Salió ${asistencia.horaSalida?.formatoHora()}", TipoEstado.INFO, R.drawable.ic_logout, modifier)
         else -> EstadoChip("Presente desde ${asistencia.horaEntrada.formatoHora()}", TipoEstado.EXITO, R.drawable.ic_check_circle_fill, modifier)
     }
 }

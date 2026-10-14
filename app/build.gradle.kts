@@ -13,6 +13,8 @@ android {
         targetSdk = 37
         versionCode = 1
         versionName = "0.1.0"
+        // servidor por defecto (gradle -Pservidor=https://...); vacio = datos de prueba sin servidor. se puede cambiar en el login
+        buildConfigField("String", "SERVIDOR", "\"${providers.gradleProperty("servidor").getOrElse("")}\"")
     }
 
     buildTypes {
@@ -32,6 +34,7 @@ android {
 }
 
 dependencies {
+    implementation(project(":shared"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)

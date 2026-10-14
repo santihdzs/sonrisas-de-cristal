@@ -45,7 +45,7 @@ class SesionViewModel(
                 estrella = sala?.estrella,
                 nombre = u.nombre,
             )
-        }.stateIn(viewModelScope, SharingStarted.Eagerly, null)
+        }.reintentando().stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     // los viewmodels de cada sesion viven aqui y no en un remember, para que sobrevivan a la rotacion
     private var tiendaDe: String? = null

@@ -13,16 +13,17 @@ JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home" ./gradle
 
 Se necesita el JDK que trae Android Studio (Gradle 9.8 no corre con Java 11). Las pruebas unitarias cubren el diseño de la bitácora imprimible.
 
-La app arranca con datos de prueba en memoria generados a partir de la fecha del teléfono. Todas las cuentas de prueba usan la contraseña `demo1234`.
+La app se conecta al servidor de `backend/` (ver [backend/README.md](backend/README.md) para levantarlo con `docker compose up -d`). La dirección se elige en la opción "Servidor" del inicio de sesión. Si no hay servidor, la misma opción activa los datos de prueba en memoria, generados a partir de la fecha del teléfono. Todas las cuentas de prueba usan la contraseña `demo1234`.
 
 ## Arquitectura
 
-- `domain/`: modelos y reglas puras (resúmenes del día y de la semana, validaciones, reporte de asistencia).
-- `data/`: interfaces de repositorios y `AppContainer`. `data/fake/` tiene las implementaciones en memoria y los datos de prueba.
+- `shared/`: módulo que comparten la app y el servidor. Modelos y reglas puras (`domain/`: resúmenes, validaciones, reporte de asistencia, quién ve a qué niño), los cuerpos del API y el generador de datos de prueba.
+- `data/`: interfaces de repositorios y `AppContainer`, que elige entre `data/remoto/` (el servidor) y `data/fake/` (en memoria, respaldo para la demo).
+- `backend/`: servidor Ktor y PostgreSQL.
 - `bitacora/`: la bitácora imprimible. `ContenidoBitacora` arma el texto de cada fila, `DisenoBitacora` calcula las páginas sin depender de Android y `PdfBitacora` las dibuja con `PdfDocument`.
 - `ui/`: pantallas por rol, `AppViewModelProvider` y navegación. Cada pantalla recibe un `UiState` (cargando, éxito o error).
 
-Toda regla de privacidad (qué niño, sala o conversación puede ver cada quien) vive en la capa de datos, no en las pantallas.
+Toda regla de privacidad (qué niño, sala o conversación puede ver cada quien) vive en la capa de datos, no en las pantallas. Con servidor, quien la aplica es el servidor.
 
 ## Funciones por rol
 
@@ -62,7 +63,7 @@ Toda regla de privacidad (qué niño, sala o conversación puede ver cada quien)
 | RF-08 | Avisos del centro | Avisos con indicador de no leídos |
 | RF-09 | Fotografía de la actividad | Fotos etiquetadas visibles solo para las familias de esos niños |
 | RF-10 | Borrar una foto | La familia borra la foto para todos |
-| RF-11 | Funciona sin internet | Pendiente: requiere el backend (ver "Backend") |
+| RF-11 | Funciona sin internet | Pendiente: hace falta guardar en el teléfono y sincronizar con el servidor |
 | RF-12 | Resumen semanal | Pestaña "Semana", compartir resumen e imprimir bitácora |
 | RF-13 | Desbloqueo con huella | Bloqueo al ir a segundo plano o tras 5 minutos |
 | RF-14 | Quién hizo qué | Registro de actividad: capturas, cuentas, salas, objetos perdidos, material y bitácoras exportadas |
@@ -91,7 +92,7 @@ Puntos pendientes del catálogo que se resolvieron:
 ## Decisiones
 
 - **Sin registro público.** Las cuentas solo las crean la fundación (dirección de cada estancia) y la dirección (educadoras y familias). Así nadie entra a una estancia sin que alguien de la estancia lo autorice.
-- **Contraseña temporal.** Al crear una cuenta se muestran usuario y contraseña una sola vez, con "Copiar". El cambio obligatorio de contraseña en el primer acceso queda para cuando exista el backend.
+- **Contraseña temporal.** Al crear una cuenta se muestran usuario y contraseña una sola vez, con "Copiar". El cambio obligatorio de contraseña en el primer acceso queda pendiente.
 - **Retirar acceso no borra la cuenta.** La cuenta queda inactiva: no puede iniciar sesión, sale de los chats y su nombre se conserva en la bitácora y en el registro de actividad. Si tenía la sesión abierta, se cierra.
 - **Una sala por educadora.** Una sala puede tener varias educadoras, pero cada educadora pertenece a una sala.
 - **Máximo cinco salas por estancia.** El color de estrella identifica a la sala y no se repite dentro de la estancia; hay cinco colores.
@@ -99,7 +100,10 @@ Puntos pendientes del catálogo que se resolvieron:
 - **Chats.** Solo participan personas con acceso a la app. La dirección está en el chat de cada sala de su estancia, pero no inicia mensajes directos (el requerimiento solo define familia y educadora). La pertenencia se recalcula siempre: si un niño cambia de sala o alguien pierde el acceso, la conversación deja de mostrarse. Los mensajes no se copian al registro de actividad para no exponer su contenido.
 - **Objetos perdidos.** La familia ve que un objeto está reclamado, pero solo ve el nombre de quien lo reclamó si fue ella. Los entregados quedan en el filtro "Entregados".
 - **Material de clase.** PDF, imágenes y documentos de Word, Excel y PowerPoint, de hasta 10 MB. La educadora edita o borra lo que ella subió; la dirección puede corregir cualquier material de su estancia.
-- **Archivos.** Las fotos de objetos y el material se copian al almacenamiento privado de la app. Como los datos de prueba viven en memoria, al abrir la app se borran los archivos subidos en una ejecución anterior y los PDF temporales de la bitácora.
+- **Archivos.** Con servidor, el material y las fotos de objetos se guardan en la base y la app los baja una vez a su caché privada; al cerrar sesión se borran del teléfono. Sin servidor se copian al almacenamiento privado de la app y, como los datos viven en memoria, al abrir la app se borran los de la ejecución anterior. Los PDF temporales de la bitácora se borran al abrir la app.
+- **Sesión.** El teléfono guarda un token de 30 días, así que la sesión no se cierra al salir de la app. En lugar de JWT se usan tokens opacos guardados en la base: cerrar sesión o retirar el acceso los invalida de inmediato.
+- **Actualización.** Las pantallas se vuelven a pedir cada 15 segundos (el chat cada 3) y en cuanto el teléfono guarda algo. No hay notificaciones push.
+- **Datos de prueba sin servidor.** Se conservan como respaldo para la demo; se activan desde la opción "Servidor" del inicio de sesión y la app lo indica ahí mismo.
 - **Bitácora en papel.** La semana de un niño ocupa dos hojas, igual que el formato oficial; al imprimir una sala, cada niño empieza en su propia hoja. El texto nunca baja de 7 pt: una celda que no cabe en cuatro renglones deja "sigue en Observaciones, nota N" y el texto completo pasa a una hoja de observaciones al final.
 - **Accidentes y salud.** Golpes, caídas, mordidas, rasguños y "otro" van en "Accidentes"; reacción alérgica, fiebre y malestar van en "Salud".
 - **Salida.** La asistencia ahora guarda qué persona del personal entregó al niño, porque el formato oficial lo pide.
@@ -108,6 +112,4 @@ Puntos pendientes del catálogo que se resolvieron:
 
 ## Backend
 
-Todavía no hay backend: la carpeta `backend/` solo tiene un README con el stack planeado (Ktor y PostgreSQL) y carpetas vacías, sin proyecto ni contrato de API. Por eso la app sigue con repositorios en memoria.
-
-Para conectarlo basta con implementar las interfaces de `data/Repositorios.kt` y `data/SesionRepository.kt` (por ejemplo con Retrofit) y cambiarlas en `AppContainer`. Las pantallas y los ViewModels no cambian. Los archivos llegan a la capa de datos como `ArchivoEntrada`, así que un repositorio remoto puede subirlos tal cual. El funcionamiento sin conexión (RF-11) depende de ese backend.
+`backend/` es el servidor: Ktor, PostgreSQL y las mismas reglas de privacidad que la app, compartidas en `shared/`. Se levanta en local con `docker compose up -d` y se publica gratis en Render con Neon. Los pasos, las variables de entorno, la seguridad y el API están en [backend/README.md](backend/README.md).

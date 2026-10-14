@@ -47,6 +47,11 @@ import mx.tec.sonrisas.domain.TipoIncidente
 import mx.tec.sonrisas.domain.Tutor
 import mx.tec.sonrisas.domain.Usuario
 import mx.tec.sonrisas.domain.Validaciones
+import mx.tec.sonrisas.domain.Visibilidad
+import mx.tec.sonrisas.domain.describirEvento
+import mx.tec.sonrisas.domain.describirIncidente
+import mx.tec.sonrisas.domain.describirLlegada
+import mx.tec.sonrisas.domain.describirSalida
 import mx.tec.sonrisas.domain.folioIncidente
 import mx.tec.sonrisas.domain.puedeAparecerEn
 import java.time.LocalDate
@@ -58,32 +63,6 @@ import kotlin.random.Random
 
 // simula la latencia de red para que se vean los estados de carga y "Guardando..."
 internal suspend fun latencia() = delay(Random.nextLong(200, 401))
-
-/** reglas de quien ve a que nino (RF-02, RF-07, RF-17) */
-internal object Visibilidad {
-    fun ninos(usuario: Usuario?, todos: List<Nino>): List<Nino> = when (usuario?.rol) {
-        Rol.EDUCADORA -> todos.filter { it.estanciaId == usuario.estanciaId && it.salaId == usuario.salaId && it.activo }
-        Rol.FAMILIAR -> todos.filter { usuario.tutorId != null && usuario.tutorId in it.tutorIds && it.activo }
-        Rol.DIRECCION -> todos.filter { it.estanciaId == usuario.estanciaId }
-        // la fundacion solo ve datos consolidados, nunca expedientes individuales
-        Rol.FUNDACION, null -> emptyList()
-    }
-
-    /** salas cuyo contenido (objetos perdidos, material, chat) puede ver el usuario */
-    fun salas(usuario: Usuario?, salas: List<Sala>, ninos: List<Nino>): Set<String> = when (usuario?.rol) {
-        Rol.EDUCADORA -> setOfNotNull(usuario.salaId)
-        Rol.DIRECCION -> salas.filter { it.estanciaId == usuario.estanciaId }.map { it.id }.toSet()
-        Rol.FAMILIAR -> ninos(usuario, ninos).map { it.salaId }.toSet()
-        Rol.FUNDACION, null -> emptySet()
-    }
-
-    /** educadoras de la sala y direccion de su estancia */
-    fun esPersonalDe(usuario: Usuario?, sala: Sala?): Boolean = sala != null && when (usuario?.rol) {
-        Rol.EDUCADORA -> usuario.salaId == sala.id
-        Rol.DIRECCION -> usuario.estanciaId == sala.estanciaId
-        else -> false
-    }
-}
 
 class FakeSesionRepository(
     private val almacen: AlmacenMemoria,
@@ -123,7 +102,7 @@ class FakeSesionRepository(
     override suspend fun iniciar(usuario: String, contrasena: String): ResultadoInicio {
         latencia()
         val encontrado = almacen.usuarios.value.firstOrNull {
-            it.usuario.equals(usuario.trim(), ignoreCase = true) && it.contrasena == contrasena
+            it.usuario.equals(usuario.trim(), ignoreCase = true) && almacen.contrasenas.value[it.id] == contrasena
         } ?: return ResultadoInicio.INCORRECTO
         if (!encontrado.activo) return ResultadoInicio.SIN_ACCESO
         _estado.value = SesionEstado.Activa(Sesion(encontrado, encontrado.id in almacen.desbloqueoHuella.value))
@@ -221,12 +200,13 @@ class FakeEstanciasRepository(
     override suspend fun guardarSala(sala: Sala): Sala {
         latencia()
         val u = sesion.usuarioActual()
-        if (u?.rol != Rol.DIRECCION || u.estanciaId == null) throw AccesoDenegado()
+        val estanciaId = u?.estanciaId
+        if (u?.rol != Rol.DIRECCION || estanciaId == null) throw AccesoDenegado()
         val existente = almacen.salas.value.firstOrNull { it.id == sala.id }
         if (existente != null && existente.estanciaId != u.estanciaId) throw AccesoDenegado()
         val otras = almacen.salas.value.filter { it.estanciaId == u.estanciaId && it.id != sala.id }
         if (Validaciones.sala(sala.nombre, sala.estrella, otras).isNotEmpty()) throw IllegalArgumentException("Revisa los datos de la sala.")
-        val limpia = sala.copy(estanciaId = u.estanciaId, nombre = sala.nombre.trim())
+        val limpia = sala.copy(estanciaId = estanciaId, nombre = sala.nombre.trim())
         almacen.salas.update { lista -> if (existente != null) lista.map { if (it.id == limpia.id) limpia else it } else lista + limpia }
         almacen.registrar(
             u, reloj.ahora(), AccionRegistro.ESTRUCTURA,
@@ -600,8 +580,9 @@ class FakeAvisosRepository(
     override suspend fun publicar(tipo: TipoAviso, titulo: String, cuerpo: String, fechaEvento: LocalDateTime?): Aviso {
         latencia()
         val u = sesion.usuarioActual()
-        if (u?.rol != Rol.DIRECCION || u.estanciaId == null) throw AccesoDenegado()
-        val aviso = Aviso(UUID.randomUUID().toString(), u.estanciaId, tipo, titulo.trim(), cuerpo.trim(), fechaEvento, reloj.ahora(), u.id)
+        val estanciaId = u?.estanciaId
+        if (u?.rol != Rol.DIRECCION || estanciaId == null) throw AccesoDenegado()
+        val aviso = Aviso(UUID.randomUUID().toString(), estanciaId, tipo, titulo.trim(), cuerpo.trim(), fechaEvento, reloj.ahora(), u.id)
         almacen.avisos.update { it + aviso }
         almacen.avisosLeidos.update { mapa -> mapa + (u.id to (mapa[u.id].orEmpty() + aviso.id)) }
         almacen.registrar(u, reloj.ahora(), AccionRegistro.AVISO, "Publicó el aviso \"${aviso.titulo}\"")

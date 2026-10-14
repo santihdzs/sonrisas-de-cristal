@@ -1,15 +1,21 @@
+@file:UseSerializers(FechaSerializer::class, FechaHoraSerializer::class, HoraSerializer::class)
+
 package mx.tec.sonrisas.domain
 
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.UseSerializers
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 
+@Serializable
 data class Estancia(val id: String, val nombre: String, val colonia: String, val telefono: String = "")
 
 enum class TipoSala { LACTANTES, MATERNALES, PREESCOLAR }
 
 enum class ColorEstrella { AZUL, ROJO, NARANJA, VERDE, AMARILLO }
 
+@Serializable
 data class Sala(
     val id: String,
     val estanciaId: String,
@@ -20,10 +26,10 @@ data class Sala(
 
 enum class Rol { EDUCADORA, FAMILIAR, DIRECCION, FUNDACION }
 
+@Serializable
 data class Usuario(
     val id: String,
     val usuario: String,
-    val contrasena: String,
     val nombre: String,
     val rol: Rol,
     val estanciaId: String? = null,
@@ -34,17 +40,24 @@ data class Usuario(
 )
 
 /** se muestran una sola vez al crear la cuenta; despues ya no se pueden consultar */
+@Serializable
 data class Credenciales(val nombre: String, val usuario: String, val contrasena: String, val rol: Rol)
 
+@Serializable
 data class Tutor(val id: String, val nombre: String, val parentesco: String, val telefono: String)
 
+@Serializable
 data class PersonaAutorizada(val id: String, val nombre: String, val parentesco: String, val telefono: String)
 
+@Serializable
 sealed interface EstadoExpediente {
+    @Serializable
     data object Activo : EstadoExpediente
+    @Serializable
     data class BajaTemporal(val fechaBaja: LocalDate, val eliminarEl: LocalDate) : EstadoExpediente
 }
 
+@Serializable
 data class Nino(
     val id: String,
     val nombre: String,
@@ -71,6 +84,7 @@ data class Nino(
 
 enum class SiNoNoAplica { SI, NO, NO_APLICA }
 
+@Serializable
 data class Asistencia(
     val id: String,
     val ninoId: String,
@@ -103,12 +117,14 @@ enum class TipoEvacuacion { PIPI, POPO, AMBOS }
 enum class ControlEsfinteres { AVISO, NO_AVISO, NO_APLICA }
 enum class EstadoAnimo { FELIZ, TRISTE, ENOJADO }
 
+@Serializable
 sealed interface EventoBitacora {
     val id: String
     val ninoId: String
     val cuando: LocalDateTime
     val registradoPorId: String
 
+    @Serializable
     data class Alimento(
         override val id: String,
         override val ninoId: String,
@@ -118,6 +134,7 @@ sealed interface EventoBitacora {
         val porcion: Porcion,
     ) : EventoBitacora
 
+    @Serializable
     data class Siesta(
         override val id: String,
         override val ninoId: String,
@@ -130,6 +147,7 @@ sealed interface EventoBitacora {
             get() = if (fin == null) 0 else java.time.Duration.between(inicio, fin).toMinutes().toInt().coerceAtLeast(0)
     }
 
+    @Serializable
     data class Evacuacion(
         override val id: String,
         override val ninoId: String,
@@ -139,6 +157,7 @@ sealed interface EventoBitacora {
         val control: ControlEsfinteres,
     ) : EventoBitacora
 
+    @Serializable
     data class Animo(
         override val id: String,
         override val ninoId: String,
@@ -150,6 +169,7 @@ sealed interface EventoBitacora {
         val participo: Boolean,
     ) : EventoBitacora
 
+    @Serializable
     data class Nota(
         override val id: String,
         override val ninoId: String,
@@ -161,6 +181,7 @@ sealed interface EventoBitacora {
 
 enum class TipoIncidente { GOLPE, CAIDA, MORDIDA, RASGUNO, REACCION_ALERGICA, FIEBRE, MALESTAR, OTRO }
 
+@Serializable
 data class Incidente(
     val id: String,
     val folio: String,
@@ -176,6 +197,7 @@ data class Incidente(
 enum class UsoFoto { INTERNA, REDES }
 enum class TemaFoto { PINTURA, JARDIN, MUSICA, LECTURA, CUMPLEANOS, JUEGO }
 
+@Serializable
 data class Foto(
     val id: String,
     val salaId: String,
@@ -188,6 +210,7 @@ data class Foto(
 
 enum class TipoAviso { JUNTA, SUSPENSION, CAMPANA, GENERAL }
 
+@Serializable
 data class Aviso(
     val id: String,
     val estanciaId: String,
@@ -201,6 +224,7 @@ data class Aviso(
 
 enum class EstadoObjeto { DISPONIBLE, RECLAMADO, ENTREGADO }
 
+@Serializable
 data class ObjetoPerdido(
     val id: String,
     val salaId: String,
@@ -220,6 +244,7 @@ data class ObjetoPerdido(
     val entregadoEl: LocalDateTime? = null,
 )
 
+@Serializable
 data class MaterialClase(
     val id: String,
     val salaId: String,
@@ -237,6 +262,7 @@ data class MaterialClase(
 enum class TipoConversacion { SALA, DIRECTA }
 
 /** el chat de sala es uno por sala; quienes participan se calcula en la capa de datos */
+@Serializable
 data class Conversacion(
     val id: String,
     val tipo: TipoConversacion,
@@ -244,6 +270,7 @@ data class Conversacion(
     val participantes: List<String> = emptyList(),
 )
 
+@Serializable
 data class Mensaje(
     val id: String,
     val conversacionId: String,
@@ -252,6 +279,7 @@ data class Mensaje(
     val enviado: LocalDateTime,
 )
 
+@Serializable
 data class BloqueHorario(
     val id: String,
     val salaId: String,
@@ -260,6 +288,7 @@ data class BloqueHorario(
     val actividad: String,
 )
 
+@Serializable
 data class ActividadEspecial(
     val id: String,
     val salaId: String,
@@ -271,6 +300,7 @@ data class ActividadEspecial(
 
 enum class AccionRegistro { CAPTURA, EDICION, BORRADO, FOTO_CONSULTADA, EXPEDIENTE, AVISO, SESION, ESTRUCTURA, CUENTA, OBJETO, MATERIAL, IMPRESION }
 
+@Serializable
 data class RegistroActividad(
     val id: String,
     val cuando: LocalDateTime,

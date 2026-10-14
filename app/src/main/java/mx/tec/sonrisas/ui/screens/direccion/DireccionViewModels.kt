@@ -49,6 +49,7 @@ import mx.tec.sonrisas.domain.Validaciones
 import mx.tec.sonrisas.ui.navigation.Route
 import mx.tec.sonrisas.ui.state.UiState
 import mx.tec.sonrisas.ui.state.comoUiState
+import mx.tec.sonrisas.ui.state.conReintentos
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -311,8 +312,8 @@ class InscripcionViewModel(
     init {
         if (ninoId != null) {
             viewModelScope.launch {
-                val n = ninosRepository.nino(ninoId).first() ?: return@launch
-                val tutores = ninosRepository.tutoresDe(ninoId).first()
+                val (n, tutores) = conReintentos { ninosRepository.nino(ninoId).first() to ninosRepository.tutoresDe(ninoId).first() }
+                if (n == null) return@launch
                 original = n
                 val idsTutores = tutores.map { it.id }.toSet()
                 form = InscripcionForm(

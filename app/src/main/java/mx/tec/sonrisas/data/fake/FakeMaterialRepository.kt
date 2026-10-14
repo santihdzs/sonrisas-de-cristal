@@ -16,6 +16,7 @@ import mx.tec.sonrisas.domain.Reloj
 import mx.tec.sonrisas.domain.Rol
 import mx.tec.sonrisas.domain.Sala
 import mx.tec.sonrisas.domain.Usuario
+import mx.tec.sonrisas.domain.Visibilidad
 import java.io.File
 import java.util.UUID
 

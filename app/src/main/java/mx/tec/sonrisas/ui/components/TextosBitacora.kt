@@ -17,8 +17,8 @@ val EventoBitacora.icono: Int
 fun EventoBitacora.titulo(): String = when (this) {
     is EventoBitacora.Alimento -> "${tiempo.etiqueta}: ${porcion.etiqueta.lowercase()}"
     is EventoBitacora.Siesta ->
-        if (fin == null) "Durmiendo desde las ${inicio.formatoHora()}"
-        else "Siesta de ${inicio.formatoHora()} a ${fin.formatoHora()} (${minutosTexto(minutos)})"
+        fin?.let { "Siesta de ${inicio.formatoHora()} a ${it.formatoHora()} (${minutosTexto(minutos)})" }
+            ?: "Durmiendo desde las ${inicio.formatoHora()}"
     is EventoBitacora.Evacuacion -> buildString {
         append("Baño: ${tipo.etiqueta.lowercase()}")
         if (control != ControlEsfinteres.NO_APLICA) append(", ${control.etiqueta.lowercase()}")

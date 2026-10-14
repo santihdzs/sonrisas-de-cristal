@@ -1,31 +1,22 @@
-package mx.tec.sonrisas.data.fake
+package mx.tec.sonrisas.domain
 
-import mx.tec.sonrisas.domain.Asistencia
-import mx.tec.sonrisas.domain.ControlEsfinteres
-import mx.tec.sonrisas.domain.EstadoAnimo
-import mx.tec.sonrisas.domain.EventoBitacora
-import mx.tec.sonrisas.domain.Incidente
-import mx.tec.sonrisas.domain.Nino
-import mx.tec.sonrisas.domain.Porcion
-import mx.tec.sonrisas.domain.TiempoComida
-import mx.tec.sonrisas.domain.TipoEvacuacion
 import java.time.format.DateTimeFormatter
 
 // textos del registro de actividad (RF-14); los arma la capa de datos porque ahi se registra
 
 private val hora = DateTimeFormatter.ofPattern("H:mm")
 
-internal fun describirLlegada(n: Nino, a: Asistencia): String {
+fun describirLlegada(n: Nino, a: Asistencia): String {
     val quien = n.persona(a.entregadoPorId)?.let { "; entregó ${it.nombre} (${it.parentesco.lowercase()})" } ?: ""
     return "Registró la llegada de ${n.nombreCompleto} a las ${a.horaEntrada.format(hora)}$quien"
 }
 
-internal fun describirSalida(n: Nino, a: Asistencia): String {
+fun describirSalida(n: Nino, a: Asistencia): String {
     val quien = n.persona(a.recogidoPorId)?.let { "; recogió ${it.nombre} (${it.parentesco.lowercase()})" } ?: ""
     return "Registró la salida de ${n.nombreCompleto} a las ${a.horaSalida?.format(hora)}$quien"
 }
 
-internal fun describirEvento(n: Nino, e: EventoBitacora): String = when (e) {
+fun describirEvento(n: Nino, e: EventoBitacora): String = when (e) {
     is EventoBitacora.Alimento -> {
         val tiempo = when (e.tiempo) {
             TiempoComida.DESAYUNO -> "desayuno"
@@ -67,5 +58,5 @@ internal fun describirEvento(n: Nino, e: EventoBitacora): String = when (e) {
     is EventoBitacora.Nota -> "Escribió una nota para la familia de ${n.nombreCompleto}"
 }
 
-internal fun describirIncidente(n: Nino, i: Incidente): String =
+fun describirIncidente(n: Nino, i: Incidente): String =
     "Registró el incidente ${i.folio.ifBlank { "" }} de ${n.nombreCompleto}: ${i.descripcion}".replace("  ", " ")

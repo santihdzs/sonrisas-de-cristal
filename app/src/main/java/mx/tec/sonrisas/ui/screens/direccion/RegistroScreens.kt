@@ -236,7 +236,7 @@ private fun SelectorEstrella(seleccionada: ColorEstrella?, ocupadas: Set<ColorEs
 private fun EstanciaFormPreview() {
     SonrisasTheme {
         EstanciaFormScreen(
-            EstanciaDatos(Estancia("e", "Estancia San Bernabé", "San Bernabé, Monterrey", "81 8331 2040"), listOf(Usuario("u", "direccion", "", "Claudia Martínez Leal", Rol.DIRECCION, "e"))),
+            EstanciaDatos(Estancia("e", "Estancia San Bernabé", "San Bernabé, Monterrey", "81 8331 2040"), listOf(Usuario("u", "direccion", "Claudia Martínez Leal", Rol.DIRECCION, "e"))),
             EstanciaForm("Estancia San Bernabé", "San Bernabé, Monterrey", "81 8331 2040"),
             {}, {}, {},
         )

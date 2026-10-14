@@ -178,7 +178,8 @@ class AsistenciaViewModel(
     fun abrirSalida(nino: Nino, asistencia: Asistencia) {
         val hoy = reloj.hoy()
         viewModelScope.launch {
-            val incidentes = incidentesRepository.incidentesDe(nino.id, hoy, hoy).first()
+            // los incidentes del dia solo son un recordatorio; sin red la hoja abre igual
+            val incidentes = runCatching { incidentesRepository.incidentesDe(nino.id, hoy, hoy).first() }.getOrDefault(emptyList())
             hoja = HojaAsistencia.Salida(nino, asistencia, incidentes, SalidaForm(hora = reloj.ahora().toLocalTime().sinSegundos()))
         }
     }

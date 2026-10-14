@@ -1,0 +1,8 @@
+# solo hace falta lo que compila el servidor
+*
+!gradlew
+!gradle/wrapper/
+!shared/src/
+!backend/build.gradle.kts
+!backend/settings.gradle.kts
+!backend/src/main/

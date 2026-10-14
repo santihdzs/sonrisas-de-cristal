@@ -54,6 +54,14 @@ class LoginViewModel(private val sesionRepository: SesionRepository) : ViewModel
                     entrando = false,
                     error = "Tu acceso a la app fue retirado. Si crees que es un error, habla con la dirección de tu estancia.",
                 )
+                ResultadoInicio.SIN_CONEXION -> estado.copy(
+                    entrando = false,
+                    error = "No pudimos conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.",
+                )
+                ResultadoInicio.DEMASIADOS_INTENTOS -> estado.copy(
+                    entrando = false,
+                    error = "Hubo demasiados intentos. Espera un minuto e inténtalo de nuevo.",
+                )
             }
         }
     }

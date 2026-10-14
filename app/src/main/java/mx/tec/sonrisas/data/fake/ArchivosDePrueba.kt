@@ -10,8 +10,6 @@ import mx.tec.sonrisas.data.AlmacenArchivos
 import java.io.ByteArrayOutputStream
 import java.io.File
 
-data class ArchivoDemo(val clave: String, val nombre: String, val tipo: String, val ruta: String, val tamano: Long)
-
 /** archivos reales y pequenos para que "Abrir" funcione en la demo; se generan una vez en el almacenamiento privado */
 object ArchivosDePrueba {
 
