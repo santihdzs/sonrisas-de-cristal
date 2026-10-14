@@ -11,7 +11,7 @@ sealed interface SesionEstado {
     data class Activa(val sesion: Sesion) : SesionEstado
 }
 
-enum class ResultadoInicio { EXITO, INCORRECTO, SIN_ACCESO }
+enum class ResultadoInicio { EXITO, INCORRECTO, SIN_ACCESO, SIN_CONEXION, DEMASIADOS_INTENTOS }
 
 interface SesionRepository {
     val estado: StateFlow<SesionEstado>
