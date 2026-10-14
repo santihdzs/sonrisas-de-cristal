@@ -9,6 +9,8 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import android.app.Application
+import android.content.Context
+import android.content.Intent
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.HasDefaultViewModelProviderFactory
 import androidx.lifecycle.ViewModelProvider
@@ -19,6 +21,7 @@ import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
+import mx.tec.sonrisas.SonrisasApplication
 import mx.tec.sonrisas.data.Sesion
 import mx.tec.sonrisas.data.SesionEstado
 import mx.tec.sonrisas.domain.Rol
@@ -36,12 +39,19 @@ fun SonrisasApp(sesionViewModel: SesionViewModel, onDesbloquear: () -> Unit) {
         SesionEstado.Cargando -> SplashScreen()
         SesionEstado.Anonima -> {
             val vm: LoginViewModel = viewModel(factory = AppViewModelProvider.Factory)
+            val context = LocalContext.current
+            val contenedor = (context.applicationContext as SonrisasApplication).container
             LoginScreen(
                 estado = vm.estado,
                 onUsuario = vm::cambiarUsuario,
                 onContrasena = vm::cambiarContrasena,
                 onMostrarContrasena = vm::alternarMostrar,
                 onEntrar = vm::entrar,
+                servidor = contenedor.servidor,
+                onServidor = { url ->
+                    contenedor.cambiarServidor(url)
+                    context.reiniciarApp()
+                },
             )
         }
         is SesionEstado.Activa -> {
@@ -85,4 +95,12 @@ private fun SesionActiva(sesion: Sesion, tienda: ViewModelStore, onCerrarSesion:
             Rol.FUNDACION -> FundacionApp(onCerrarSesion)
         }
     }
+}
+
+// los repositorios se eligen al crear el contenedor, asi que cambiar de servidor requiere un proceso nuevo
+private fun Context.reiniciarApp() {
+    val inicio = packageManager.getLaunchIntentForPackage(packageName)!!
+        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+    startActivity(inicio)
+    Runtime.getRuntime().exit(0)
 }

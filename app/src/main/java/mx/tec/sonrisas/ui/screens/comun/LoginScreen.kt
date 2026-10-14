@@ -39,6 +39,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import mx.tec.sonrisas.R
 import mx.tec.sonrisas.domain.Rol
+import mx.tec.sonrisas.ui.components.FilaSwitch
 import mx.tec.sonrisas.ui.components.Icono
 import mx.tec.sonrisas.ui.theme.Espacio
 import mx.tec.sonrisas.ui.theme.SonrisasTheme
@@ -50,9 +51,12 @@ fun LoginScreen(
     onContrasena: (String) -> Unit,
     onMostrarContrasena: () -> Unit,
     onEntrar: () -> Unit,
+    servidor: String,
+    onServidor: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     var olvido by remember { mutableStateOf(false) }
+    var configurar by remember { mutableStateOf(false) }
     Surface(modifier.fillMaxSize(), color = MaterialTheme.colorScheme.surface) {
         Column(
             modifier = Modifier
@@ -113,6 +117,9 @@ fun LoginScreen(
                 TextButton(onClick = { olvido = true }, modifier = Modifier.heightIn(min = 48.dp)) {
                     Text("¿Olvidaste tu contraseña?")
                 }
+                TextButton(onClick = { configurar = true }, modifier = Modifier.heightIn(min = 48.dp)) {
+                    Text(if (servidor.isBlank()) "Modo: datos de prueba sin servidor" else "Servidor: $servidor")
+                }
             }
         }
     }
@@ -124,6 +131,46 @@ fun LoginScreen(
             confirmButton = { TextButton(onClick = { olvido = false }) { Text("Entendido") } },
         )
     }
+    if (configurar) {
+        DialogoServidor(servidor, onCerrar = { configurar = false }, onGuardar = onServidor)
+    }
+}
+
+/** la direccion del servidor cambia segun la red (la laptop de la demo) o se apaga para usar los datos de prueba */
+@Composable
+private fun DialogoServidor(actual: String, onCerrar: () -> Unit, onGuardar: (String) -> Unit) {
+    var url by remember { mutableStateOf(actual) }
+    var sinServidor by remember { mutableStateOf(actual.isBlank()) }
+    AlertDialog(
+        onDismissRequest = onCerrar,
+        title = { Text("Servidor") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(Espacio.space3)) {
+                Text("Al guardar, la app se reinicia y hay que volver a entrar.")
+                FilaSwitch("Datos de prueba sin servidor", sinServidor, { sinServidor = it })
+                OutlinedTextField(
+                    value = url,
+                    onValueChange = { url = it },
+                    label = { Text("Dirección del servidor") },
+                    placeholder = { Text("http://192.168.1.20:8080") },
+                    singleLine = true,
+                    enabled = !sinServidor,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Done),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    val limpia = url.trim().trimEnd('/')
+                    onGuardar(if (sinServidor) "" else if (limpia.startsWith("http://") || limpia.startsWith("https://")) limpia else "http://$limpia")
+                },
+                enabled = sinServidor || url.isNotBlank(),
+            ) { Text("Guardar") }
+        },
+        dismissButton = { TextButton(onClick = onCerrar) { Text("Cancelar") } },
+    )
 }
 
 fun iconoRol(rol: Rol): Int = when (rol) {
@@ -140,6 +187,7 @@ private fun LoginPreview() {
         LoginScreen(
             estado = LoginUiState(usuario = "educadora", error = "Usuario o contraseña incorrectos. Revísalos e inténtalo de nuevo."),
             onUsuario = {}, onContrasena = {}, onMostrarContrasena = {}, onEntrar = {},
+            servidor = "http://192.168.1.20:8080", onServidor = {},
         )
     }
 }
