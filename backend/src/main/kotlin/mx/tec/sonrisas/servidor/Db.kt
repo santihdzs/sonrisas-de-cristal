@@ -200,13 +200,19 @@ class Db(url: String, usuario: String? = null, clave: String? = null) {
     companion object {
         /** acepta jdbc:... o la url postgres://usuario:clave@host/base que dan neon, render o supabase */
         fun desde(url: String?): Db {
-            if (url.isNullOrBlank()) return Db("jdbc:h2:file:./datos/sonrisas;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE")
-            if (url.startsWith("jdbc:")) return Db(url)
+            val (jdbc, usuario, clave) = jdbcDe(url)
+            return Db(jdbc, usuario, clave)
+        }
+
+        /** url jdbc, usuario y clave */
+        fun jdbcDe(url: String?): Triple<String, String?, String?> {
+            if (url.isNullOrBlank()) return Triple("jdbc:h2:file:./datos/sonrisas;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE", null, null)
+            if (url.startsWith("jdbc:")) return Triple(url, null, null)
             val uri = URI(url)
             val (usuario, clave) = uri.rawUserInfo.orEmpty().split(":", limit = 2).map { URLDecoder.decode(it, Charsets.UTF_8) } + listOf("", "")
             val puerto = if (uri.port > 0) ":${uri.port}" else ""
             val consulta = uri.rawQuery?.let { "?$it" } ?: ""
-            return Db("jdbc:postgresql://${uri.host}$puerto${uri.rawPath}$consulta", usuario.ifBlank { null }, clave.ifBlank { null })
+            return Triple("jdbc:postgresql://${uri.host}$puerto${uri.rawPath}$consulta", usuario.ifBlank { null }, clave.ifBlank { null })
         }
     }
 }
