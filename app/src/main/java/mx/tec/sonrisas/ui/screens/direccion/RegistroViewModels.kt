@@ -25,6 +25,7 @@ import mx.tec.sonrisas.domain.Validaciones
 import mx.tec.sonrisas.ui.navigation.Route
 import mx.tec.sonrisas.ui.state.UiState
 import mx.tec.sonrisas.ui.state.comoUiState
+import mx.tec.sonrisas.ui.state.conReintentos
 import java.util.UUID
 
 const val MENSAJE_ERROR_REGISTRO = "No pudimos guardar el registro. Revisa tu conexión e inténtalo de nuevo."
@@ -75,7 +76,7 @@ class EstanciaViewModel(
     init {
         if (estanciaId != null) {
             viewModelScope.launch {
-                val e = estanciasRepository.estancias().first().firstOrNull { it.id == estanciaId } ?: return@launch
+                val e = conReintentos { estanciasRepository.estancias().first() }.firstOrNull { it.id == estanciaId } ?: return@launch
                 form = EstanciaForm(e.nombre, e.colonia, e.telefono)
             }
         }

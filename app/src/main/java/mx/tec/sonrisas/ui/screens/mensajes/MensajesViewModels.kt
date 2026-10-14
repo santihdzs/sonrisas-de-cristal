@@ -22,6 +22,7 @@ import mx.tec.sonrisas.domain.Reloj
 import mx.tec.sonrisas.ui.navigation.Route
 import mx.tec.sonrisas.ui.state.UiState
 import mx.tec.sonrisas.ui.state.comoUiState
+import mx.tec.sonrisas.ui.state.reintentando
 import java.time.LocalDate
 
 data class ConversacionesDatos(val conversaciones: List<ResumenConversacion>, val hoy: LocalDate)
@@ -33,7 +34,7 @@ class ConversacionesViewModel(mensajesRepository: MensajesRepository, reloj: Rel
         mensajesRepository.conversaciones().map { ConversacionesDatos(it, reloj.hoy()) }
     }
 
-    val noLeidos: StateFlow<Int> = mensajesRepository.noLeidos().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
+    val noLeidos: StateFlow<Int> = mensajesRepository.noLeidos().reintentando().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
 
     fun reintentar() {
         reintentos.value++

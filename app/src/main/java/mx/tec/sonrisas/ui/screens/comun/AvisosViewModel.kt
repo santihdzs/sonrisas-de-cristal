@@ -12,6 +12,7 @@ import mx.tec.sonrisas.data.AvisosRepository
 import mx.tec.sonrisas.domain.Aviso
 import mx.tec.sonrisas.ui.state.UiState
 import mx.tec.sonrisas.ui.state.comoUiState
+import mx.tec.sonrisas.ui.state.reintentando
 
 data class AvisosDatos(val avisos: List<Aviso>, val leidos: Set<String>) {
     val noLeidos: Int get() = avisos.count { it.id !in leidos }
@@ -26,6 +27,7 @@ class AvisosViewModel(private val avisosRepository: AvisosRepository) : ViewMode
 
     val noLeidos: StateFlow<Int> =
         combine(avisosRepository.avisos(), avisosRepository.leidos()) { a, l -> a.count { it.id !in l } }
+            .reintentando()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
 
     fun marcarLeidos(ids: Collection<String>) {
