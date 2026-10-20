@@ -1,5 +1,19 @@
 package mx.tec.sonrisas.ui.screens.direccion
 
+import androidx.annotation.DrawableRes
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Surface
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import mx.tec.sonrisas.ui.components.EtiquetaSeccion
+import mx.tec.sonrisas.ui.components.Pildora
+import mx.tec.sonrisas.ui.components.ProgresoDelgado
+import mx.tec.sonrisas.ui.components.TarjetaBase
+import mx.tec.sonrisas.ui.components.TarjetaTeal
+import kotlin.math.roundToInt
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -21,7 +35,6 @@ import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
@@ -97,93 +110,147 @@ fun InicioScreen(
 ) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(Espacio.space4),
+        contentPadding = PaddingValues(start = Espacio.space4, end = Espacio.space4, top = Espacio.space1, bottom = Espacio.space6),
         verticalArrangement = Arrangement.spacedBy(Espacio.space3),
     ) {
         item {
-            Column {
-                Text("Hoy en la estancia", style = MaterialTheme.typography.headlineSmall)
-                Text(
-                    listOfNotNull(datos.estancia?.nombre, datos.hoy.formatoLargo()).joinToString(" · "),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+            Text(
+                listOfNotNull(datos.estancia?.nombre, datos.hoy.formatoLargo()).joinToString(" · "),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
-        item {
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(Espacio.space2), verticalArrangement = Arrangement.spacedBy(Espacio.space2)) {
-                FilledTonalButton(onClick = onInscribir, modifier = Modifier.heightIn(min = 48.dp)) {
-                    Icono(R.drawable.ic_person_add, null)
-                    Text("Inscribir niño", modifier = Modifier.padding(start = Espacio.space2))
-                }
-                FilledTonalButton(onClick = onPublicarAviso, modifier = Modifier.heightIn(min = 48.dp)) {
-                    Icono(R.drawable.ic_campaign, null)
-                    Text("Publicar aviso", modifier = Modifier.padding(start = Espacio.space2))
-                }
-            }
-        }
-        items(datos.salas, key = { it.sala.id }) { s ->
-            TarjetaSeccion {
-                EstrellaSala("Sala ${s.sala.nombre}", s.sala.estrella)
-                s.educadora?.let { Text("Educadora: $it", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Espacio.space3)) {
-                    Text("${s.presentes} de ${s.inscritos} presentes", style = MaterialTheme.typography.titleMedium)
-                }
-                LinearProgressIndicator(
-                    progress = { if (s.inscritos == 0) 0f else s.presentes / s.inscritos.toFloat() },
-                    modifier = Modifier.fillMaxWidth(),
-                    drawStopIndicator = {},
-                )
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(Espacio.space1)) {
-                    TextButton(onClick = { onMaterial(s.sala) }, modifier = Modifier.heightIn(min = 48.dp)) {
-                        Icono(R.drawable.ic_folder, null)
-                        Text("Material", modifier = Modifier.padding(start = Espacio.space2))
-                    }
-                    TextButton(onClick = { onImprimir(s.sala) }, modifier = Modifier.heightIn(min = 48.dp)) {
-                        Icono(R.drawable.ic_print, null)
-                        Text("Bitácora", modifier = Modifier.padding(start = Espacio.space2))
-                    }
-                    TextButton(onClick = { onObjetos(s.sala) }, modifier = Modifier.heightIn(min = 48.dp)) {
-                        Icono(R.drawable.ic_checkroom, null)
-                        Text("Objetos perdidos", modifier = Modifier.padding(start = Espacio.space2))
-                    }
-                }
-            }
-        }
-        item { TituloSeccion("Incidentes de hoy") }
+        item { ResumenHoy(datos, onInscribir, onPublicarAviso) }
+        item { EtiquetaSeccion("Salas") }
+        items(datos.salas, key = { it.sala.id }) { s -> TarjetaSalaInicio(s, onMaterial, onImprimir, onObjetos) }
+        item { EtiquetaSeccion("Incidentes de hoy") }
         if (datos.incidentes.isEmpty()) {
             item {
-                Row(horizontalArrangement = Arrangement.spacedBy(Espacio.space2), verticalAlignment = Alignment.CenterVertically) {
-                    Icono(R.drawable.ic_check_circle, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("Sin incidentes registrados hoy.", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                TarjetaBase(Modifier.fillMaxWidth()) {
+                    Row(
+                        Modifier.padding(Espacio.space4),
+                        horizontalArrangement = Arrangement.spacedBy(Espacio.space3),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Box(Modifier.size(40.dp).clip(CircleShape).background(SonrisasTheme.colors.exitoContenedor), contentAlignment = Alignment.Center) {
+                            Icono(R.drawable.ic_check, null, Modifier.size(20.dp), tint = SonrisasTheme.colors.exito)
+                        }
+                        Text("Sin incidentes registrados hoy.", style = MaterialTheme.typography.bodyLarge)
+                    }
                 }
             }
         }
         items(datos.incidentes, key = { it.first.id }) { (inc, nino) ->
+            val esquema = MaterialTheme.colorScheme
             TarjetaSeccion(onClick = { onIncidente(inc) }) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Espacio.space2)) {
-                    EstadoChip(inc.tipo.etiqueta, TipoEstado.ERROR, R.drawable.ic_error_fill)
+                    Pildora(inc.tipo.etiqueta, esquema.errorContainer, esquema.onErrorContainer, icono = R.drawable.ic_error_fill, colorIcono = esquema.error)
                     Text(inc.cuando.formatoHora(), style = MaterialTheme.typography.labelLarge)
-                    Text(inc.folio, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(inc.folio, style = MaterialTheme.typography.labelMedium, color = esquema.onSurfaceVariant)
                 }
-                Text(nino.nombreCompleto, style = MaterialTheme.typography.titleMedium)
-                Text(inc.descripcion, style = MaterialTheme.typography.bodyMedium)
+                Text(nino.nombreCompleto, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
+                Text(inc.descripcion, style = MaterialTheme.typography.bodyMedium, color = esquema.onSurfaceVariant)
             }
         }
         item {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                TituloSeccion("Últimos avisos", Modifier.weight(1f))
+            EtiquetaSeccion("Últimos avisos", accion = {
                 TextButton(onClick = onVerAvisos, modifier = Modifier.heightIn(min = 48.dp)) { Text("Ver todos") }
-            }
+            })
         }
         if (datos.avisos.isEmpty()) {
             item { Text("Todavía no hay avisos publicados.", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         }
         items(datos.avisos, key = { it.id }) { a ->
-            TarjetaSeccion {
-                EstadoChip(a.tipo.etiqueta, TipoEstado.NEUTRO, a.tipo.icono)
-                Text(a.titulo, style = MaterialTheme.typography.titleMedium)
-                Text("Publicado el ${a.publicadoEl.formatoFechaHora()}", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            TarjetaBase(Modifier.fillMaxWidth()) {
+                Row(
+                    Modifier.padding(Espacio.space4),
+                    horizontalArrangement = Arrangement.spacedBy(Espacio.space3),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Box(Modifier.size(44.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) {
+                        Icono(a.tipo.icono, null, Modifier.size(22.dp), tint = MaterialTheme.colorScheme.primary)
+                    }
+                    Column(Modifier.weight(1f)) {
+                        Text(a.titulo, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
+                        Text(
+                            "${a.tipo.etiqueta} · Publicado el ${a.publicadoEl.formatoFechaHora()}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** tarjeta teal del patron B: presentes de toda la estancia y las dos acciones rapidas */
+@Composable
+private fun ResumenHoy(datos: InicioDatos, onInscribir: () -> Unit, onPublicarAviso: () -> Unit) {
+    val presentes = datos.salas.sumOf { it.presentes }
+    val inscritos = datos.salas.sumOf { it.inscritos }
+    val fraccion = if (inscritos == 0) 0f else presentes / inscritos.toFloat()
+    TarjetaTeal {
+        Text("Hoy en la estancia", style = MaterialTheme.typography.labelLarge, color = Color.White.copy(alpha = 0.85f))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("$presentes de $inscritos presentes", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
+            Text("${(fraccion * 100).roundToInt()} %", style = MaterialTheme.typography.titleMedium)
+        }
+        ProgresoDelgado(fraccion, Modifier.padding(top = Espacio.space2, bottom = Espacio.space4))
+        Row(horizontalArrangement = Arrangement.spacedBy(Espacio.space3)) {
+            BotonTranslucido("Inscribir niño", R.drawable.ic_person_add, onInscribir, Modifier.weight(1f))
+            BotonTranslucido("Publicar aviso", R.drawable.ic_campaign, onPublicarAviso, Modifier.weight(1f))
+        }
+    }
+}
+
+/** boton en pildora blanca translucida para usar dentro de la tarjeta teal */
+@Composable
+private fun BotonTranslucido(texto: String, @DrawableRes icono: Int, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Surface(
+        onClick = onClick,
+        shape = CircleShape,
+        color = Color.White.copy(alpha = 0.18f),
+        contentColor = Color.White,
+        modifier = modifier.heightIn(min = 48.dp),
+    ) {
+        Row(
+            Modifier.padding(horizontal = Espacio.space3, vertical = Espacio.space3),
+            horizontalArrangement = Arrangement.spacedBy(Espacio.space2, Alignment.CenterHorizontally),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icono(icono, null, Modifier.size(20.dp))
+            Text(texto, style = MaterialTheme.typography.labelLarge, maxLines = 1)
+        }
+    }
+}
+
+/** sala con su estrella, educadora, presentes y una barra del color de la sala; abajo sus accesos */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun TarjetaSalaInicio(s: SalaResumen, onMaterial: (Sala) -> Unit, onImprimir: (Sala) -> Unit, onObjetos: (Sala) -> Unit) {
+    val par = SonrisasTheme.colors.estrella(s.sala.estrella)
+    val fraccion = if (s.inscritos == 0) 0f else s.presentes / s.inscritos.toFloat()
+    TarjetaSeccion {
+        EstrellaSala("Sala ${s.sala.nombre}", s.sala.estrella)
+        s.educadora?.let { Text("Educadora: $it", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("${s.presentes} de ${s.inscritos} presentes", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+            Text("${(fraccion * 100).roundToInt()} %", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        ProgresoDelgado(fraccion, color = par.glifo, pista = MaterialTheme.colorScheme.surfaceContainer)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(Espacio.space1)) {
+            TextButton(onClick = { onMaterial(s.sala) }, modifier = Modifier.heightIn(min = 48.dp)) {
+                Icono(R.drawable.ic_folder, null)
+                Text("Material", modifier = Modifier.padding(start = Espacio.space2))
+            }
+            TextButton(onClick = { onImprimir(s.sala) }, modifier = Modifier.heightIn(min = 48.dp)) {
+                Icono(R.drawable.ic_print, null)
+                Text("Bitácora", modifier = Modifier.padding(start = Espacio.space2))
+            }
+            TextButton(onClick = { onObjetos(s.sala) }, modifier = Modifier.heightIn(min = 48.dp)) {
+                Icono(R.drawable.ic_checkroom, null)
+                Text("Objetos perdidos", modifier = Modifier.padding(start = Espacio.space2))
             }
         }
     }

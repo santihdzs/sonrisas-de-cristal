@@ -69,7 +69,11 @@ fun DireccionApp(onCerrarSesion: () -> Unit) {
         Pestana(Route.AVISOS, "Avisos", R.drawable.ic_campaign, R.drawable.ic_campaign_fill, insignia = noLeidos),
         Pestana(Route.MAS, "Más", R.drawable.ic_more_horiz, R.drawable.ic_more_horiz_fill),
     )
-    ScaffoldRol(navController, pestanas, snackbar, titulo = ::tituloDireccion) { padding ->
+    ScaffoldRol(
+        navController, pestanas, snackbar, titulo = ::tituloDireccion,
+        // patron B: titulo grande en las pestañas de la direccion, igual que Avisos y Perfil
+        rutasConTituloGrande = setOf(Route.INICIO, Route.NINOS, Route.AVISOS, Route.MAS, Route.PERFIL),
+    ) { padding ->
         NavHost(navController, startDestination = Route.INICIO, modifier = Modifier.padding(padding)) {
             composable(Route.INICIO) {
                 val vm: InicioViewModel = viewModel(factory = AppViewModelProvider.Factory)
