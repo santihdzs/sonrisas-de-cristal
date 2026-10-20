@@ -37,7 +37,8 @@ class RemotoSesionRepository(
     private val prefs = context.getSharedPreferences("sesion", Context.MODE_PRIVATE)
 
     @Volatile
-    private var token: String? = prefs.getString("token", null)
+    // P7: el token se guarda cifrado (CajaFuerte); un token viejo sin cifrar no se descifra y pide iniciar sesion otra vez
+    private var token: String? = prefs.getString("token", null)?.let { CajaFuerte.descifrar(it) }
 
     val api = Api(servidor, { token }, ::vencer)
 
@@ -62,7 +63,7 @@ class RemotoSesionRepository(
 
     private fun guardar(perfil: Perfil, nuevoToken: String? = null) {
         val editor = prefs.edit().putString("perfil", JsonApi.encodeToString(Perfil.serializer(), perfil))
-        nuevoToken?.let { editor.putString("token", it) }
+        nuevoToken?.let { editor.putString("token", CajaFuerte.cifrar(it)) }
         editor.apply()
         nuevoToken?.let { token = it }
         if (token != null) _estado.value = SesionEstado.Activa(Sesion(perfil.usuario, perfil.desbloqueoHuella))
