@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mi sala - Sonrisas de Cristal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0..1,0" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            teal: {
+              primary: '#2E7D74',
+              dark: '#1F5C55',
+              soft: '#E6F2F0',
+            },
+            terracotta: '#D97A56',
+            bgLight: '#F3F5F7',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Hide scrollbars for pill chips container */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .material-symbols-rounded {
+      font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .material-symbols-outlined-custom {
+      font-family: 'Material Symbols Rounded';
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+  </style>
+</head>
+<body class="bg-[#F3F5F7] text-slate-800 font-sans antialiased min-h-screen flex flex-col justify-between selection:bg-teal-100 selection:text-teal-900 pb-28 relative overflow-x-hidden">
+
+  <!-- Status Bar (Android Pixel Mockup) -->
+  <div class="pt-3 px-6 pb-2 flex justify-between items-center text-xs font-semibold text-slate-600 select-none">
+    <span>11:34</span>
+    <div class="flex items-center space-x-2">
+      <span class="material-symbols-rounded text-sm">wifi</span>
+      <span class="material-symbols-rounded text-sm">signal_cellular_alt</span>
+      <span class="material-symbols-rounded text-sm">battery_full</span>
+    </div>
+  </div>
+
+  <!-- Main Content Container -->
+  <main class="px-4 space-y-4 pt-1">
+
+    <!-- 1. HERO CARD -->
+    <section class="rounded-[28px] p-5 text-white shadow-lg relative overflow-hidden"
+             style="background: linear-gradient(145deg, #2E7D74 0%, #1F5C55 100%);">
+      <!-- Decorative soft glow behind chart -->
+      <div class="absolute -right-12 -bottom-12 w-44 h-44 bg-white/5 rounded-full pointer-events-none"></div>
+
+      <!-- Header Row: Title & Profile -->
+      <div class="flex justify-between items-start">
+        <div>
+          <h1 class="text-2xl font-bold tracking-tight">Mi sala</h1>
+          <div class="mt-1.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur-sm text-xs font-medium text-white/95">
+            <span class="material-symbols-rounded text-[15px] text-amber-300">star</span>
+            <span>Sala Maternales</span>
+          </div>
+          <p class="text-xs text-white/80 mt-1 font-normal">Lunes 5 de octubre</p>
+        </div>
+        <button class="w-10 h-10 rounded-full border border-white/30 flex items-center justify-center bg-white/10 hover:bg-white/20 active:scale-95 transition-all text-white" aria-label="Perfil">
+          <span class="material-symbols-outlined-custom text-xl">account_circle</span>
+        </button>
+      </div>
+
+      <!-- Donut Chart & Legend Row -->
+      <div class="mt-5 pt-4 border-t border-white/10 flex items-center justify-between">
+        
+        <!-- Donut Chart (64% filled -> 9 of 14) -->
+        <div class="relative w-[104px] h-[104px] flex items-center justify-center shrink-0">
+          <svg class="w-full h-full -rotate-90" viewBox="0 0 100 100">
+            <!-- Background track (remaining 5 children) -->
+            <circle cx="50" cy="50" r="40" stroke="rgba(255, 255, 255, 0.22)" stroke-width="11" fill="transparent" />
+            <!-- Active arc: 9 of 14 = ~64.3% -> circumference = 2 * PI * 40 = 251.32. Dash = 251.32 * 0.643 = 161.6 -->
+            <circle cx="50" cy="50" r="40" stroke="#FFFFFF" stroke-width="11" fill="transparent"
+                    stroke-dasharray="161.6 251.32" stroke-linecap="round" />
+          </svg>
+          <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+            <span class="text-2xl font-bold leading-tight tracking-tight">9</span>
+            <span class="text-[11px] font-medium text-white/85">presentes</span>
+          </div>
+        </div>
+
+        <!-- Legend Stack -->
+        <div class="flex-1 ml-6 space-y-2.5">
+          <div class="flex items-center justify-between text-xs">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-white shadow-sm"></span>
+              <span class="text-white font-medium">Presentes</span>
+            </div>
+            <span class="text-white font-bold text-sm">9</span>
+          </div>
+
+          <div class="flex items-center justify-between text-xs">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-white/40"></span>
+              <span class="text-white font-medium">Sin llegar</span>
+            </div>
+            <span class="text-white font-bold text-sm">3</span>
+          </div>
+
+          <div class="flex items-center justify-between text-xs">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-teal-200"></span>
+              <span class="text-white font-medium">Ya salieron</span>
+            </div>
+            <span class="text-white font-bold text-sm">2</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 2. FILTER CHIPS (Scrollable with fade indication) -->
+    <section class="relative -mx-4 px-4 overflow-hidden">
+      <div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 pr-8">
+        <!-- Selected: Todos 14 -->
+        <button class="shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#2E7D74] text-white text-xs font-semibold shadow-sm active:scale-95 transition-transform">
+          <span class="material-symbols-rounded text-[16px]">check</span>
+          <span>Todos 14</span>
+        </button>
+
+        <!-- Unselected: Presentes 9 -->
+        <button class="shrink-0 px-4 py-2 rounded-full bg-white text-slate-700 text-xs font-semibold shadow-sm active:scale-95 transition-transform">
+          Presentes 9
+        </button>
+
+        <!-- Unselected: Sin llegar 3 -->
+        <button class="shrink-0 px-4 py-2 rounded-full bg-white text-slate-700 text-xs font-semibold shadow-sm active:scale-95 transition-transform">
+          Sin llegar 3
+        </button>
+
+        <!-- Unselected: Ya salieron 2 (overflows edge) -->
+        <button class="shrink-0 px-4 py-2 rounded-full bg-white text-slate-700 text-xs font-semibold shadow-sm active:scale-95 transition-transform">
+          Ya salieron 2
+        </button>
+      </div>
+
+      <!-- Right Edge Subtle Fade to indicate scroll -->
+      <div class="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#F3F5F7] to-transparent pointer-events-none"></div>
+    </section>
+
+    <!-- 3. HEALTH ALERT BANNER -->
+    <section class="rounded-[12px] bg-[#FEF6E6] px-3.5 py-2.5 flex items-center gap-2.5 shadow-sm">
+      <span class="material-symbols-rounded text-amber-600 text-lg">warning</span>
+      <span class="text-xs font-semibold text-amber-900 tracking-tight">1 niño con alerta de salud</span>
+    </section>
+
+    <!-- 4. SECTION LABEL -->
+    <div class="pt-1">
+      <p class="text-[11px] font-bold text-slate-400 tracking-wider uppercase">NIÑOS DE LA SALA</p>
+    </div>
+
+    <!-- 5. CHILDREN AS A 2-COLUMN GRID -->
+    <section class="grid grid-cols-2 gap-3">
+
+      <!-- Card 1: Andrea Cantú Elizondo -->
+      <div class="bg-white rounded-[20px] p-3.5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between relative group cursor-pointer">
+        <div>
+          <!-- Squircle Avatar (AC) - Pastel Peach -->
+          <div class="w-[52px] h-[52px] rounded-2xl bg-[#FFE8D6] text-[#B85D19] font-bold text-lg flex items-center justify-center tracking-tight shadow-inner">
+            AC
+          </div>
+          <!-- Name & Age -->
+          <h2 class="mt-3 text-sm font-bold text-slate-900 leading-snug line-clamp-2">Andrea Cantú Elizondo</h2>
+          <p class="text-xs text-slate-500 mt-0.5">2 años 10 m</p>
+        </div>
+        <!-- Status Pill: Presente -->
+        <div class="mt-3.5">
+          <div class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#E8F5E9] text-[#1B5E20] text-[10px] font-semibold tracking-tight w-full justify-center">
+            <span class="w-1.5 h-1.5 rounded-full bg-[#2E7D32]"></span>
+            <span class="truncate">Presente desde 8:05</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2: Camila Sánchez Castillo -->
+      <div class="bg-white rounded-[20px] p-3.5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between relative group cursor-pointer">
+        <div>
+          <!-- Squircle Avatar (CS) - Pastel Light Blue -->
+          <div class="w-[52px] h-[52px] rounded-2xl bg-[#E1F0FA] text-[#1A6898] font-bold text-lg flex items-center justify-center tracking-tight shadow-inner">
+            CS
+          </div>
+          <!-- Name & Age -->
+          <h2 class="mt-3 text-sm font-bold text-slate-900 leading-snug line-clamp-2">Camila Sánchez Castillo</h2>
+          <p class="text-xs text-slate-500 mt-0.5">2 años 4 m</p>
+        </div>
+        <!-- Status Pill: Presente -->
+        <div class="mt-3.5">
+          <div class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#E8F5E9] text-[#1B5E20] text-[10px] font-semibold tracking-tight w-full justify-center">
+            <span class="w-1.5 h-1.5 rounded-full bg-[#2E7D32]"></span>
+            <span class="truncate">Presente desde 8:20</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3: Diego Sánchez Rivera -->
+      <div class="bg-white rounded-[20px] p-3.5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between relative group cursor-pointer">
+        <div>
+          <!-- Squircle Avatar (DS) - Pastel Mint -->
+          <div class="w-[52px] h-[52px] rounded-2xl bg-[#DDF4ED] text-[#206856] font-bold text-lg flex items-center justify-center tracking-tight shadow-inner">
+            DS
+          </div>
+          <!-- Name & Age -->
+          <h2 class="mt-3 text-sm font-bold text-slate-900 leading-snug line-clamp-2">Diego Sánchez Rivera</h2>
+          <p class="text-xs text-slate-500 mt-0.5">2 años 5 m</p>
+        </div>
+        <!-- Status Pill: Sin llegar -->
+        <div class="mt-3.5">
+          <div class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#F0F2F5] text-slate-600 text-[10px] font-semibold tracking-tight w-full justify-center">
+            <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+            <span class="truncate">Sin llegar</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 4: Fernanda Villarreal Zambrano -->
+      <div class="bg-white rounded-[20px] p-3.5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between relative group cursor-pointer">
+        <div>
+          <!-- Squircle Avatar (FV) - Pastel Lilac -->
+          <div class="w-[52px] h-[52px] rounded-2xl bg-[#F0E6FF] text-[#693EB5] font-bold text-lg flex items-center justify-center tracking-tight shadow-inner">
+            FV
+          </div>
+          <!-- Name & Age -->
+          <h2 class="mt-3 text-sm font-bold text-slate-900 leading-snug line-clamp-2">Fernanda Villarreal Zambrano</h2>
+          <p class="text-xs text-slate-500 mt-0.5">19 meses</p>
+        </div>
+        <!-- Status Pill: Salió 11:15 -->
+        <div class="mt-3.5">
+          <div class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#EBF0F5] text-[#334E68] text-[10px] font-semibold tracking-tight w-full justify-center">
+            <span class="material-symbols-rounded text-[13px] -ml-0.5 text-[#334E68]">logout</span>
+            <span class="truncate">Salió 11:15</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 5: Frida Saldaña Aguilar (Health Alert Badge!) -->
+      <div class="bg-white rounded-[20px] p-3.5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between relative group cursor-pointer">
+        <!-- Top-right corner health alert badge -->
+        <div class="absolute top-3 right-3 w-6 h-6 rounded-full bg-[#FEF6E6] text-amber-700 flex items-center justify-center shadow-sm">
+          <span class="material-symbols-rounded text-sm font-bold">warning</span>
+        </div>
+
+        <div>
+          <!-- Squircle Avatar (FS) - Pastel Rose -->
+          <div class="w-[52px] h-[52px] rounded-2xl bg-[#FCE7F3] text-[#9D174D] font-bold text-lg flex items-center justify-center tracking-tight shadow-inner">
+            FS
+          </div>
+          <!-- Name & Age -->
+          <h2 class="mt-3 text-sm font-bold text-slate-900 leading-snug line-clamp-2 pr-5">Frida Saldaña Aguilar</h2>
+          <p class="text-xs text-slate-500 mt-0.5">19 meses</p>
+        </div>
+        <!-- Status Pill: Presente -->
+        <div class="mt-3.5">
+          <div class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#E8F5E9] text-[#1B5E20] text-[10px] font-semibold tracking-tight w-full justify-center">
+            <span class="w-1.5 h-1.5 rounded-full bg-[#2E7D32]"></span>
+            <span class="truncate">Presente desde 8:40</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 6: Gael Ortiz Leal -->
+      <div class="bg-white rounded-[20px] p-3.5 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between relative group cursor-pointer">
+        <div>
+          <!-- Squircle Avatar (GO) - Pastel Soft Orange -->
+          <div class="w-[52px] h-[52px] rounded-2xl bg-[#FFEDD5] text-[#C2410C] font-bold text-lg flex items-center justify-center tracking-tight shadow-inner">
+            GO
+          </div>
+          <!-- Name & Age -->
+          <h2 class="mt-3 text-sm font-bold text-slate-900 leading-snug line-clamp-2">Gael Ortiz Leal</h2>
+          <p class="text-xs text-slate-500 mt-0.5">2 años 1 m</p>
+        </div>
+        <!-- Status Pill: Presente -->
+        <div class="mt-3.5">
+          <div class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#E8F5E9] text-[#1B5E20] text-[10px] font-semibold tracking-tight w-full justify-center">
+            <span class="w-1.5 h-1.5 rounded-full bg-[#2E7D32]"></span>
+            <span class="truncate">Presente desde 8:12</span>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Extra spacing reserved so bottom FAB and floating nav do not cover the last row -->
+    <div class="h-10"></div>
+  </main>
+
+  <!-- 6. EXTENDED FLOATING ACTION BUTTON (Registro grupal) -->
+  <div class="fixed right-4 bottom-24 z-30">
+    <button class="flex items-center gap-2.5 px-5 py-3.5 rounded-full bg-[#D97A56] text-white shadow-xl hover:shadow-2xl hover:brightness-105 active:scale-95 transition-all">
+      <span class="material-symbols-rounded text-xl">group_add</span>
+      <span class="text-sm font-bold tracking-tight">Registro grupal</span>
+    </button>
+  </div>
+
+  <!-- 7. FLOATING BOTTOM NAVIGATION (Detached Pill Bar) -->
+  <nav class="fixed bottom-3 inset-x-4 z-20 bg-white rounded-[28px] px-6 py-2.5 shadow-[0_8px_30px_rgb(0,0,0,0.08)] flex justify-around items-center border border-slate-100">
+    
+    <!-- Item 1: Sala (Active) -->
+    <button class="flex flex-col items-center group cursor-pointer">
+      <div class="px-5 py-1 rounded-full bg-[#E6F2F0] text-[#2E7D74] flex items-center justify-center transition-colors">
+        <span class="material-symbols-rounded text-2xl">groups</span>
+      </div>
+      <span class="text-[11px] font-bold text-[#2E7D74] mt-0.5">Sala</span>
+    </button>
+
+    <!-- Item 2: Fotos -->
+    <button class="flex flex-col items-center group cursor-pointer text-slate-500 hover:text-slate-700 transition-colors">
+      <div class="px-4 py-1 flex items-center justify-center">
+        <span class="material-symbols-outlined-custom text-2xl">photo_library</span>
+      </div>
+      <span class="text-[11px] font-semibold mt-0.5">Fotos</span>
+    </button>
+
+    <!-- Item 3: Avisos (With Notification Badge 4) -->
+    <button class="flex flex-col items-center group cursor-pointer text-slate-500 hover:text-slate-700 transition-colors relative">
+      <div class="px-4 py-1 flex items-center justify-center relative">
+        <span class="material-symbols-outlined-custom text-2xl">campaign</span>
+        <!-- Red circular badge showing "4" -->
+        <span class="absolute top-0.5 right-2 w-4 h-4 rounded-full bg-red-600 text-white text-[10px] font-bold flex items-center justify-center shadow-sm">
+          4
+        </span>
+      </div>
+      <span class="text-[11px] font-semibold mt-0.5">Avisos</span>
+    </button>
+
+  </nav>
+
+  <!-- Android Gesture Bar indicator -->
+  <div class="fixed bottom-1 inset-x-0 flex justify-center pointer-events-none z-30">
+    <div class="w-32 h-1 bg-slate-300 rounded-full"></div>
+  </div>
+
+</body>
+</html>

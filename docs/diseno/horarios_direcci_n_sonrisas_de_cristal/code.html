@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Horarios - Dirección (Sonrisas de Cristal)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            page: '#F3F5F7',
+            brand: {
+              teal: '#2E7D74',
+              tealDark: '#24645D',
+              tealLight: '#E6F3F1',
+            },
+            status: {
+              food: '#E67E22',
+              nap: '#3B82F6',
+              other: '#64748B',
+              delete: '#B94A3E',
+            }
+          },
+          boxShadow: {
+            'soft': '0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.03)',
+            'floating': '0 10px 25px -5px rgba(46, 125, 116, 0.25), 0 8px 10px -6px rgba(46, 125, 116, 0.1)',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .material-symbols-rounded {
+      font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .material-symbols-rounded.outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    body {
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+  </style>
+</head>
+<body class="bg-page text-slate-800 font-sans antialiased min-h-screen flex flex-col justify-start items-center p-0 m-0">
+
+  <!-- Mobile Container (Android 9:16) -->
+  <div class="w-full max-w-[412px] min-h-screen bg-page flex flex-col relative pb-10">
+
+    <!-- 0. STATUS BAR AREA -->
+    <header class="w-full pt-3 px-6 pb-2 flex items-center justify-between text-xs font-semibold text-slate-700 select-none">
+      <span class="tracking-tight text-sm font-medium">9:41</span>
+      <div class="flex items-center space-x-2">
+        <span class="material-symbols-rounded text-sm">signal_cellular_alt</span>
+        <span class="material-symbols-rounded text-sm">wifi</span>
+        <span class="material-symbols-rounded text-sm">battery_full</span>
+      </div>
+    </header>
+
+    <!-- 1. TOP BAR (Detail Screen: Back arrow, Title, Profile button) -->
+    <div class="px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <button type="button" aria-label="Volver" class="w-10 h-10 rounded-full flex items-center justify-center text-slate-800 hover:bg-slate-200/50 active:bg-slate-200 transition-colors">
+          <span class="material-symbols-rounded text-2xl">arrow_back</span>
+        </button>
+        <h1 class="text-2xl font-bold text-[#1B1F23] tracking-tight">Horarios</h1>
+      </div>
+      <button type="button" aria-label="Perfil de usuario" class="w-10 h-10 rounded-full bg-white shadow-soft flex items-center justify-center text-slate-700 hover:bg-slate-50 active:scale-95 transition-all">
+        <span class="material-symbols-rounded outlined text-2xl">account_circle</span>
+      </button>
+    </div>
+
+    <!-- 2. ROOM SELECTOR SEGMENTED CONTROL -->
+    <div class="px-4 mt-1 mb-4">
+      <div class="bg-white rounded-full p-1 shadow-soft flex items-center">
+        <!-- Lactantes (Selected) -->
+        <button type="button" class="flex-1 py-2 px-3 rounded-full bg-brand-teal text-white font-medium text-sm text-center shadow-sm transition-all flex items-center justify-center gap-1.5">
+          <span>Lactantes</span>
+        </button>
+        <!-- Maternales (Unselected) -->
+        <button type="button" class="flex-1 py-2 px-3 rounded-full text-slate-500 font-medium text-sm text-center hover:text-slate-800 transition-all flex items-center justify-center">
+          <span>Maternales</span>
+        </button>
+        <!-- Preescolar (Unselected) -->
+        <button type="button" class="flex-1 py-2 px-3 rounded-full text-slate-500 font-medium text-sm text-center hover:text-slate-800 transition-all flex items-center justify-center">
+          <span>Preescolar</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 3. ROOM CARD (Inset Floating Teal Card) -->
+    <div class="px-4 mb-6">
+      <div class="bg-brand-teal rounded-[28dp] p-4 text-white shadow-floating relative overflow-hidden">
+        <div class="flex items-start gap-3.5">
+          <div class="w-11 h-11 rounded-full bg-white/20 flex-shrink-0 flex items-center justify-center backdrop-blur-sm">
+            <span class="material-symbols-rounded text-white text-2xl">kid_star</span>
+          </div>
+          <div class="flex-1 pt-0.5">
+            <h2 class="text-lg font-bold leading-tight">Sala Lactantes</h2>
+            <p class="text-white/85 text-xs mt-1 leading-relaxed">
+              El horario se configura una vez y las familias lo ven en «Ahora mismo».
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. SECTION LABEL: ACTIVIDADES ESPECIALES -->
+    <div class="px-6 mb-2">
+      <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Actividades especiales</span>
+    </div>
+
+    <!-- 5. SPECIAL ACTIVITIES CARD -->
+    <div class="px-4 mb-6">
+      <div class="bg-white rounded-[24dp] p-5 shadow-soft flex flex-col items-center text-center">
+        <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mb-2.5">
+          <span class="material-symbols-rounded text-2xl">event_busy</span>
+        </div>
+        <p class="text-sm text-slate-500 font-normal mb-4">
+          No hay actividades especiales próximas.
+        </p>
+        <button type="button" class="w-full py-3 px-4 rounded-full bg-[#EAF4F3] text-brand-teal font-semibold text-sm flex items-center justify-center gap-2 hover:bg-[#DCEEEB] active:scale-[0.99] transition-all">
+          <span class="material-symbols-rounded text-xl">event_available</span>
+          <span>Publicar actividad especial</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 6. SECTION LABEL: HORARIO REGULAR -->
+    <div class="px-6 mb-2">
+      <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Horario regular</span>
+    </div>
+
+    <!-- 7. REGULAR SCHEDULE AS A VERTICAL LIST (Single White Card) -->
+    <div class="px-4 mb-6">
+      <div class="bg-white rounded-[24dp] shadow-soft overflow-hidden divide-y divide-slate-100">
+        
+        <!-- Row 1: Recepción -->
+        <div class="px-4 py-3.5 flex items-center justify-between gap-3 hover:bg-slate-50/50 transition-colors">
+          <div class="flex items-center gap-3 min-w-0">
+            <!-- Indicator: gray-blue -->
+            <span class="w-2.5 h-2.5 rounded-full bg-slate-400 flex-shrink-0"></span>
+            <div class="flex flex-col sm:flex-row sm:items-baseline gap-0.5 sm:gap-2 min-w-0">
+              <span class="text-xs font-semibold text-[#1C5B54] whitespace-nowrap">7:15 a 8:00</span>
+              <span class="text-sm font-medium text-slate-800 truncate">Recepción</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-0.5 flex-shrink-0">
+            <button type="button" aria-label="Editar Recepción" class="w-10 h-10 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-800 hover:bg-slate-100 active:scale-95 transition-all">
+              <span class="material-symbols-rounded outlined text-xl">edit</span>
+            </button>
+            <button type="button" aria-label="Eliminar Recepción" class="w-10 h-10 rounded-full flex items-center justify-center text-[#B94A3E] hover:bg-red-50 active:scale-95 transition-all">
+              <span class="material-symbols-rounded outlined text-xl">delete</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Row 2: Biberón y desayuno -->
+        <div class="px-4 py-3.5 flex items-center justify-between gap-3 hover:bg-slate-50/50 transition-colors">
+          <div class="flex items-center gap-3 min-w-0">
+            <!-- Indicator: orange (food) -->
+            <span class="w-2.5 h-2.5 rounded-full bg-[#E67E22] flex-shrink-0"></span>
+            <div class="flex flex-col sm:flex-row sm:items-baseline gap-0.5 sm:gap-2 min-w-0">
+              <span class="text-xs font-semibold text-[#1C5B54] whitespace-nowrap">8:00 a 9:00</span>
+              <span class="text-sm font-medium text-slate-800 truncate">Biberón y desayuno</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-0.5 flex-shrink-0">
+            <button type="button" aria-label="Editar Biberón y desayuno" class="w-10 h-10 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-800 hover:bg-slate-100 active:scale-95 transition-all">
+              <span class="material-symbols-rounded outlined text-xl">edit</span>
+            </button>
+            <button type="button" aria-label="Eliminar Biberón y desayuno" class="w-10 h-10 rounded-full flex items-center justify-center text-[#B94A3E] hover:bg-red-50 active:scale-95 transition-all">
+              <span class="material-symbols-rounded outlined text-xl">delete</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Row 3: Estimulación temprana -->
+        <div class="px-4 py-3.5 flex items-center justify-between gap-3 hover:bg-slate-50/50 transition-colors">
+          <div class="flex items-center gap-3 min-w-0">
+            <!-- Indicator: gray-blue -->
+            <span class="w-2.5 h-2.5 rounded-full bg-slate-400 flex-shrink-0"></span>
+            <div class="flex flex-col sm:flex-row sm:items-baseline gap-0.5 sm:gap-2 min-w-0">
+              <span class="text-xs font-semibold text-[#1C5B54] whitespace-nowrap">9:00 a 9:45</span>
+              <span class="text-sm font-medium text-slate-800 truncate">Estimulación temprana</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-0.5 flex-shrink-0">
+            <button type="button" aria-label="Editar Estimulación temprana" class="w-10 h-10 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-800 hover:bg-slate-100 active:scale-95 transition-all">
+              <span class="material-symbols-rounded outlined text-xl">edit</span>
+            </button>
+            <button type="button" aria-label="Eliminar Estimulación temprana" class="w-10 h-10 rounded-full flex items-center justify-center text-[#B94A3E] hover:bg-red-50 active:scale-95 transition-all">
+              <span class="material-symbols-rounded outlined text-xl">delete</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Row 4: Colación -->
+        <div class="px-4 py-3.5 flex items-center justify-between gap-3 hover:bg-slate-50/50 transition-colors">
+          <div class="flex items-center gap-3 min-w-0">
+            <!-- Indicator: orange (food) -->
+            <span class="w-2.5 h-2.5 rounded-full bg-[#E67E22] flex-shrink-0"></span>
+            <div class="flex flex-col sm:flex-row sm:items-baseline gap-0.5 sm:gap-2 min-w-0">
+              <span class="text-xs font-semibold text-[#1C5B54] whitespace-nowrap">9:45 a 10:15</span>
+              <span class="text-sm font-medium text-slate-800 truncate">Colación</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-0.5 flex-shrink-0">
+            <button type="button" aria-label="Editar Colación" class="w-10 h-10 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-800 hover:bg-slate-100 active:scale-95 transition-all">
+              <span class="material-symbols-rounded outlined text-xl">edit</span>
+            </button>
+            <button type="button" aria-label="Eliminar Colación" class="w-10 h-10 rounded-full flex items-center justify-center text-[#B94A3E] hover:bg-red-50 active:scale-95 transition-all">
+              <span class="material-symbols-rounded outlined text-xl">delete</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Row 5: Siesta de la mañana -->
+        <div class="px-4 py-3.5 flex items-center justify-between gap-3 hover:bg-slate-50/50 transition-colors">
+          <div class="flex items-center gap-3 min-w-0">
+            <!-- Indicator: blue (nap) -->
+            <span class="w-2.5 h-2.5 rounded-full bg-[#3B82F6] flex-shrink-0"></span>
+            <div class="flex flex-col sm:flex-row sm:items-baseline gap-0.5 sm:gap-2 min-w-0">
+              <span class="text-xs font-semibold text-[#1C5B54] whitespace-nowrap">10:15 a 11:30</span>
+              <span class="text-sm font-medium text-slate-800 truncate">Siesta de la mañana</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-0.5 flex-shrink-0">
+            <button type="button" aria-label="Editar Siesta de la mañana" class="w-10 h-10 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-800 hover:bg-slate-100 active:scale-95 transition-all">
+              <span class="material-symbols-rounded outlined text-xl">edit</span>
+            </button>
+            <button type="button" aria-label="Eliminar Siesta de la mañana" class="w-10 h-10 rounded-full flex items-center justify-center text-[#B94A3E] hover:bg-red-50 active:scale-95 transition-all">
+              <span class="material-symbols-rounded outlined text-xl">delete</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Row 6: Juego sensorial -->
+        <div class="px-4 py-3.5 flex items-center justify-between gap-3 hover:bg-slate-50/50 transition-colors">
+          <div class="flex items-center gap-3 min-w-0">
+            <!-- Indicator: gray-blue -->
+            <span class="w-2.5 h-2.5 rounded-full bg-slate-400 flex-shrink-0"></span>
+            <div class="flex flex-col sm:flex-row sm:items-baseline gap-0.5 sm:gap-2 min-w-0">
+              <span class="text-xs font-semibold text-[#1C5B54] whitespace-nowrap">11:30 a 12:15</span>
+              <span class="text-sm font-medium text-slate-800 truncate">Juego sensorial</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-0.5 flex-shrink-0">
+            <button type="button" aria-label="Editar Juego sensorial" class="w-10 h-10 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-800 hover:bg-slate-100 active:scale-95 transition-all">
+              <span class="material-symbols-rounded outlined text-xl">edit</span>
+            </button>
+            <button type="button" aria-label="Eliminar Juego sensorial" class="w-10 h-10 rounded-full flex items-center justify-center text-[#B94A3E] hover:bg-red-50 active:scale-95 transition-all">
+              <span class="material-symbols-rounded outlined text-xl">delete</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Row 7: Comida -->
+        <div class="px-4 py-3.5 flex items-center justify-between gap-3 hover:bg-slate-50/50 transition-colors">
+          <div class="flex items-center gap-3 min-w-0">
+            <!-- Indicator: orange (food) -->
+            <span class="w-2.5 h-2.5 rounded-full bg-[#E67E22] flex-shrink-0"></span>
+            <div class="flex flex-col sm:flex-row sm:items-baseline gap-0.5 sm:gap-2 min-w-0">
+              <span class="text-xs font-semibold text-[#1C5B54] whitespace-nowrap">12:15 a 13:00</span>
+              <span class="text-sm font-medium text-slate-800 truncate">Comida</span>
+            </div>
+          </div>
+          <div class="flex items-center gap-0.5 flex-shrink-0">
+            <button type="button" aria-label="Editar Comida" class="w-10 h-10 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-800 hover:bg-slate-100 active:scale-95 transition-all">
+              <span class="material-symbols-rounded outlined text-xl">edit</span>
+            </button>
+            <button type="button" aria-label="Eliminar Comida" class="w-10 h-10 rounded-full flex items-center justify-center text-[#B94A3E] hover:bg-red-50 active:scale-95 transition-all">
+              <span class="material-symbols-rounded outlined text-xl">delete</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Generous bottom spacing for navigation gestures -->
+    <div class="h-8"></div>
+
+    <!-- Android Gesture Bar indicator -->
+    <div class="w-full flex justify-center pb-2">
+      <div class="w-32 h-1 bg-slate-300 rounded-full"></div>
+    </div>
+
+  </div>
+
+</body>
+</html>
