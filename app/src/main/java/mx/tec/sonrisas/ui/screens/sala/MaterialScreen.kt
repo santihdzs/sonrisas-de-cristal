@@ -1,6 +1,8 @@
 package mx.tec.sonrisas.ui.screens.sala
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -13,8 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -24,6 +24,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import mx.tec.sonrisas.R
@@ -31,7 +33,9 @@ import mx.tec.sonrisas.domain.ColorEstrella
 import mx.tec.sonrisas.domain.MaterialClase
 import mx.tec.sonrisas.domain.Sala
 import mx.tec.sonrisas.domain.TipoSala
+import mx.tec.sonrisas.ui.components.BotonFlotante
 import mx.tec.sonrisas.ui.components.BotonPrincipal
+import mx.tec.sonrisas.ui.components.DialogoConfirmar
 import mx.tec.sonrisas.ui.components.CampoTexto
 import mx.tec.sonrisas.ui.components.EstadoVacio
 import mx.tec.sonrisas.ui.components.EstrellaSala
@@ -76,11 +80,11 @@ fun MaterialScreen(
 ) {
     Scaffold(
         modifier = modifier,
+        containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = WindowInsets(0),
         floatingActionButton = {
-            if (datos.esPersonal) {
-                ExtendedFloatingActionButton(onClick = onSubir, icon = { Icono(R.drawable.ic_upload_file, null) }, text = { Text("Subir material") })
-            }
+            // solo el personal sube material; la familia solo lo abre o lo comparte
+            if (datos.esPersonal) BotonFlotante("Subir material", R.drawable.ic_upload_file, onSubir)
         },
     ) { padding ->
         LazyColumn(
@@ -126,9 +130,15 @@ private fun TarjetaMaterial(
 ) {
     TarjetaSeccion {
         Row(horizontalArrangement = Arrangement.spacedBy(Espacio.space3), verticalAlignment = Alignment.Top) {
-            Icono(iconoTipo(m.tipo), nombreTipo(m.tipo), Modifier.size(40.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            // icono del tipo de archivo en un cuadro teal suave
+            Box(
+                Modifier.size(48.dp).clip(MaterialTheme.shapes.small).background(MaterialTheme.colorScheme.primaryContainer),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icono(iconoTipo(m.tipo), nombreTipo(m.tipo), Modifier.size(28.dp), tint = MaterialTheme.colorScheme.primary)
+            }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Espacio.space1)) {
-                Text(m.titulo, style = MaterialTheme.typography.titleMedium)
+                Text(m.titulo, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
                 if (m.descripcion.isNotBlank()) Text(m.descripcion, style = MaterialTheme.typography.bodyMedium)
                 Text(
                     listOfNotNull(nombreTipo(m.tipo), tamanoTexto(m.tamano), m.subidoEl.toLocalDate().relativoA(datos.hoy), datos.autores[m.subidoPorId])
@@ -152,8 +162,9 @@ private fun TarjetaMaterial(
                 Text("Compartir", modifier = Modifier.padding(start = Espacio.space2))
             }
             if (datos.puedeEditar(m)) {
-                IconButton(onClick = { onEditar(m) }) { Icono(R.drawable.ic_edit, "Editar ${m.titulo}") }
-                IconButton(onClick = { onBorrar(m) }) { Icono(R.drawable.ic_delete, "Borrar ${m.titulo}") }
+                // lapiz gris y bote en rojo apagado, como en Horarios
+                IconButton(onClick = { onEditar(m) }) { Icono(R.drawable.ic_edit, "Editar ${m.titulo}", tint = MaterialTheme.colorScheme.onSurfaceVariant) }
+                IconButton(onClick = { onBorrar(m) }) { Icono(R.drawable.ic_delete, "Borrar ${m.titulo}", tint = MaterialTheme.colorScheme.error) }
             }
         }
     }
@@ -185,18 +196,17 @@ fun HojaMaterialForm(hoja: HojaMaterial, onCambiar: (HojaMaterial) -> Unit, onGu
             CampoTexto(hoja.descripcion, { onCambiar(hoja.copy(descripcion = it)) }, "Descripción (opcional)", null, lineas = 3)
             hoja.error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium) }
         }
-        is HojaMaterial.Borrar -> AlertDialog(
-            onDismissRequest = onCerrar,
-            icon = { Icono(R.drawable.ic_delete, null) },
-            title = { Text("¿Borrar \"${hoja.material.titulo}\"?") },
-            text = { Text("Se borra el archivo para todas las familias de la sala. No se puede deshacer.") },
-            confirmButton = { TextButton(onClick = onGuardar) { Text("Borrar", color = MaterialTheme.colorScheme.error) } },
-            dismissButton = { TextButton(onClick = onCerrar) { Text("Cancelar") } },
+        is HojaMaterial.Borrar -> DialogoConfirmar(
+            titulo = "¿Borrar \"${hoja.material.titulo}\"?",
+            mensaje = "Se borra el archivo para todas las familias de la sala. No se puede deshacer.",
+            confirmar = "Borrar",
+            onConfirmar = onGuardar,
+            onCancelar = onCerrar,
         )
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, backgroundColor = 0xFFF3F5F7)
 @Composable
 private fun MaterialPreview() {
     val hoy = LocalDate.of(2026, 10, 12)
