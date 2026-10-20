@@ -90,6 +90,8 @@ import mx.tec.sonrisas.ui.components.BotonPrincipal
 import mx.tec.sonrisas.ui.components.EstadoChip
 import mx.tec.sonrisas.ui.components.EstadoVacio
 import mx.tec.sonrisas.ui.components.EstrellaSala
+import mx.tec.sonrisas.ui.components.EtiquetaSeccion
+import mx.tec.sonrisas.ui.components.FormaAvatar
 import mx.tec.sonrisas.ui.components.Icono
 import mx.tec.sonrisas.ui.components.TarjetaSeccion
 import mx.tec.sonrisas.ui.components.TipoEstado
@@ -625,24 +627,30 @@ fun IncidenteDetalleScreen(datos: IncidenteDetalleDatos?, modifier: Modifier = M
             .padding(Espacio.space4),
         verticalArrangement = Arrangement.spacedBy(Espacio.space3),
     ) {
-        EstadoChip("Incidente ${i.folio}", TipoEstado.ERROR, R.drawable.ic_error_fill)
-        Text(i.tipo.etiqueta, style = MaterialTheme.typography.headlineSmall)
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Espacio.space3)) {
-            AvatarNino(datos.nino.nombre, datos.nino.apellidos, datos.sala?.estrella ?: ColorEstrella.AZUL, tamano = 40.dp)
-            Column {
-                Text(datos.nino.nombreCompleto, style = MaterialTheme.typography.titleMedium)
-                Text("${i.cuando.toLocalDate().formatoLargo()}, ${i.cuando.formatoHora()}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        val esquema = MaterialTheme.colorScheme
+        // encabezado: folio en pildora rojo apagado, tipo y el niño con la hora
+        TarjetaSeccion {
+            Pildora("Incidente ${i.folio}", esquema.errorContainer, esquema.onErrorContainer, icono = R.drawable.ic_error_fill, colorIcono = esquema.error)
+            Text(i.tipo.etiqueta, style = MaterialTheme.typography.headlineSmall)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Espacio.space3)) {
+                AvatarNino(datos.nino.nombre, datos.nino.apellidos, datos.sala?.estrella ?: ColorEstrella.AZUL, tamano = 44.dp, forma = FormaAvatar.CUADRADO)
+                Column {
+                    Text(datos.nino.nombreCompleto, style = MaterialTheme.typography.titleMedium)
+                    Text("${i.cuando.toLocalDate().formatoLargo()}, ${i.cuando.formatoHora()}", style = MaterialTheme.typography.bodyMedium, color = esquema.onSurfaceVariant)
+                }
             }
         }
-        TarjetaSeccion(titulo = "Qué pasó") {
+        EtiquetaSeccion("Qué pasó")
+        TarjetaSeccion {
             Text(i.descripcion, style = MaterialTheme.typography.bodyLarge)
-            i.parteDelCuerpo?.let { Text("Parte del cuerpo: $it", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            i.parteDelCuerpo?.let { Text("Parte del cuerpo: $it", style = MaterialTheme.typography.bodyMedium, color = esquema.onSurfaceVariant) }
         }
-        TarjetaSeccion(titulo = "Qué hicimos") {
+        EtiquetaSeccion("Qué hicimos")
+        TarjetaSeccion {
             Text(i.accionTomada, style = MaterialTheme.typography.bodyLarge)
         }
         datos.registradoPor?.let {
-            Text("Registró: $it", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("Registró: $it", style = MaterialTheme.typography.bodyMedium, color = esquema.onSurfaceVariant)
         }
     }
 }
