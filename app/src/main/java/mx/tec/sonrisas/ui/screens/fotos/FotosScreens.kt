@@ -3,7 +3,6 @@ package mx.tec.sonrisas.ui.screens.fotos
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,14 +31,13 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -55,6 +53,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -74,6 +73,7 @@ import mx.tec.sonrisas.ui.components.BotonFlotante
 import mx.tec.sonrisas.ui.components.BotonPrincipal
 import mx.tec.sonrisas.ui.components.TarjetaBase
 import mx.tec.sonrisas.ui.components.CampoTexto
+import mx.tec.sonrisas.ui.components.DialogoConfirmar
 import mx.tec.sonrisas.ui.components.EtiquetaSeccion
 import mx.tec.sonrisas.ui.components.TarjetaSeccion
 import mx.tec.sonrisas.ui.components.EstadoChip
@@ -339,38 +339,49 @@ fun FotoDetalleScreen(
     ) {
         FotoActividad(
             foto.tema, datos.sala?.estrella ?: ColorEstrella.AZUL,
-            Modifier.fillMaxWidth().aspectRatio(4f / 3f), tamanoIcono = 96.dp, descripcion = foto.descripcion,
+            Modifier.fillMaxWidth().aspectRatio(4f / 3f).clip(RoundedCornerShape(Radio.tarjeta)),
+            tamanoIcono = 96.dp, descripcion = foto.descripcion,
         )
-        Text(foto.descripcion, style = MaterialTheme.typography.headlineSmall)
-        Text(
-            listOfNotNull(foto.cuando.formatoFechaHora(), datos.sala?.let { "Sala ${it.nombre}" }).joinToString(" · "),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        EstadoChip(
-            if (foto.uso == UsoFoto.INTERNA) "Solo para las familias" else "También para redes",
-            TipoEstado.NEUTRO,
-            if (foto.uso == UsoFoto.INTERNA) R.drawable.ic_lock else R.drawable.ic_public,
-        )
-        Text(if (esFamilia) "Aparece" else "Aparecen", style = MaterialTheme.typography.titleMedium)
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(Espacio.space3), verticalArrangement = Arrangement.spacedBy(Espacio.space2)) {
-            datos.etiquetados.forEach { n ->
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Espacio.space2)) {
-                    AvatarNino(n.nombre, n.apellidos, datos.sala?.estrella ?: ColorEstrella.AZUL, tamano = 32.dp)
-                    Text(if (esFamilia) n.nombre else n.nombreCompleto, style = MaterialTheme.typography.bodyLarge)
-                }
-            }
-        }
-        if (esFamilia) {
+        TarjetaSeccion {
+            Text(foto.descripcion, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
             Text(
-                "Por privacidad solo ves el nombre de tu hijo o hija.",
+                listOfNotNull(foto.cuando.formatoFechaHora(), datos.sala?.let { "Sala ${it.nombre}" }).joinToString(" · "),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            EstadoChip(
+                if (foto.uso == UsoFoto.INTERNA) "Solo para las familias" else "También para redes",
+                TipoEstado.NEUTRO,
+                if (foto.uso == UsoFoto.INTERNA) R.drawable.ic_lock else R.drawable.ic_public,
+            )
         }
-        OutlinedButton(
+        // la familia solo ve el nombre de su hijo; el personal ve nombres completos
+        EtiquetaSeccion(if (esFamilia) "Aparece" else "Aparecen")
+        TarjetaSeccion {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(Espacio.space3), verticalArrangement = Arrangement.spacedBy(Espacio.space2)) {
+                datos.etiquetados.forEach { n ->
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Espacio.space2)) {
+                        AvatarNino(n.nombre, n.apellidos, datos.sala?.estrella ?: ColorEstrella.AZUL, tamano = 32.dp)
+                        Text(if (esFamilia) n.nombre else n.nombreCompleto, style = MaterialTheme.typography.bodyLarge)
+                    }
+                }
+            }
+            if (esFamilia) {
+                Text(
+                    "Por privacidad solo ves el nombre de tu hijo o hija.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        // accion destructiva en rojo apagado, sin contorno; la familia solo pide que se borre
+        FilledTonalButton(
             onClick = { confirmar = true },
             enabled = !borrando,
+            colors = ButtonDefaults.filledTonalButtonColors(
+                containerColor = MaterialTheme.colorScheme.errorContainer,
+                contentColor = MaterialTheme.colorScheme.error,
+            ),
             modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
         ) {
             Icono(R.drawable.ic_delete, null)
@@ -378,18 +389,15 @@ fun FotoDetalleScreen(
         }
     }
     if (confirmar) {
-        AlertDialog(
-            onDismissRequest = { confirmar = false },
-            icon = { Icono(R.drawable.ic_delete, null) },
-            title = { Text("¿Borrar esta foto?") },
-            text = { Text("Esta foto se borrará para todas las familias. No se puede deshacer.") },
-            confirmButton = {
-                TextButton(onClick = {
-                    confirmar = false
-                    onBorrar()
-                }) { Text("Borrar foto", color = MaterialTheme.colorScheme.error) }
+        DialogoConfirmar(
+            titulo = "¿Borrar esta foto?",
+            mensaje = "Esta foto se borrará para todas las familias. No se puede deshacer.",
+            confirmar = "Borrar foto",
+            onConfirmar = {
+                confirmar = false
+                onBorrar()
             },
-            dismissButton = { TextButton(onClick = { confirmar = false }) { Text("Cancelar") } },
+            onCancelar = { confirmar = false },
         )
     }
 }
