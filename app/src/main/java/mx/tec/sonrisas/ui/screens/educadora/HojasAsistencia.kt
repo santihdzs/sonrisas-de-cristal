@@ -6,13 +6,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.tooling.preview.Preview
 import mx.tec.sonrisas.R
 import mx.tec.sonrisas.domain.Incidente
@@ -22,6 +19,7 @@ import mx.tec.sonrisas.domain.SiNoNoAplica
 import mx.tec.sonrisas.domain.TipoIncidente
 import mx.tec.sonrisas.ui.components.BotonPrincipal
 import mx.tec.sonrisas.ui.components.CampoHora
+import mx.tec.sonrisas.ui.components.CampoTexto
 import mx.tec.sonrisas.ui.components.EtiquetaCampo
 import mx.tec.sonrisas.ui.components.FilaSwitch
 import mx.tec.sonrisas.ui.components.HojaModal
@@ -34,8 +32,6 @@ import mx.tec.sonrisas.ui.theme.Espacio
 import mx.tec.sonrisas.ui.theme.SonrisasTheme
 import java.time.LocalDate
 import java.time.LocalDateTime
-
-private val oraciones = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
 
 @Composable
 fun HojasAsistencia(
@@ -76,26 +72,21 @@ private fun HojaLlegada(
         FilaSwitch("Trajo su mochila completa", form.mochilaCompleta, { onCambio(form.copy(mochilaCompleta = it)) })
         FilaSwitch("Llegó en buen estado físico", form.buenEstado, { onCambio(form.copy(buenEstado = it)) })
         if (!form.buenEstado) {
-            OutlinedTextField(
-                value = form.lesion,
-                onValueChange = { onCambio(form.copy(lesion = it)) },
-                label = { Text("¿Qué lesión y dónde?") },
-                isError = form.faltaLesion,
-                supportingText = { Text(if (form.faltaLesion) "Describe la lesión y la parte del cuerpo." else "Por ejemplo: rasguño en la mejilla izquierda.") },
-                keyboardOptions = oraciones,
-                modifier = Modifier.fillMaxWidth(),
+            CampoTexto(
+                valor = form.lesion,
+                onCambio = { onCambio(form.copy(lesion = it)) },
+                etiqueta = "¿Qué lesión y dónde?",
+                error = if (form.faltaLesion) "Describe la lesión y la parte del cuerpo." else null,
+                ayuda = "Por ejemplo: rasguño en la mejilla izquierda.",
             )
         }
         FilaSwitch("¿Llega con síntomas?", form.conSintomas, { onCambio(form.copy(conSintomas = it)) })
         if (form.conSintomas) {
-            OutlinedTextField(
-                value = form.sintomas,
-                onValueChange = { onCambio(form.copy(sintomas = it)) },
-                label = { Text("¿Cuáles?") },
-                isError = form.faltanSintomas,
-                supportingText = if (form.faltanSintomas) ({ Text("Escribe los síntomas.") }) else null,
-                keyboardOptions = oraciones,
-                modifier = Modifier.fillMaxWidth(),
+            CampoTexto(
+                valor = form.sintomas,
+                onCambio = { onCambio(form.copy(sintomas = it)) },
+                etiqueta = "¿Cuáles?",
+                error = if (form.faltanSintomas) "Escribe los síntomas." else null,
             )
             EtiquetaCampo("¿Dejaron medicamento con receta?")
             SelectorOpciones(SiNoNoAplica.entries, form.medicamento, { onCambio(form.copy(medicamento = it)) }, { it.etiqueta })
@@ -138,23 +129,19 @@ private fun HojaSalida(
         FilaSwitch("Lleva sus pertenencias completas", form.pertenenciasCompletas, { onCambio(form.copy(pertenenciasCompletas = it)) })
         FilaSwitch("Sale en buen estado físico", form.buenEstado, { onCambio(form.copy(buenEstado = it)) })
         if (!form.buenEstado) {
-            OutlinedTextField(
-                value = form.lesion,
-                onValueChange = { onCambio(form.copy(lesion = it)) },
-                label = { Text("¿Qué lesión y dónde?") },
-                isError = form.faltaLesion,
-                supportingText = if (form.faltaLesion) ({ Text("Describe la lesión y la parte del cuerpo.") }) else null,
-                keyboardOptions = oraciones,
-                modifier = Modifier.fillMaxWidth(),
+            CampoTexto(
+                valor = form.lesion,
+                onCambio = { onCambio(form.copy(lesion = it)) },
+                etiqueta = "¿Qué lesión y dónde?",
+                error = if (form.faltaLesion) "Describe la lesión y la parte del cuerpo." else null,
             )
         }
-        OutlinedTextField(
-            value = form.observaciones,
-            onValueChange = { onCambio(form.copy(observaciones = it)) },
-            label = { Text("Observaciones (opcional)") },
-            keyboardOptions = oraciones,
-            minLines = 2,
-            modifier = Modifier.fillMaxWidth(),
+        CampoTexto(
+            valor = form.observaciones,
+            onCambio = { onCambio(form.copy(observaciones = it)) },
+            etiqueta = "Observaciones (opcional)",
+            error = null,
+            lineas = 2,
         )
         form.error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium) }
     }
@@ -169,7 +156,7 @@ private fun RecordatorioIncidentes(incidentes: List<Incidente>) {
         modifier = Modifier.fillMaxWidth(),
     ) {
         Row(Modifier.padding(Espacio.space4), horizontalArrangement = Arrangement.spacedBy(Espacio.space3)) {
-            Icono(R.drawable.ic_error_fill, null)
+            Icono(R.drawable.ic_error_fill, null, tint = MaterialTheme.colorScheme.error)
             Column(verticalArrangement = Arrangement.spacedBy(Espacio.space1)) {
                 Text("Coméntalo con quien lo recoge", style = MaterialTheme.typography.titleSmall)
                 incidentes.forEach {

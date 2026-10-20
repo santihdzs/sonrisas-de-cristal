@@ -1,5 +1,6 @@
 package mx.tec.sonrisas.ui.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -34,6 +35,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
@@ -120,21 +122,26 @@ fun SelectorPersona(
     onSeleccion: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier.selectableGroup()) {
+    val esquema = MaterialTheme.colorScheme
+    Column(modifier.selectableGroup(), verticalArrangement = Arrangement.spacedBy(Espacio.space2)) {
         personas.forEach { p ->
             val activa = p.id == seleccionadaId
+            // cada persona es una tarjeta gris sin contorno; la elegida se pinta de teal suave
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .heightIn(min = 56.dp)
-                    .selectable(selected = activa, role = Role.RadioButton, onClick = { onSeleccion(p.id) }),
+                    .clip(RoundedCornerShape(Radio.r16))
+                    .background(if (activa) esquema.primaryContainer else esquema.surfaceContainer)
+                    .selectable(selected = activa, role = Role.RadioButton, onClick = { onSeleccion(p.id) })
+                    .padding(horizontal = Espacio.space2, vertical = Espacio.space1),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(Espacio.space2),
             ) {
                 RadioButton(selected = activa, onClick = null)
                 Column {
-                    Text(p.nombre, style = MaterialTheme.typography.bodyLarge)
-                    Text(p.parentesco, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(p.nombre, style = MaterialTheme.typography.titleSmall)
+                    Text(p.parentesco, style = MaterialTheme.typography.bodyMedium, color = esquema.onSurfaceVariant)
                 }
             }
         }
