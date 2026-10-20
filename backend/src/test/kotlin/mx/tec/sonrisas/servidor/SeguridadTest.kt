@@ -23,6 +23,7 @@ import mx.tec.sonrisas.data.ResumenConversacion
 import mx.tec.sonrisas.domain.Estancia
 import mx.tec.sonrisas.domain.Nino
 import mx.tec.sonrisas.domain.Usuario
+import mx.tec.sonrisas.domain.contrasenaTemporal
 import java.net.URLEncoder
 import java.util.UUID
 import kotlin.test.Test
@@ -299,5 +300,16 @@ class SeguridadTest {
         val personal = leer<List<Usuario>>("/personal", token("familia"))
         assertTrue(personal.isNotEmpty())
         assertTrue(personal.all { it.usuario.isBlank() })
+    }
+
+    // ---------- I. Contrasenas temporales ----------
+
+    @Test
+    fun `S27 las contrasenas temporales son de tres palabras y cuatro digitos y casi nunca se repiten`() {
+        val formato = Regex("[a-z]+-[a-z]+-[a-z]+-[0-9]{4}")
+        val muestra = List(3000) { contrasenaTemporal() }
+        assertTrue(muestra.all { formato.matches(it) })
+        // con 72,000 combinaciones (antes) 3000 contrasenas chocaban unas 60 veces; con ~2,400 millones, casi nunca
+        assertTrue(muestra.toSet().size >= 2995)
     }
 }

@@ -310,11 +310,22 @@ fun usuarioSugerido(nombre: String, ocupados: Collection<String>): String {
     return generateSequence(2) { it + 1 }.map { "$base$it" }.first { it !in usados }
 }
 
-private val palabrasContrasena = listOf("luna", "nube", "flor", "sol", "mar", "pino", "lago", "rio")
+// 64 palabras faciles de dictar, sin acentos ni enie
+private val palabrasContrasena = listOf(
+    "luna", "nube", "flor", "sol", "mar", "pino", "lago", "rio",
+    "cielo", "monte", "playa", "arena", "piedra", "roble", "cedro", "hoja",
+    "rama", "fruta", "mango", "limon", "pera", "uva", "coco", "kiwi",
+    "gato", "perro", "oso", "lobo", "zorro", "tigre", "leon", "delfin",
+    "ballena", "tortuga", "conejo", "pato", "buho", "abeja", "mesa", "silla",
+    "lapiz", "libro", "globo", "tambor", "piano", "guitarra", "cometa", "barco",
+    "tren", "avion", "faro", "puente", "torre", "castillo", "estrella", "planeta",
+    "trueno", "brisa", "nieve", "lluvia", "volcan", "isla", "bosque", "jardin",
+)
 
-// facil de dictar en voz alta; la persona la usa para entrar la primera vez
+// la persona la usa para entrar la primera vez y se dicta en voz alta: "luna-pino-cometa-4821"
+// P6: 64^3 x 9000 combinaciones (~31 bits de entropia) en lugar de 8 x 9000 (~16 bits)
 fun contrasenaTemporal(azar: Random = Random.Default): String =
-    palabrasContrasena[azar.nextInt(palabrasContrasena.size)] + azar.nextInt(1000, 10000)
+    List(3) { palabrasContrasena[azar.nextInt(palabrasContrasena.size)] }.joinToString("-") + "-" + azar.nextInt(1000, 10000)
 
 // feriados oficiales de la ley federal del trabajo (sin los de cambio de gobierno)
 fun siguienteFeriado(desde: LocalDate): Pair<LocalDate, String> {
