@@ -5,9 +5,12 @@ import mx.tec.sonrisas.domain.Usuario
 import java.security.MessageDigest
 import java.security.SecureRandom
 import java.util.Base64
+import java.util.concurrent.ConcurrentHashMap
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.PBEKeySpec
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
+import kotlin.time.Duration.Companion.minutes
 
 val azarSeguro = SecureRandom()
 
@@ -68,6 +71,39 @@ object Sesiones {
     fun cerrar(c: Conexion, token: String) = c.ejecutar("DELETE FROM sesiones WHERE token_hash = ?", huella(token))
 
     fun cerrarTodas(c: Conexion, usuarioId: String) = c.ejecutar("DELETE FROM sesiones WHERE usuario_id = ?", usuarioId)
+}
+
+/**
+ * P4: bloqueo temporal por cuenta. Tras [maxFallos] contrasenas incorrectas dentro de [duracion], esa cuenta queda
+ * bloqueada [duracion], venga de la ip que venga. Cuenta tambien nombres que no existen: si solo se bloquearan
+ * cuentas reales, el 429 delataria cuales existen. Vive en memoria: al reiniciar el servidor se limpia.
+ */
+class BloqueoCuentas(
+    private val maxFallos: Int = 5,
+    private val duracion: Duration = 15.minutes,
+    private val reloj: () -> Long = System::currentTimeMillis,
+) {
+    private class Estado(val fallos: Int, val desde: Long, val bloqueadaHasta: Long)
+
+    private val estados = ConcurrentHashMap<String, Estado>()
+
+    fun bloqueada(usuario: String): Boolean = (estados[usuario]?.bloqueadaHasta ?: 0L) > reloj()
+
+    fun fallo(usuario: String) {
+        val ahora = reloj()
+        val ventana = duracion.inWholeMilliseconds
+        // memoria acotada: si alguien prueba miles de nombres distintos, se olvidan los que ya vencieron
+        if (estados.size > 10_000) estados.entries.removeIf { ahora - it.value.desde > ventana && it.value.bloqueadaHasta < ahora }
+        estados.compute(usuario) { _, previo ->
+            val vigente = previo?.takeIf { ahora - it.desde < ventana || it.bloqueadaHasta > ahora }
+            val fallos = (vigente?.fallos ?: 0) + 1
+            Estado(fallos, vigente?.desde ?: ahora, if (fallos >= maxFallos) ahora + ventana else 0L)
+        }
+    }
+
+    fun exito(usuario: String) {
+        estados.remove(usuario)
+    }
 }
 
 /**
