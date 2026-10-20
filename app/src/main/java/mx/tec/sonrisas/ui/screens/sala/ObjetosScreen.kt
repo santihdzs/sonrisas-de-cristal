@@ -20,11 +20,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -33,6 +30,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import mx.tec.sonrisas.R
@@ -41,7 +39,9 @@ import mx.tec.sonrisas.domain.EstadoObjeto
 import mx.tec.sonrisas.domain.ObjetoPerdido
 import mx.tec.sonrisas.domain.Sala
 import mx.tec.sonrisas.domain.TipoSala
+import mx.tec.sonrisas.ui.components.BotonFlotante
 import mx.tec.sonrisas.ui.components.BotonPrincipal
+import mx.tec.sonrisas.ui.components.ChipFiltro
 import mx.tec.sonrisas.ui.components.CampoFecha
 import mx.tec.sonrisas.ui.components.CampoTexto
 import mx.tec.sonrisas.ui.components.EstadoChip
@@ -74,11 +74,11 @@ fun ObjetosScreen(
     val visibles = datos.objetos.filter { filtro.aplica(it) }
     Scaffold(
         modifier = modifier,
+        containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = WindowInsets(0),
         floatingActionButton = {
-            if (datos.esPersonal) {
-                ExtendedFloatingActionButton(onClick = onPublicar, icon = { Icono(R.drawable.ic_add_a_photo, null) }, text = { Text("Publicar objeto") })
-            }
+            // solo el personal publica objetos; la familia los reclama desde cada tarjeta
+            if (datos.esPersonal) BotonFlotante("Publicar objeto", R.drawable.ic_add_a_photo, onPublicar)
         },
     ) { padding ->
         LazyColumn(
@@ -100,13 +100,7 @@ fun ObjetosScreen(
             item {
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(Espacio.space2)) {
                     items(FiltroObjetos.entries) { f ->
-                        FilterChip(
-                            selected = f == filtro,
-                            onClick = { onFiltro(f) },
-                            label = { Text("${f.etiqueta} (${datos.cuantos(f)})") },
-                            leadingIcon = if (f == filtro) ({ Icono(R.drawable.ic_check, null) }) else null,
-                            modifier = Modifier.heightIn(min = 48.dp),
-                        )
+                        ChipFiltro(f.etiqueta, f == filtro, { onFiltro(f) }, contador = datos.cuantos(f))
                     }
                 }
             }
@@ -153,7 +147,7 @@ private fun TarjetaObjeto(
                 }
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Espacio.space1)) {
-                Text(o.descripcion, style = MaterialTheme.typography.titleMedium)
+                Text(o.descripcion, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
                 Text(
                     "Se encontró en: ${o.dondeSeEncontro}",
                     style = MaterialTheme.typography.bodyMedium,
@@ -240,7 +234,7 @@ fun HojaObjetoForm(
                         Text("Quitar foto", modifier = Modifier.padding(start = Espacio.space2))
                     }
                 } else {
-                    OutlinedButton(
+                    FilledTonalButton(
                         onClick = { selector.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
                         modifier = Modifier.heightIn(min = 48.dp),
                     ) {
@@ -272,7 +266,7 @@ fun HojaObjetoForm(
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, backgroundColor = 0xFFF3F5F7)
 @Composable
 private fun ObjetosPreview() {
     val hoy = LocalDate.of(2026, 10, 12)
