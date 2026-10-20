@@ -8,15 +8,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import mx.tec.sonrisas.R
@@ -27,16 +26,18 @@ import mx.tec.sonrisas.ui.components.AvatarNino
 import mx.tec.sonrisas.ui.components.BannerAlergias
 import mx.tec.sonrisas.ui.components.BotonPrincipal
 import mx.tec.sonrisas.ui.components.CampoHora
-import mx.tec.sonrisas.ui.components.EtiquetaCampo
+import mx.tec.sonrisas.ui.components.CampoTexto
+import mx.tec.sonrisas.ui.components.EtiquetaSeccion
+import mx.tec.sonrisas.ui.components.FormaAvatar
 import mx.tec.sonrisas.ui.components.Icono
 import mx.tec.sonrisas.ui.components.SelectorOpciones
+import mx.tec.sonrisas.ui.components.TarjetaBase
+import mx.tec.sonrisas.ui.components.TarjetaSeccion
 import mx.tec.sonrisas.ui.components.etiqueta
 import mx.tec.sonrisas.ui.theme.Espacio
 import mx.tec.sonrisas.ui.theme.SonrisasTheme
 import java.time.LocalDate
 import java.time.LocalTime
-
-private val oraciones = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
 
 @Composable
 fun IncidenteScreen(
@@ -56,57 +57,69 @@ fun IncidenteScreen(
             .padding(Espacio.space4),
         verticalArrangement = Arrangement.spacedBy(Espacio.space3),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Espacio.space3)) {
-            AvatarNino(nino.nombre, nino.apellidos, estrella)
-            Text(nino.nombreCompleto, style = MaterialTheme.typography.titleLarge)
+        TarjetaBase(Modifier.fillMaxWidth()) {
+            Row(
+                Modifier.padding(Espacio.space4),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(Espacio.space3),
+            ) {
+                AvatarNino(nino.nombre, nino.apellidos, estrella, forma = FormaAvatar.CUADRADO)
+                Text(nino.nombreCompleto, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
+            }
         }
         if (nino.tieneInfoMedica) BannerAlergias(nino.alergias, nino.padecimientos, nino.medicamentos)
-        EtiquetaCampo("¿Qué pasó?")
-        SelectorOpciones(TipoIncidente.entries, form.tipo, { onCambiar(form.copy(tipo = it)) }, { it.etiqueta })
-        errores["tipo"]?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium) }
-        CampoHora("Hora del incidente", form.hora, { onCambiar(form.copy(hora = it)) })
-        OutlinedTextField(
-            value = form.parteDelCuerpo,
-            onValueChange = { onCambiar(form.copy(parteDelCuerpo = it)) },
-            label = { Text("Parte del cuerpo (opcional)") },
-            singleLine = true,
-            keyboardOptions = oraciones,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        OutlinedTextField(
-            value = form.descripcion,
-            onValueChange = { onCambiar(form.copy(descripcion = it)) },
-            label = { Text("Descripción") },
-            isError = errores["descripcion"] != null,
-            supportingText = { Text(errores["descripcion"] ?: "Cuenta qué pasó y cómo está ahora.") },
-            keyboardOptions = oraciones,
-            minLines = 3,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        OutlinedTextField(
-            value = form.accionTomada,
-            onValueChange = { onCambiar(form.copy(accionTomada = it)) },
-            label = { Text("Acción tomada") },
-            isError = errores["accion"] != null,
-            supportingText = { Text(errores["accion"] ?: "Por ejemplo: se aplicó compresa fría.") },
-            keyboardOptions = oraciones,
-            minLines = 2,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Row(horizontalArrangement = Arrangement.spacedBy(Espacio.space2)) {
-            Icono(R.drawable.ic_notifications, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text(
-                "La familia lo verá de inmediato en su pantalla de hoy, sin esperar a la hora de salida.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+        EtiquetaSeccion("¿Qué pasó?")
+        TarjetaSeccion {
+            SelectorOpciones(TipoIncidente.entries, form.tipo, { onCambiar(form.copy(tipo = it)) }, { it.etiqueta })
+            errores["tipo"]?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium) }
+            CampoHora("Hora del incidente", form.hora, { onCambiar(form.copy(hora = it)) })
+        }
+        EtiquetaSeccion("Detalles")
+        TarjetaSeccion {
+            CampoTexto(
+                valor = form.parteDelCuerpo,
+                onCambio = { onCambiar(form.copy(parteDelCuerpo = it)) },
+                etiqueta = "Parte del cuerpo (opcional)",
+                error = null,
             )
+            CampoTexto(
+                valor = form.descripcion,
+                onCambio = { onCambiar(form.copy(descripcion = it)) },
+                etiqueta = "Descripción",
+                error = errores["descripcion"],
+                ayuda = "Cuenta qué pasó y cómo está ahora.",
+                lineas = 3,
+            )
+            CampoTexto(
+                valor = form.accionTomada,
+                onCambio = { onCambiar(form.copy(accionTomada = it)) },
+                etiqueta = "Acción tomada",
+                error = errores["accion"],
+                ayuda = "Por ejemplo: se aplicó compresa fría.",
+                lineas = 2,
+            )
+        }
+        // aviso informativo en teal suave (no es una alerta)
+        Surface(
+            color = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            shape = MaterialTheme.shapes.medium,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Row(Modifier.padding(Espacio.space4), horizontalArrangement = Arrangement.spacedBy(Espacio.space3)) {
+                Icono(R.drawable.ic_notifications, null)
+                Text(
+                    "La familia lo verá de inmediato en su pantalla de hoy, sin esperar a la hora de salida.",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
         }
         form.error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium) }
         BotonPrincipal("Registrar y avisar a la familia", onGuardar, guardando = form.guardando, modifier = Modifier.padding(bottom = 8.dp))
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, backgroundColor = 0xFFF3F5F7)
 @Composable
 private fun IncidentePreview() {
     val nino = Nino("1", "Sofía", "Ramírez Treviño", LocalDate.of(2024, 4, 18), "e", "s", emptyList(), emptyList(), alergias = "Cacahuate")
