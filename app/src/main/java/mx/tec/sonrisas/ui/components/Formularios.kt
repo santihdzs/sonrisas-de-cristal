@@ -23,6 +23,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldColors
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.RadioButton
@@ -210,7 +211,6 @@ fun CampoTexto(
     lineas: Int = 1,
 ) {
     // sin contorno fino: fondo gris claro y esquinas de 12; el foco se nota en la etiqueta y el cursor teal
-    val esquema = MaterialTheme.colorScheme
     TextField(
         value = valor,
         // en telefonos solo se aceptan digitos y espacios, aunque el teclado permita otros simbolos
@@ -221,17 +221,27 @@ fun CampoTexto(
         singleLine = lineas == 1,
         minLines = lineas,
         keyboardOptions = teclado,
-        shape = RoundedCornerShape(Radio.controlChico),
-        colors = TextFieldDefaults.colors(
-            focusedContainerColor = esquema.surfaceContainer,
-            unfocusedContainerColor = esquema.surfaceContainer,
-            disabledContainerColor = esquema.surfaceContainer,
-            errorContainerColor = esquema.errorContainer,
-            focusedIndicatorColor = Color.Transparent,
-            unfocusedIndicatorColor = Color.Transparent,
-            disabledIndicatorColor = Color.Transparent,
-            errorIndicatorColor = Color.Transparent,
-        ),
+        shape = FormaCampo,
+        colors = coloresCampo(),
         modifier = modifier.fillMaxWidth(),
+    )
+}
+
+/** forma de los campos de texto: esquinas de 12, sin contorno */
+val FormaCampo = RoundedCornerShape(Radio.controlChico)
+
+/** colores de un campo sin contorno: fondo gris claro, sin linea inferior; con error, fondo rojo apagado suave */
+@Composable
+fun coloresCampo(): TextFieldColors {
+    val esquema = MaterialTheme.colorScheme
+    return TextFieldDefaults.colors(
+        focusedContainerColor = esquema.surfaceContainer,
+        unfocusedContainerColor = esquema.surfaceContainer,
+        disabledContainerColor = esquema.surfaceContainer,
+        errorContainerColor = esquema.errorContainer,
+        focusedIndicatorColor = Color.Transparent,
+        unfocusedIndicatorColor = Color.Transparent,
+        disabledIndicatorColor = Color.Transparent,
+        errorIndicatorColor = Color.Transparent,
     )
 }
