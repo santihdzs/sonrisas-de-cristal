@@ -26,8 +26,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.TextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -41,6 +41,8 @@ import mx.tec.sonrisas.domain.TipoAviso
 import mx.tec.sonrisas.domain.TipoSala
 import mx.tec.sonrisas.ui.components.BotonPrincipal
 import mx.tec.sonrisas.ui.components.CampoTexto
+import mx.tec.sonrisas.ui.components.FormaCampo
+import mx.tec.sonrisas.ui.components.coloresCampo
 import mx.tec.sonrisas.ui.components.coincideCon
 import mx.tec.sonrisas.ui.components.tecladoNombres
 import mx.tec.sonrisas.ui.components.tecladoTelefono
@@ -100,7 +102,7 @@ fun InscripcionScreen(
                     Text("Tutor ${i + 1}", style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
                     if (form.tutores.size > 1) {
                         IconButton(onClick = { onCambiar(form.copy(tutores = form.tutores - t)) }) {
-                            Icono(R.drawable.ic_delete, "Quitar tutor ${i + 1}")
+                            Icono(R.drawable.ic_delete, "Quitar tutor ${i + 1}", tint = MaterialTheme.colorScheme.error)
                         }
                     }
                 }
@@ -131,13 +133,13 @@ fun InscripcionScreen(
             }
             errores["tutores"]?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
             FlowRow(horizontalArrangement = Arrangement.spacedBy(Espacio.space2), verticalArrangement = Arrangement.spacedBy(Espacio.space2)) {
-                OutlinedButton(onClick = { onCambiar(form.copy(tutores = form.tutores + FilaTutor())) }, modifier = Modifier.heightIn(min = 48.dp)) {
+                FilledTonalButton(onClick = { onCambiar(form.copy(tutores = form.tutores + FilaTutor())) }, modifier = Modifier.heightIn(min = 48.dp)) {
                     Icono(R.drawable.ic_add, null)
                     Text("Agregar tutor", modifier = Modifier.padding(start = Espacio.space2))
                 }
                 val disponibles = datos.registrados.filter { r -> form.tutores.none { it.id == r.id } }
                 if (disponibles.isNotEmpty()) {
-                    OutlinedButton(onClick = { eligiendo = true }, modifier = Modifier.heightIn(min = 48.dp)) {
+                    FilledTonalButton(onClick = { eligiendo = true }, modifier = Modifier.heightIn(min = 48.dp)) {
                         Icono(R.drawable.ic_family_restroom, null)
                         Text("Elegir tutor registrado", modifier = Modifier.padding(start = Espacio.space2))
                     }
@@ -154,7 +156,7 @@ fun InscripcionScreen(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("Persona ${i + 1}", style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
                     IconButton(onClick = { onCambiar(form.copy(otras = form.otras - p)) }) {
-                        Icono(R.drawable.ic_delete, "Quitar persona ${i + 1}")
+                        Icono(R.drawable.ic_delete, "Quitar persona ${i + 1}", tint = MaterialTheme.colorScheme.error)
                     }
                 }
                 fun cambiar(nueva: FilaPersona) = onCambiar(form.copy(otras = form.otras.map { if (it.id == p.id) nueva else it }))
@@ -163,7 +165,7 @@ fun InscripcionScreen(
                 CampoTexto(p.telefono, { cambiar(p.copy(telefono = it)) }, "Teléfono", errores["otra.telefono.${p.id}"], teclado = tecladoTelefono)
             }
             errores["recoger"]?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
-            OutlinedButton(onClick = { onCambiar(form.copy(otras = form.otras + FilaPersona())) }, modifier = Modifier.heightIn(min = 48.dp)) {
+            FilledTonalButton(onClick = { onCambiar(form.copy(otras = form.otras + FilaPersona())) }, modifier = Modifier.heightIn(min = 48.dp)) {
                 Icono(R.drawable.ic_add, null)
                 Text("Agregar persona", modifier = Modifier.padding(start = Espacio.space2))
             }
@@ -218,22 +220,26 @@ private fun HojaTutoresRegistrados(
 ) {
     var busqueda by rememberSaveable { mutableStateOf("") }
     HojaModal(titulo = "Elegir tutor registrado", subtitulo = "Tutores de otros niños de esta estancia.", onCerrar = onCerrar) {
-        OutlinedTextField(
+        TextField(
             value = busqueda,
             onValueChange = { busqueda = it },
             label = { Text("Buscar por nombre") },
             leadingIcon = { Icono(R.drawable.ic_search, null) },
             singleLine = true,
+            shape = FormaCampo,
+            colors = coloresCampo(),
             modifier = Modifier.fillMaxWidth(),
         )
         val filtrados = tutores.filter { it.nombre.coincideCon(busqueda) }
         if (filtrados.isEmpty()) Text("No encontramos tutores con ese nombre.", style = MaterialTheme.typography.bodyLarge)
         filtrados.forEach { t ->
             val hijos = hijosDe[t.id].orEmpty()
+            // cada tutor es una tarjeta gris sin contorno, como la eleccion de personas autorizadas
             ListItem(
                 headlineContent = { Text(t.nombre, style = MaterialTheme.typography.titleMedium) },
                 supportingContent = { Text(listOfNotNull(t.parentesco, hijos.takeIf { it.isNotEmpty() }?.let { "de ${it.joinToString(", ")}" }).joinToString(" ")) },
-                colors = ListItemDefaults.colors(containerColor = SonrisasTheme.colors.superficieElevada),
+                trailingContent = { Icono(R.drawable.ic_chevron_right, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+                colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
                 modifier = Modifier.clip(MaterialTheme.shapes.medium).clickable { onElegir(t) },
             )
         }
