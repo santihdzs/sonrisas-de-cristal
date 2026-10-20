@@ -18,12 +18,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.AlertDialog
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -36,7 +34,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -57,21 +55,31 @@ import mx.tec.sonrisas.ui.components.AvatarNino
 import mx.tec.sonrisas.ui.components.BannerAlergias
 import mx.tec.sonrisas.ui.components.BotonPrincipal
 import mx.tec.sonrisas.ui.components.CampoHora
+import mx.tec.sonrisas.ui.components.CampoTexto
+import mx.tec.sonrisas.ui.components.DialogoConfirmar
 import mx.tec.sonrisas.ui.components.EstadoVacio
 import mx.tec.sonrisas.ui.components.EstrellaSala
 import mx.tec.sonrisas.ui.components.EtiquetaCampo
+import mx.tec.sonrisas.ui.components.EtiquetaSeccion
 import mx.tec.sonrisas.ui.components.FilaCheck
+import mx.tec.sonrisas.ui.components.FormaAvatar
 import mx.tec.sonrisas.ui.components.HojaModal
 import mx.tec.sonrisas.ui.components.Icono
 import mx.tec.sonrisas.ui.components.SelectorOpciones
-import mx.tec.sonrisas.ui.components.TituloSeccion
+import mx.tec.sonrisas.ui.components.TarjetaBase
+import mx.tec.sonrisas.ui.components.TipoTono
+import mx.tec.sonrisas.ui.components.sombraSuave
+import mx.tec.sonrisas.ui.components.tipoTono
+import mx.tec.sonrisas.ui.components.tono
 import mx.tec.sonrisas.ui.components.detalle
 import mx.tec.sonrisas.ui.components.etiqueta
 import mx.tec.sonrisas.ui.components.formatoHora
 import mx.tec.sonrisas.ui.components.icono
 import mx.tec.sonrisas.ui.components.minutosTexto
 import mx.tec.sonrisas.ui.components.titulo
+import mx.tec.sonrisas.ui.theme.Elevacion
 import mx.tec.sonrisas.ui.theme.Espacio
+import mx.tec.sonrisas.ui.theme.Radio
 import mx.tec.sonrisas.ui.theme.SonrisasTheme
 import java.time.Duration
 import java.time.LocalDate
@@ -100,19 +108,20 @@ fun FichaScreen(
     val presente = datos.asistencia != null && !datos.asistencia.salio
     Scaffold(
         modifier = modifier,
+        containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = WindowInsets(0),
         bottomBar = { AccionesRapidas(habilitadas = presente, onAbrir = onAbrir, onIncidente = onIncidente) },
     ) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(Espacio.space4),
+            contentPadding = PaddingValues(start = Espacio.space4, end = Espacio.space4, top = Espacio.space1, bottom = Espacio.space4),
             verticalArrangement = Arrangement.spacedBy(Espacio.space3),
         ) {
-            item { Column { EncabezadoFicha(datos, onLlegada, onSalida, onImprimir) } }
+            item { EncabezadoFicha(datos, onLlegada, onSalida, onImprimir) }
             if (datos.nino.tieneInfoMedica) {
                 item { BannerAlergias(datos.nino.alergias, datos.nino.padecimientos, datos.nino.medicamentos) }
             }
-            item { TituloSeccion("Hoy") }
+            item { EtiquetaSeccion("Hoy") }
             if (datos.linea.isEmpty()) {
                 item {
                     EstadoVacio(
@@ -130,54 +139,56 @@ fun FichaScreen(
     HojasRapidas(datos, form, ahora, onCambiar, onCerrarHoja, onGuardar, onEmpezarSiesta, onTerminarSiesta)
 
     aBorrar?.let { id ->
-        AlertDialog(
-            onDismissRequest = { aBorrar = null },
-            title = { Text("¿Borrar este registro?") },
-            text = { Text("Se quitará de la bitácora de hoy y la familia ya no lo verá.") },
-            confirmButton = {
-                TextButton(onClick = {
-                    onBorrar(id)
-                    aBorrar = null
-                }) { Text("Borrar") }
+        DialogoConfirmar(
+            titulo = "¿Borrar este registro?",
+            mensaje = "Se quitará de la bitácora de hoy y la familia ya no lo verá.",
+            confirmar = "Borrar",
+            onConfirmar = {
+                onBorrar(id)
+                aBorrar = null
             },
-            dismissButton = { TextButton(onClick = { aBorrar = null }) { Text("Cancelar") } },
+            onCancelar = { aBorrar = null },
         )
     }
 }
 
+/** tarjeta del niño: avatar, nombre, sala, estado de asistencia y sus acciones */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun EncabezadoFicha(datos: FichaDatos, onLlegada: () -> Unit, onSalida: (Asistencia) -> Unit, onImprimir: () -> Unit) {
     val n = datos.nino
-    Row(horizontalArrangement = Arrangement.spacedBy(Espacio.space3), verticalAlignment = Alignment.CenterVertically) {
-        AvatarNino(n.nombre, n.apellidos, datos.sala.estrella, tamano = 64.dp)
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Espacio.space1)) {
-            Text(n.nombreCompleto, style = MaterialTheme.typography.headlineSmall)
-            EstrellaSala("Sala ${datos.sala.nombre}", datos.sala.estrella, tamano = 24.dp)
-        }
-    }
-    FlowRow(
-        modifier = Modifier.padding(top = Espacio.space3),
-        horizontalArrangement = Arrangement.spacedBy(Espacio.space2),
-        verticalArrangement = Arrangement.spacedBy(Espacio.space2),
-        itemVerticalAlignment = Alignment.CenterVertically,
-    ) {
-        ChipAsistencia(datos.asistencia)
-        val a = datos.asistencia
-        if (a == null) {
-            FilledTonalButton(onClick = onLlegada, modifier = Modifier.heightIn(min = 48.dp)) {
-                Icono(R.drawable.ic_login, null)
-                Text("Registrar llegada", modifier = Modifier.padding(start = Espacio.space2))
+    TarjetaBase(Modifier.fillMaxWidth()) {
+        Column(Modifier.padding(Espacio.space4), verticalArrangement = Arrangement.spacedBy(Espacio.space3)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(Espacio.space3), verticalAlignment = Alignment.CenterVertically) {
+                AvatarNino(n.nombre, n.apellidos, datos.sala.estrella, tamano = 64.dp, forma = FormaAvatar.CUADRADO)
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Espacio.space1)) {
+                    Text(n.nombreCompleto, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
+                    EstrellaSala("Sala ${datos.sala.nombre}", datos.sala.estrella, tamano = 24.dp)
+                }
             }
-        } else if (!a.salio) {
-            FilledTonalButton(onClick = { onSalida(a) }, modifier = Modifier.heightIn(min = 48.dp)) {
-                Icono(R.drawable.ic_logout, null)
-                Text("Registrar salida", modifier = Modifier.padding(start = Espacio.space2))
+            ChipAsistencia(datos.asistencia, Modifier.fillMaxWidth())
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(Espacio.space2),
+                verticalArrangement = Arrangement.spacedBy(Espacio.space2),
+                itemVerticalAlignment = Alignment.CenterVertically,
+            ) {
+                val a = datos.asistencia
+                if (a == null) {
+                    FilledTonalButton(onClick = onLlegada, modifier = Modifier.heightIn(min = 48.dp)) {
+                        Icono(R.drawable.ic_login, null)
+                        Text("Registrar llegada", modifier = Modifier.padding(start = Espacio.space2))
+                    }
+                } else if (!a.salio) {
+                    FilledTonalButton(onClick = { onSalida(a) }, modifier = Modifier.heightIn(min = 48.dp)) {
+                        Icono(R.drawable.ic_logout, null)
+                        Text("Registrar salida", modifier = Modifier.padding(start = Espacio.space2))
+                    }
+                }
+                TextButton(onClick = onImprimir, modifier = Modifier.heightIn(min = 48.dp)) {
+                    Icono(R.drawable.ic_print, null)
+                    Text("Imprimir bitácora", modifier = Modifier.padding(start = Espacio.space2))
+                }
             }
-        }
-        TextButton(onClick = onImprimir, modifier = Modifier.heightIn(min = 48.dp)) {
-            Icono(R.drawable.ic_print, null)
-            Text("Imprimir bitácora", modifier = Modifier.padding(start = Espacio.space2))
         }
     }
 }
@@ -212,30 +223,40 @@ private fun FilaLinea(item: ItemLinea, datos: FichaDatos, ahora: LocalTime, onBo
         is ItemLinea.Salida -> datos.nombres[item.asistencia.recibidoPorId]
         is ItemLinea.ConIncidente -> datos.nombres[item.incidente.registradoPorId]
     }
-    val esIncidente = item is ItemLinea.ConIncidente
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(Espacio.space3),
-        verticalAlignment = Alignment.Top,
-    ) {
-        Box(
-            Modifier.size(40.dp).clip(CircleShape).background(if (esIncidente) esquema.errorContainer else esquema.surfaceContainer),
-            contentAlignment = Alignment.Center,
+    val par = tono(
+        when (item) {
+            is ItemLinea.Evento -> item.evento.tipoTono
+            is ItemLinea.Llegada, is ItemLinea.Salida -> TipoTono.LLEGADA_SALIDA
+            is ItemLinea.ConIncidente -> TipoTono.INCIDENTE
+        },
+    )
+    TarjetaBase(Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.padding(start = Espacio.space4, top = Espacio.space3, bottom = Espacio.space3, end = Espacio.space1),
+            horizontalArrangement = Arrangement.spacedBy(Espacio.space3),
+            verticalAlignment = Alignment.Top,
         ) {
-            Icono(icono, null, tint = if (esIncidente) esquema.onErrorContainer else esquema.onSurfaceVariant)
-        }
-        Column(Modifier.weight(1f).padding(top = Espacio.space1)) {
-            Text(titulo, style = MaterialTheme.typography.bodyLarge)
-            if (detalle != null) Text(detalle, style = MaterialTheme.typography.bodyMedium, color = esquema.onSurfaceVariant)
-            Text(
-                listOfNotNull(item.cuando.formatoHora(), quien).joinToString(" · "),
-                style = MaterialTheme.typography.labelMedium,
-                color = esquema.onSurfaceVariant,
-            )
-        }
-        if (item is ItemLinea.Evento) {
-            IconButton(onClick = { onBorrar(item.evento.id) }) {
-                Icono(R.drawable.ic_delete, "Borrar registro", tint = esquema.onSurfaceVariant)
+            Box(
+                Modifier.size(40.dp).clip(CircleShape).background(par.suave),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icono(icono, null, tint = par.texto)
+            }
+            Column(Modifier.weight(1f).padding(top = 2.dp, end = Espacio.space3)) {
+                Text(titulo, style = MaterialTheme.typography.titleSmall)
+                if (detalle != null) Text(detalle, style = MaterialTheme.typography.bodyMedium, color = esquema.onSurfaceVariant)
+                Text(
+                    listOfNotNull(item.cuando.formatoHora(), quien).joinToString(" · "),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = esquema.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 2.dp),
+                )
+            }
+            if (item is ItemLinea.Evento) {
+                // borrar en rojo apagado; siempre pide confirmacion
+                IconButton(onClick = { onBorrar(item.evento.id) }) {
+                    Icono(R.drawable.ic_delete, "Borrar registro", tint = esquema.error)
+                }
             }
         }
     }
@@ -243,7 +264,12 @@ private fun FilaLinea(item: ItemLinea, datos: FichaDatos, ahora: LocalTime, onBo
 
 @Composable
 private fun AccionesRapidas(habilitadas: Boolean, onAbrir: (HojaRapida) -> Unit, onIncidente: () -> Unit) {
-    Surface(color = MaterialTheme.colorScheme.surfaceContainer) {
+    val forma = RoundedCornerShape(topStart = Radio.tarjeta, topEnd = Radio.tarjeta)
+    Surface(
+        color = SonrisasTheme.colors.superficieElevada,
+        shape = forma,
+        modifier = Modifier.sombraSuave(Elevacion.barraInferior, forma),
+    ) {
         Column(
             Modifier.fillMaxWidth().padding(Espacio.space3),
             verticalArrangement = Arrangement.spacedBy(Espacio.space2),
@@ -258,14 +284,14 @@ private fun AccionesRapidas(habilitadas: Boolean, onAbrir: (HojaRapida) -> Unit,
                 )
             }
             Row(horizontalArrangement = Arrangement.spacedBy(Espacio.space2)) {
-                BotonRapido("Comida", R.drawable.ic_restaurant, habilitadas, Modifier.weight(1f)) { onAbrir(HojaRapida.COMIDA) }
-                BotonRapido("Siesta", R.drawable.ic_bedtime, habilitadas, Modifier.weight(1f)) { onAbrir(HojaRapida.SIESTA) }
-                BotonRapido("Baño", R.drawable.ic_wc, habilitadas, Modifier.weight(1f)) { onAbrir(HojaRapida.BANO) }
+                BotonRapido("Comida", R.drawable.ic_restaurant, habilitadas, TipoTono.ALIMENTO, Modifier.weight(1f)) { onAbrir(HojaRapida.COMIDA) }
+                BotonRapido("Siesta", R.drawable.ic_bedtime, habilitadas, TipoTono.SIESTA, Modifier.weight(1f)) { onAbrir(HojaRapida.SIESTA) }
+                BotonRapido("Baño", R.drawable.ic_wc, habilitadas, TipoTono.PANAL, Modifier.weight(1f)) { onAbrir(HojaRapida.BANO) }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(Espacio.space2)) {
-                BotonRapido("Ánimo", R.drawable.ic_mood, habilitadas, Modifier.weight(1f)) { onAbrir(HojaRapida.ANIMO) }
-                BotonRapido("Nota", R.drawable.ic_edit_note, habilitadas, Modifier.weight(1f)) { onAbrir(HojaRapida.NOTA) }
-                BotonRapido("Incidente", R.drawable.ic_healing, true, Modifier.weight(1f), acento = true, onClick = onIncidente)
+                BotonRapido("Ánimo", R.drawable.ic_mood, habilitadas, TipoTono.ANIMO, Modifier.weight(1f)) { onAbrir(HojaRapida.ANIMO) }
+                BotonRapido("Nota", R.drawable.ic_edit_note, habilitadas, TipoTono.NOTA, Modifier.weight(1f)) { onAbrir(HojaRapida.NOTA) }
+                BotonRapido("Incidente", R.drawable.ic_healing, true, TipoTono.INCIDENTE, Modifier.weight(1f), onClick = onIncidente)
             }
         }
     }
@@ -276,22 +302,19 @@ private fun BotonRapido(
     texto: String,
     @DrawableRes icono: Int,
     habilitado: Boolean,
+    tipo: TipoTono,
     modifier: Modifier = Modifier,
-    acento: Boolean = false,
     onClick: () -> Unit,
 ) {
     val esquema = MaterialTheme.colorScheme
-    val frente = when {
-        !habilitado -> esquema.onSurface.copy(alpha = 0.38f)
-        acento -> esquema.onTertiaryContainer
-        else -> esquema.onSurface
-    }
+    val par = tono(tipo)
+    // cada boton lleva el tono suave de su tipo de evento; deshabilitado queda gris
     Surface(
         onClick = onClick,
         enabled = habilitado,
         shape = MaterialTheme.shapes.medium,
-        color = if (acento) esquema.tertiaryContainer else SonrisasTheme.colors.superficieElevada,
-        contentColor = frente,
+        color = if (habilitado) par.suave else esquema.surfaceContainer,
+        contentColor = if (habilitado) par.texto else esquema.onSurface.copy(alpha = 0.38f),
         modifier = modifier.heightIn(min = 64.dp),
     ) {
         Column(
@@ -304,8 +327,6 @@ private fun BotonRapido(
         }
     }
 }
-
-private val oraciones = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
 
 @Composable
 private fun HojasRapidas(
@@ -396,14 +417,13 @@ private fun HojasRapidas(
             boton = { BotonPrincipal("Guardar nota", onGuardar, habilitado = form.puedeGuardar, guardando = form.guardando) },
         ) {
             val n = form.nota
-            OutlinedTextField(
-                value = n.texto,
-                onValueChange = { onCambiar(form.copy(nota = n.copy(texto = it))) },
-                label = { Text("Observaciones para la familia") },
-                supportingText = { Text("La familia la verá en su resumen del día.") },
-                keyboardOptions = oraciones,
-                minLines = 4,
-                modifier = Modifier.fillMaxWidth(),
+            CampoTexto(
+                valor = n.texto,
+                onCambio = { onCambiar(form.copy(nota = n.copy(texto = it))) },
+                etiqueta = "Observaciones para la familia",
+                error = null,
+                ayuda = "La familia la verá en su resumen del día.",
+                lineas = 4,
             )
             error()
         }
@@ -411,7 +431,7 @@ private fun HojasRapidas(
     }
 }
 
-@Preview(showBackground = true, heightDp = 900)
+@Preview(showBackground = true, heightDp = 900, backgroundColor = 0xFFF3F5F7)
 @Composable
 private fun FichaPreview() {
     val hoy = LocalDate.of(2026, 9, 30)
