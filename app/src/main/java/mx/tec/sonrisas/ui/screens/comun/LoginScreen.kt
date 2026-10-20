@@ -1,5 +1,6 @@
 package mx.tec.sonrisas.ui.screens.comun
 
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -31,12 +32,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import mx.tec.sonrisas.BuildConfig
 import mx.tec.sonrisas.R
 import mx.tec.sonrisas.domain.Rol
 import mx.tec.sonrisas.ui.components.FilaSwitch
@@ -68,7 +71,12 @@ fun LoginScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Column(Modifier.widthIn(max = 480.dp), verticalArrangement = Arrangement.spacedBy(Espacio.space4)) {
-                LogoFundacion(Modifier.align(Alignment.CenterHorizontally), tamano = 160.dp)
+                // la configuracion del servidor es para el equipo, no para las familias:
+                // en la version release no hay boton; se abre manteniendo presionado el logo
+                LogoFundacion(
+                    Modifier.align(Alignment.CenterHorizontally).pointerInput(Unit) { detectTapGestures(onLongPress = { configurar = true }) },
+                    tamano = 160.dp,
+                )
                 Column {
                     Text("Sonrisas de Cristal", style = MaterialTheme.typography.displaySmall)
                     Text("Estancias infantiles", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -117,8 +125,10 @@ fun LoginScreen(
                 TextButton(onClick = { olvido = true }, modifier = Modifier.heightIn(min = 48.dp)) {
                     Text("¿Olvidaste tu contraseña?")
                 }
-                TextButton(onClick = { configurar = true }, modifier = Modifier.heightIn(min = 48.dp)) {
-                    Text(if (servidor.isBlank()) "Modo: datos de prueba sin servidor" else "Servidor: $servidor")
+                if (BuildConfig.DEBUG) {
+                    TextButton(onClick = { configurar = true }, modifier = Modifier.heightIn(min = 48.dp)) {
+                        Text(if (servidor.isBlank()) "Modo: datos de prueba sin servidor" else "Servidor: $servidor")
+                    }
                 }
             }
         }
