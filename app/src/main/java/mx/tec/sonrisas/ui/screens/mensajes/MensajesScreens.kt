@@ -1,6 +1,5 @@
 package mx.tec.sonrisas.ui.screens.mensajes
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -20,9 +19,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Badge
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilledIconButton
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
@@ -33,6 +30,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -51,9 +49,11 @@ import mx.tec.sonrisas.domain.Sala
 import mx.tec.sonrisas.domain.TipoConversacion
 import mx.tec.sonrisas.domain.TipoSala
 import mx.tec.sonrisas.ui.components.AvatarNino
+import mx.tec.sonrisas.ui.components.BotonFlotante
 import mx.tec.sonrisas.ui.components.EstadoVacio
 import mx.tec.sonrisas.ui.components.GlifoEstrella
 import mx.tec.sonrisas.ui.components.Icono
+import mx.tec.sonrisas.ui.components.TarjetaBase
 import mx.tec.sonrisas.ui.components.formatoDiaMes
 import mx.tec.sonrisas.ui.components.formatoHora
 import mx.tec.sonrisas.ui.components.relativoA
@@ -77,11 +77,11 @@ fun ConversacionesScreen(
 ) {
     Scaffold(
         modifier = modifier,
+        containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = WindowInsets(0),
         floatingActionButton = {
-            if (onNuevo != null) {
-                ExtendedFloatingActionButton(onClick = onNuevo, icon = { Icono(R.drawable.ic_edit, null) }, text = { Text("Nuevo mensaje") })
-            }
+            // la direccion no inicia mensajes directos: para ella no llega onNuevo
+            if (onNuevo != null) BotonFlotante("Nuevo mensaje", R.drawable.ic_edit, onNuevo)
         },
     ) { padding ->
         if (datos.conversaciones.isEmpty()) {
@@ -93,11 +93,11 @@ fun ConversacionesScreen(
         }
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(top = Espacio.space2, bottom = 128.dp),
+            contentPadding = PaddingValues(start = Espacio.space4, end = Espacio.space4, top = Espacio.space2, bottom = 128.dp),
+            verticalArrangement = Arrangement.spacedBy(Espacio.space3),
         ) {
             items(datos.conversaciones, key = { it.conversacion.id }) { c ->
                 FilaConversacion(c, datos.hoy, onClick = { onAbrir(c) })
-                HorizontalDivider(Modifier.padding(start = 88.dp))
             }
         }
     }
@@ -106,6 +106,8 @@ fun ConversacionesScreen(
 @Composable
 private fun FilaConversacion(c: ResumenConversacion, hoy: LocalDate, onClick: () -> Unit) {
     val ultimo = c.ultimo
+    // cada conversacion es una tarjeta blanca, sin lineas divisorias
+    TarjetaBase(Modifier.fillMaxWidth(), onClick = onClick) {
     ListItem(
         headlineContent = { Text(c.titulo, style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis) },
         supportingContent = {
@@ -133,15 +135,19 @@ private fun FilaConversacion(c: ResumenConversacion, hoy: LocalDate, onClick: ()
             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(Espacio.space1)) {
                 ultimo?.let { Text(cuando(it.mensaje, hoy), style = MaterialTheme.typography.labelMedium) }
                 if (c.noLeidos > 0) {
-                    Badge(Modifier.semantics { contentDescription = if (c.noLeidos == 1) "1 mensaje sin leer" else "${c.noLeidos} mensajes sin leer" }) {
+                    Badge(
+                        containerColor = SonrisasTheme.colors.alertaViva,
+                        contentColor = Color.White,
+                        modifier = Modifier.semantics { contentDescription = if (c.noLeidos == 1) "1 mensaje sin leer" else "${c.noLeidos} mensajes sin leer" },
+                    ) {
                         Text("${c.noLeidos}")
                     }
                 }
             }
         },
-        colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),
-        modifier = Modifier.clickable(onClick = onClick),
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
     )
+    }
 }
 
 @Composable
@@ -153,16 +159,21 @@ fun NuevoMensajeScreen(contactos: List<Contacto>, abriendo: Boolean, onElegir: (
         )
         return
     }
-    LazyColumn(modifier.fillMaxSize(), contentPadding = PaddingValues(vertical = Espacio.space2)) {
+    LazyColumn(
+        modifier.fillMaxSize(),
+        contentPadding = PaddingValues(horizontal = Espacio.space4, vertical = Espacio.space2),
+        verticalArrangement = Arrangement.spacedBy(Espacio.space3),
+    ) {
         items(contactos, key = { it.usuarioId + it.sala.id }) { c ->
-            ListItem(
-                headlineContent = { Text(c.nombre, style = MaterialTheme.typography.titleMedium) },
-                supportingContent = { Text(c.etiqueta) },
-                leadingContent = { AvatarNino(c.nombre.substringBefore(" "), c.nombre.substringAfter(" ", ""), c.sala.estrella) },
-                trailingContent = { Icono(R.drawable.ic_chevron_right, null) },
-                colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),
-                modifier = Modifier.clickable(enabled = !abriendo) { onElegir(c) },
-            )
+            TarjetaBase(Modifier.fillMaxWidth(), onClick = { if (!abriendo) onElegir(c) }) {
+                ListItem(
+                    headlineContent = { Text(c.nombre, style = MaterialTheme.typography.titleMedium) },
+                    supportingContent = { Text(c.etiqueta) },
+                    leadingContent = { AvatarNino(c.nombre.substringBefore(" "), c.nombre.substringAfter(" ", ""), c.sala.estrella) },
+                    trailingContent = { Icono(R.drawable.ic_chevron_right, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                )
+            }
         }
     }
 }
