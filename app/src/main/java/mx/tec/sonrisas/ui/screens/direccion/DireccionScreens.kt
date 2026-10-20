@@ -9,6 +9,13 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import mx.tec.sonrisas.ui.components.EtiquetaSeccion
+import mx.tec.sonrisas.ui.components.BotonFlotante
+import mx.tec.sonrisas.ui.components.ChipFiltro
+import mx.tec.sonrisas.ui.components.SelectorSegmentado
+import mx.tec.sonrisas.ui.components.sombraSuave
+import mx.tec.sonrisas.ui.theme.Elevacion
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import mx.tec.sonrisas.ui.components.Pildora
 import mx.tec.sonrisas.ui.components.ProgresoDelgado
 import mx.tec.sonrisas.ui.components.TarjetaBase
@@ -31,19 +38,15 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -81,7 +84,6 @@ import mx.tec.sonrisas.ui.components.EstrellaSala
 import mx.tec.sonrisas.ui.components.Icono
 import mx.tec.sonrisas.ui.components.TarjetaSeccion
 import mx.tec.sonrisas.ui.components.TipoEstado
-import mx.tec.sonrisas.ui.components.TituloSeccion
 import mx.tec.sonrisas.ui.components.coincideCon
 import mx.tec.sonrisas.ui.components.edadTexto
 import mx.tec.sonrisas.ui.components.etiqueta
@@ -274,44 +276,68 @@ fun NinosScreen(
         .filter { if (bajas) it.estado is EstadoExpediente.BajaTemporal else it.activo }
         .filter { salaId == null || it.salaId == salaId }
         .filter { it.nombreCompleto.coincideCon(busqueda) }
+    val activos = datos.ninos.count { it.activo }
+    val enBaja = datos.ninos.count { it.estado is EstadoExpediente.BajaTemporal }
     Scaffold(
         modifier = modifier,
+        containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = WindowInsets(0),
-        floatingActionButton = {
-            ExtendedFloatingActionButton(onClick = onInscribir, icon = { Icono(R.drawable.ic_person_add, null) }, text = { Text("Inscribir niño") })
-        },
+        floatingActionButton = { BotonFlotante("Inscribir niño", R.drawable.ic_person_add, onInscribir) },
     ) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(start = Espacio.space4, end = Espacio.space4, top = Espacio.space2, bottom = 128.dp),
-            verticalArrangement = Arrangement.spacedBy(Espacio.space2),
+            contentPadding = PaddingValues(start = Espacio.space4, end = Espacio.space4, top = Espacio.space1, bottom = 128.dp),
+            verticalArrangement = Arrangement.spacedBy(Espacio.space3),
         ) {
+            // tarjeta teal del patron B con el conteo de niños
             item {
-                OutlinedTextField(
+                TarjetaTeal {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text(if (activos == 1) "1 niño activo" else "$activos niños activos", style = MaterialTheme.typography.headlineSmall)
+                            if (enBaja > 0) {
+                                Text("$enBaja en baja temporal", style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.85f))
+                            }
+                        }
+                        Box(Modifier.size(48.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.18f)), contentAlignment = Alignment.Center) {
+                            Icono(R.drawable.ic_groups, null)
+                        }
+                    }
+                }
+            }
+            item {
+                // buscador en pildora blanca, sin contorno
+                TextField(
                     value = busqueda,
                     onValueChange = onBuscar,
-                    label = { Text("Buscar por nombre") },
-                    leadingIcon = { Icono(R.drawable.ic_search, null) },
+                    placeholder = { Text("Buscar por nombre") },
+                    leadingIcon = { Icono(R.drawable.ic_search, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
+                    shape = CircleShape,
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = SonrisasTheme.colors.superficieElevada,
+                        unfocusedContainerColor = SonrisasTheme.colors.superficieElevada,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                    ),
+                    modifier = Modifier.fillMaxWidth().sombraSuave(Elevacion.tarjeta, CircleShape).semantics { contentDescription = "Buscar por nombre" },
                 )
             }
             item {
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(Espacio.space2)) {
-                    item {
-                        FilterChip(salaId == null, { onSala(null) }, { Text("Todas") }, Modifier.heightIn(min = 48.dp))
-                    }
-                    items(datos.salas, key = { it.id }) { s ->
-                        FilterChip(salaId == s.id, { onSala(s.id) }, { Text(s.nombre) }, Modifier.heightIn(min = 48.dp))
-                    }
+                    item { ChipFiltro("Todas", salaId == null, { onSala(null) }) }
+                    items(datos.salas, key = { it.id }) { s -> ChipFiltro(s.nombre, salaId == s.id, { onSala(s.id) }) }
                 }
             }
             item {
-                SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-                    SegmentedButton(!bajas, { onBajas(false) }, SegmentedButtonDefaults.itemShape(0, 2), Modifier.heightIn(min = 48.dp)) { Text("Activos") }
-                    SegmentedButton(bajas, { onBajas(true) }, SegmentedButtonDefaults.itemShape(1, 2), Modifier.heightIn(min = 48.dp)) { Text("Baja temporal") }
-                }
+                SelectorSegmentado(
+                    opciones = listOf(false, true),
+                    seleccionada = bajas,
+                    onSeleccion = onBajas,
+                    etiqueta = { if (it) "Baja temporal" else "Activos" },
+                )
             }
+            item { EtiquetaSeccion(if (bajas) "Baja temporal" else "Niños") }
             if (filtrados.isEmpty()) {
                 item {
                     EstadoVacio(
@@ -323,20 +349,26 @@ fun NinosScreen(
             }
             items(filtrados, key = { it.id }) { n ->
                 val sala = salas[n.salaId]
-                ListItem(
-                    headlineContent = { Text(n.nombreCompleto, style = MaterialTheme.typography.titleMedium) },
-                    supportingContent = {
-                        val estado = n.estado
-                        Text(
-                            if (estado is EstadoExpediente.BajaTemporal) "Se elimina el ${estado.eliminarEl.formatoCorto()}"
-                            else listOfNotNull(sala?.let { "Sala ${it.nombre}" }, edadTexto(n.fechaNacimiento, datos.hoy)).joinToString(" · "),
-                        )
-                    },
-                    leadingContent = { AvatarNino(n.nombre, n.apellidos, sala?.estrella ?: ColorEstrella.AZUL) },
-                    trailingContent = { Icono(R.drawable.ic_chevron_right, null) },
-                    colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),
-                    modifier = Modifier.clip(MaterialTheme.shapes.medium).clickable { onNino(n) },
-                )
+                val estado = n.estado
+                TarjetaBase(Modifier.fillMaxWidth(), onClick = { onNino(n) }) {
+                    Row(
+                        Modifier.padding(horizontal = Espacio.space4, vertical = Espacio.space3),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(Espacio.space3),
+                    ) {
+                        AvatarNino(n.nombre, n.apellidos, sala?.estrella ?: ColorEstrella.AZUL)
+                        Column(Modifier.weight(1f)) {
+                            Text(n.nombreCompleto, style = MaterialTheme.typography.titleMedium)
+                            Text(
+                                if (estado is EstadoExpediente.BajaTemporal) "Se elimina el ${estado.eliminarEl.formatoCorto()}"
+                                else listOfNotNull(sala?.let { "Sala ${it.nombre}" }, edadTexto(n.fechaNacimiento, datos.hoy)).joinToString(" · "),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = if (estado is EstadoExpediente.BajaTemporal) SonrisasTheme.colors.enAvisoContenedor else MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        Icono(R.drawable.ic_chevron_right, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
             }
         }
     }
