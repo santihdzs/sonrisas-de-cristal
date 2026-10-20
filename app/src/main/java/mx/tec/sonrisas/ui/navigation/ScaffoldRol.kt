@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
@@ -34,6 +35,7 @@ import mx.tec.sonrisas.ui.components.BarraDetalle
 import mx.tec.sonrisas.ui.components.BarraInferiorFlotante
 import mx.tec.sonrisas.ui.components.BotonPerfil
 import mx.tec.sonrisas.ui.components.ItemBarraInferior
+import mx.tec.sonrisas.ui.components.TituloPantalla
 import mx.tec.sonrisas.ui.theme.Espacio
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -90,6 +92,8 @@ fun ScaffoldRol(
     modifier: Modifier = Modifier,
     /** pestañas que dibujan su propio encabezado teal detras de la barra de estado (patron A): no llevan barra superior */
     rutasConEncabezadoTeal: Set<String> = emptySet(),
+    /** pantallas con titulo grande del patron B en lugar de la barra de detalle; las comparten todos los roles */
+    rutasConTituloGrande: Set<String> = setOf(Route.AVISOS, Route.PERFIL),
     content: @Composable (PaddingValues) -> Unit,
 ) {
     val entrada by navController.currentBackStackEntryAsState()
@@ -103,18 +107,28 @@ fun ScaffoldRol(
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            if (!encabezadoPropio) BarraDetalle(
-                titulo = tituloDinamico ?: titulo(ruta),
-                onRegresar = if (!esPestana && navController.previousBackStackEntry != null) ({ navController.navigateUp() }) else null,
-                acciones = {
-                    if (ruta != Route.PERFIL && ruta != Route.ACERCA) {
-                        BotonPerfil(
-                            onClick = { navController.navigate(Route.PERFIL) { launchSingleTop = true } },
-                            modifier = Modifier.padding(end = Espacio.space3),
-                        )
-                    }
-                },
-            )
+            val tituloActual = tituloDinamico ?: titulo(ruta)
+            val onRegresar: (() -> Unit)? = if (!esPestana && navController.previousBackStackEntry != null) ({ navController.navigateUp() }) else null
+            val accionPerfil: (@Composable () -> Unit)? = if (ruta != Route.PERFIL && ruta != Route.ACERCA) {
+                { BotonPerfil(onClick = { navController.navigate(Route.PERFIL) { launchSingleTop = true } }) }
+            } else {
+                null
+            }
+            when {
+                encabezadoPropio -> Unit
+                // patron B: titulo grande sobre el fondo claro
+                ruta in rutasConTituloGrande -> TituloPantalla(
+                    tituloActual,
+                    Modifier.statusBarsPadding().padding(top = Espacio.space2),
+                    onRegresar = onRegresar,
+                    accion = accionPerfil,
+                )
+                else -> BarraDetalle(
+                    titulo = tituloActual,
+                    onRegresar = onRegresar,
+                    acciones = { accionPerfil?.let { Box(Modifier.padding(end = Espacio.space3)) { it() } } },
+                )
+            }
         },
         bottomBar = {
             if (esPestana && pestanas.size > 1) {

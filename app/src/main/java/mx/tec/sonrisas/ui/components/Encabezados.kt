@@ -104,12 +104,17 @@ fun TituloPantalla(
     titulo: String,
     modifier: Modifier = Modifier,
     subtitulo: String? = null,
+    onRegresar: (() -> Unit)? = null,
     accion: (@Composable () -> Unit)? = null,
 ) {
     Row(
-        modifier = modifier.fillMaxWidth().padding(horizontal = Espacio.space4, vertical = Espacio.space2),
+        modifier = modifier.fillMaxWidth().padding(start = if (onRegresar != null) Espacio.space1 else Espacio.space4, end = Espacio.space4, top = Espacio.space2, bottom = Espacio.space2),
         verticalAlignment = Alignment.CenterVertically,
     ) {
+        // flecha opcional para cuando el titulo grande se usa fuera de una pestaña (por ejemplo Mi perfil)
+        if (onRegresar != null) {
+            IconButton(onClick = onRegresar) { Icono(R.drawable.ic_arrow_back, "Regresar") }
+        }
         Column(Modifier.weight(1f)) {
             Text(titulo, style = MaterialTheme.typography.headlineMedium, modifier = Modifier.semantics { heading() })
             if (subtitulo != null) {
