@@ -1,6 +1,7 @@
 package mx.tec.sonrisas.ui.screens.fotos
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -29,13 +30,11 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -56,7 +55,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -73,9 +71,11 @@ import mx.tec.sonrisas.domain.UsoFoto
 import mx.tec.sonrisas.domain.puedeAparecerEn
 import mx.tec.sonrisas.ui.components.AvatarNino
 import mx.tec.sonrisas.ui.components.BotonPrincipal
+import mx.tec.sonrisas.ui.components.CampoTexto
+import mx.tec.sonrisas.ui.components.EtiquetaSeccion
+import mx.tec.sonrisas.ui.components.TarjetaSeccion
 import mx.tec.sonrisas.ui.components.EstadoChip
 import mx.tec.sonrisas.ui.components.EstadoVacio
-import mx.tec.sonrisas.ui.components.EtiquetaCampo
 import mx.tec.sonrisas.ui.components.FotoActividad
 import mx.tec.sonrisas.ui.components.Icono
 import mx.tec.sonrisas.ui.components.TipoEstado
@@ -168,8 +168,6 @@ fun GaleriaFotos(
     }
 }
 
-private val oraciones = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
-
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun AgregarFotoScreen(
@@ -189,12 +187,14 @@ fun AgregarFotoScreen(
             .padding(Espacio.space4),
         verticalArrangement = Arrangement.spacedBy(Espacio.space3),
     ) {
-        Text("Elige la foto", style = MaterialTheme.typography.titleLarge)
+        EtiquetaSeccion("Elige la foto")
+        // texto pendiente del equipo (ver CLAUDE.md): no se cambia sin preguntar
         Text(
             "En la versión final la cámara vive dentro de la app y la foto no pasa por la galería del teléfono. En esta demostración elige una imagen de ejemplo.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        TarjetaSeccion {
         FlowRow(
             Modifier.selectableGroup(),
             horizontalArrangement = Arrangement.spacedBy(Espacio.space2),
@@ -219,28 +219,32 @@ fun AgregarFotoScreen(
                 }
             }
         }
-        OutlinedTextField(
-            value = form.descripcion,
-            onValueChange = { onCambiar(form.copy(descripcion = it)) },
-            label = { Text("Descripción") },
-            supportingText = { Text("Por ejemplo: pintamos con las manos.") },
-            keyboardOptions = oraciones,
-            modifier = Modifier.fillMaxWidth(),
+        CampoTexto(
+            valor = form.descripcion,
+            onCambio = { onCambiar(form.copy(descripcion = it)) },
+            etiqueta = "Descripción",
+            error = null,
+            ayuda = "Por ejemplo: pintamos con las manos.",
         )
-        EtiquetaCampo("¿Quién puede verla?")
-        Column(Modifier.selectableGroup()) {
+        }
+        EtiquetaSeccion("¿Quién puede verla?")
+        Column(Modifier.selectableGroup(), verticalArrangement = Arrangement.spacedBy(Espacio.space2)) {
             UsoFoto.entries.forEach { uso ->
+                // cada opcion es una tarjeta sin contorno; la elegida se pinta de teal suave
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(min = 56.dp)
-                        .selectable(form.uso == uso, role = Role.RadioButton) { onUso(uso) },
+                        .clip(MaterialTheme.shapes.medium)
+                        .background(if (form.uso == uso) MaterialTheme.colorScheme.primaryContainer else SonrisasTheme.colors.superficieElevada)
+                        .selectable(form.uso == uso, role = Role.RadioButton) { onUso(uso) }
+                        .padding(horizontal = Espacio.space2, vertical = Espacio.space2),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(Espacio.space2),
                 ) {
                     RadioButton(selected = form.uso == uso, onClick = null)
                     Column {
-                        Text(uso.etiqueta, style = MaterialTheme.typography.bodyLarge)
+                        Text(uso.etiqueta, style = MaterialTheme.typography.titleSmall)
                         Text(
                             if (uso == UsoFoto.INTERNA) "Solo la verán las familias de los niños que etiquetes."
                             else "Además puede publicarse en las redes de la fundación.",
@@ -251,7 +255,7 @@ fun AgregarFotoScreen(
                 }
             }
         }
-        EtiquetaCampo("¿Quién aparece?")
+        EtiquetaSeccion("¿Quién aparece?")
         if (datos.ninos.isEmpty()) {
             Text(
                 "Todavía no llega nadie hoy. Registra las llegadas para poder etiquetar.",
@@ -259,12 +263,16 @@ fun AgregarFotoScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(Espacio.space2),
-            verticalArrangement = Arrangement.spacedBy(Espacio.space2),
-        ) {
-            datos.ninos.forEach { n ->
-                NinoEtiquetable(n, datos.sala.estrella, n.id in form.etiquetados, n.puedeAparecerEn(form.uso)) { onAlternar(n) }
+        if (datos.ninos.isNotEmpty()) {
+            TarjetaSeccion {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(Espacio.space2),
+                    verticalArrangement = Arrangement.spacedBy(Espacio.space2),
+                ) {
+                    datos.ninos.forEach { n ->
+                        NinoEtiquetable(n, datos.sala.estrella, n.id in form.etiquetados, n.puedeAparecerEn(form.uso)) { onAlternar(n) }
+                    }
+                }
             }
         }
         form.faltante?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
