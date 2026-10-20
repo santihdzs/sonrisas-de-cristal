@@ -1,10 +1,14 @@
-# servidor + postgres en cualquier maquina con docker: docker compose up -d
+# servidor + postgres en cualquier maquina con docker:
+#   1) copia .env.example como .env y define POSTGRES_PASSWORD   2) docker compose up -d
+# con tunel https de cloudflare (para entrar desde la tablet o cualquier dispositivo):
+#   docker compose --profile tunel up -d   y la direccion https sale en: docker compose logs tunel
 services:
   db:
     image: postgres:17
     environment:
       POSTGRES_USER: sonrisas
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-sonrisas}
+      # P8: sin valor por defecto; si falta en .env, compose no arranca
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Define POSTGRES_PASSWORD en el archivo .env (copia .env.example)}
       POSTGRES_DB: sonrisas
     volumes:
       - datos:/var/lib/postgresql/data
@@ -22,11 +26,32 @@ services:
       db:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgres://sonrisas:${POSTGRES_PASSWORD:-sonrisas}@db:5432/sonrisas
+      DATABASE_URL: postgres://sonrisas:${POSTGRES_PASSWORD:?Define POSTGRES_PASSWORD en el archivo .env (copia .env.example)}@db:5432/sonrisas
       DATOS_DEMO: ${DATOS_DEMO:-true}
       CLAVE_FUNDACION: ${CLAVE_FUNDACION:-}
+      # P8 + P4: el tunel pasa la ip real del cliente en X-Forwarded-For
+      PROXY_CONFIABLE: ${PROXY_CONFIABLE:-true}
     ports:
-      - "8080:8080"
+      # P8: solo esta computadora (y su emulador, 10.0.2.2) llega al puerto; desde fuera se entra por el tunel https
+      - "${HOST_IP:-127.0.0.1}:8080:8080"
+    # P8: contenedor endurecido
+    read_only: true              # nadie puede modificar los archivos del contenedor
+    tmpfs:
+      - /tmp                     # la jvm necesita un lugar temporal donde escribir
+    cap_drop:
+      - ALL                      # sin capacidades extra de linux
+    security_opt:
+      - no-new-privileges:true   # ningun proceso puede ganar privilegios
+    restart: unless-stopped
+
+  # P8: tunel de cloudflare: https publico hacia el backend sin abrir puertos ni comprar un certificado
+  tunel:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --url http://backend:8080
+    depends_on:
+      - backend
+    profiles:
+      - tunel
     restart: unless-stopped
 
 volumes:

@@ -4,11 +4,24 @@ Ktor y PostgreSQL. Aplica las mismas reglas de privacidad que la app (qué niño
 
 ## Correrlo en local
 
-Con Docker (servidor y PostgreSQL), desde la raíz del repo:
+Con Docker (servidor y PostgreSQL), desde la raíz del repo. La primera vez crea el archivo `.env` con la contraseña de la base; está en `.gitignore` y nunca se sube:
 
 ```sh
+cp .env.example .env          # en PowerShell: Copy-Item .env.example .env
+# edita .env y pon una POSTGRES_PASSWORD larga (letras, números y guiones)
 docker compose up -d --build
 ```
+
+El puerto solo queda abierto para esta computadora (`127.0.0.1:8080`) y su emulador. Para entrar desde otro dispositivo, levanta también el túnel HTTPS de Cloudflare:
+
+```sh
+docker compose --profile tunel up -d
+docker compose logs tunel     # busca la dirección https://….trycloudflare.com
+```
+
+Esa dirección cambia cada vez que se reinicia el túnel.
+
+Si cambias `POSTGRES_PASSWORD` después de haber levantado la base, borra el volumen para que PostgreSQL se cree con la nueva contraseña (también borra los datos): `docker compose down -v`.
 
 Sin Docker (usa H2, una base en el archivo `backend/datos/`):
 
@@ -30,11 +43,15 @@ docker compose run --rm --no-deps backend /app/bin/backend reiniciar-demo
 
 Borra todo, vuelve a cargar los datos y termina; el servidor que ya está corriendo no necesita reiniciarse. Las sesiones abiertas en los teléfonos se cierran. Con `DATOS_DEMO=false` el comando se niega a correr, para que nunca borre una base real.
 
-### Conectar el teléfono
+### Conectar la app
 
-En la pantalla de inicio de sesión toca "Servidor" y escribe la dirección de la laptop en la red local, por ejemplo `http://192.168.1.20:8080` (en macOS: `ipconfig getifaddr en0`). El teléfono y la laptop deben estar en la misma red. En el emulador de Android Studio la laptop es `http://10.0.2.2:8080`. Si el servidor falla, activa "Datos de prueba sin servidor" en la misma opción y la app usa los datos en memoria.
+En la pantalla de inicio de sesión toca "Servidor":
 
-La versión debug acepta `http://` para la demo en red local; la versión release solo acepta `https://`.
+- Emulador de Android Studio: `http://10.0.2.2:8080`.
+- Teléfono o tablet: la dirección `https://….trycloudflare.com` del túnel. La versión release solo acepta `https://`.
+- Red local por `http://` (solo versión debug): pon `HOST_IP=0.0.0.0` en `.env` y usa la IP de la laptop, por ejemplo `http://192.168.1.20:8080`. Abre el puerto sin cifrar a toda la red, así que úsalo solo para pruebas.
+
+Si el servidor falla, activa "Datos de prueba sin servidor" en la misma opción y la app usa los datos en memoria.
 
 ## Publicarlo gratis
 
@@ -73,24 +90,40 @@ También funciona en cualquier máquina con Docker (una computadora de la fundac
 | `DATABASE_URL` | `postgres://...` o `jdbc:...` | H2 en `./datos/` |
 | `DATOS_DEMO` | `false` en producción: sin datos de prueba | `true` |
 | `CLAVE_FUNDACION` | Contraseña inicial de `fundacion` cuando `DATOS_DEMO=false` | La base vacía no arranca |
-| `PROXY_CONFIABLE` | `true` detrás de Render u otro proxy | `false` |
-| `POSTGRES_PASSWORD` | Solo en `docker-compose.yml` | `sonrisas` |
+| `PROXY_CONFIABLE` | `true` detrás de Render, del túnel u otro proxy | `false` (`true` en `docker-compose.yml`) |
+| `POSTGRES_PASSWORD` | Contraseña de PostgreSQL, en `.env` | `docker compose` no arranca |
+| `HOST_IP` | Interfaz donde se publica el puerto 8080, en `.env` | `127.0.0.1` (solo esta computadora) |
 
 ## Seguridad
 
 - Contraseñas con PBKDF2-HMAC-SHA256 (210 000 iteraciones, sal por cuenta).
 - Sesiones con tokens aleatorios de 32 bytes. La base solo guarda su SHA-256, así que una copia de la base no sirve para entrar. Duran 30 días; cerrar sesión borra el token.
 - Cada petición vuelve a leer la cuenta: si la dirección retira el acceso, la siguiente petición de ese teléfono recibe 401 y la app regresa al inicio de sesión.
-- Máximo 10 intentos de inicio de sesión por minuto por IP. Un usuario que no existe tarda lo mismo en rechazarse que una contraseña incorrecta.
+- Máximo 10 intentos de inicio de sesión por minuto por IP, y 5 fallos seguidos bloquean esa cuenta 15 minutos desde cualquier IP (también nombres que no existen, para no delatar cuáles existen). Un usuario que no existe tarda lo mismo en rechazarse que una contraseña incorrecta.
+- Toda la API tiene un límite de 1000 peticiones por minuto por IP. Detrás de un proxy se usa la última IP de `X-Forwarded-For`, la que agrega el proxy, porque las anteriores las puede inventar el cliente.
 - El autor de cada registro sale de la sesión, nunca de lo que manda la app.
 - Archivos de hasta 10 MB; el límite se cuenta al recibir aunque el tamaño declarado mienta. Solo los descarga quien puede ver esa sala.
-- Los errores internos responden un mensaje genérico, sin detalles.
+- Los errores internos responden un mensaje genérico, sin detalles. Una fecha mal escrita responde 400, no 500.
+- Cabeceras de seguridad en todas las respuestas: `Strict-Transport-Security`, `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Content-Security-Policy`, `Referrer-Policy` y `Cache-Control: no-store`.
+- Un expediente solo se borra definitivamente si ya está en baja, aunque la petición no venga de la app.
+- Familias y educadoras no reciben los nombres de usuario (logins) del personal.
+- Las contraseñas temporales son de tres palabras y cuatro dígitos (unos 31 bits de entropía).
+- En Docker: contraseña de la base obligatoria en `.env`, puerto solo en `127.0.0.1`, contenedor de solo lectura, sin capabilities y con `no-new-privileges`.
 
 ## Pruebas
 
 ```sh
 JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home" ./gradlew -p backend test
 ```
+
+En Windows (PowerShell):
+
+```powershell
+$env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"
+.\gradlew.bat -p backend test
+```
+
+El reporte queda en `backend/build/reports/tests/test/index.html`.
 
 Corren el servidor real contra H2 en memoria con los datos de prueba y revisan:
 - que la familia solo vea a sus hijos;
@@ -99,6 +132,8 @@ Corren el servidor real contra H2 en memoria con los datos de prueba y revisan:
 - que retirar el acceso cierre la sesión abierta;
 - el límite de archivos y la descarga de material de otra sala;
 - el límite de intentos de inicio de sesión.
+
+`SeguridadTest.kt` agrega 27 ataques con ids S01–S27: tokens falsos, alterados o vencidos, inyección SQL, IDOR, privilegios, límites de peticiones y bloqueo por cuenta, validación de entrada, cabeceras y contraseñas temporales.
 
 ## Cómo está hecho
 
