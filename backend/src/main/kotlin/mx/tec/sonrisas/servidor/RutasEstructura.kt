@@ -34,6 +34,10 @@ private fun Ctx.usuariosDelAmbito(): List<Usuario> =
     if (u.rol == Rol.FUNDACION) Tablas.usuarios.todos()
     else u.estanciaId?.let { Tablas.usuarios.donde("estancia_id = ?", it) }.orEmpty()
 
+/** P5: el login de cada cuenta solo lo ve quien administra cuentas; a familias y educadoras les basta el nombre */
+private fun Ctx.sinLogin(lista: List<Usuario>): List<Usuario> =
+    if (u.rol == Rol.DIRECCION || u.rol == Rol.FUNDACION) lista else lista.map { it.copy(usuario = "") }
+
 private fun Ctx.crearCuenta(nombre: String, rol: Rol, estanciaId: String, detalle: String, salaId: String? = null, tutorId: String? = null): Credenciales {
     if (nombre.isBlank()) throw IllegalArgumentException("Escribe el nombre.")
     val ocupados = consultar("SELECT usuario FROM usuarios") { it.getString(1) }
@@ -59,12 +63,12 @@ fun Route.rutasEstructura(db: Db) {
     get("/educadoras") {
         lee(db) {
             if (u.rol == Rol.FAMILIAR) emptyList()
-            else usuariosDelAmbito().filter { it.rol == Rol.EDUCADORA && it.activo }
+            else sinLogin(usuariosDelAmbito().filter { it.rol == Rol.EDUCADORA && it.activo })
         }
     }
 
     get("/personal") {
-        lee(db) { usuariosDelAmbito().filter { it.rol == Rol.EDUCADORA || it.rol == Rol.DIRECCION } }
+        lee(db) { sinLogin(usuariosDelAmbito().filter { it.rol == Rol.EDUCADORA || it.rol == Rol.DIRECCION }) }
     }
 
     get("/resumen") {
