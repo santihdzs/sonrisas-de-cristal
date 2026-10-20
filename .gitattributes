@@ -1,0 +1,6 @@
+# scripts que corren dentro de Linux (Docker): siempre con saltos de linea LF,
+# aunque el repo se clone en Windows. Con CRLF, Linux busca "/bin/sh\r" y falla.
+gradlew text eol=lf
+*.sh text eol=lf
+# los scripts de Windows se quedan con CRLF
+*.bat text eol=crlf
