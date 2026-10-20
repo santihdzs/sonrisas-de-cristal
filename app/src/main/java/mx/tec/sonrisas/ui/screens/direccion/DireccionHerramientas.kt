@@ -33,11 +33,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -68,7 +66,6 @@ import mx.tec.sonrisas.ui.components.EstrellaSala
 import mx.tec.sonrisas.ui.components.HojaModal
 import mx.tec.sonrisas.ui.components.Icono
 import mx.tec.sonrisas.ui.components.TarjetaSeccion
-import mx.tec.sonrisas.ui.components.TituloSeccion
 import mx.tec.sonrisas.ui.components.formatoHora
 import mx.tec.sonrisas.ui.components.formatoMes
 import mx.tec.sonrisas.ui.components.icono
@@ -358,14 +355,14 @@ fun ActividadScreen(
     val porDia = filtrados.groupBy { it.cuando.toLocalDate() }
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(Espacio.space4),
+        contentPadding = PaddingValues(start = Espacio.space4, end = Espacio.space4, top = Espacio.space1, bottom = Espacio.space6),
         verticalArrangement = Arrangement.spacedBy(Espacio.space2),
     ) {
         item {
             // con tantas categorias, una sola fila deslizable ocupa menos que varias filas de chips
             LazyRow(horizontalArrangement = Arrangement.spacedBy(Espacio.space2)) {
                 items(FiltroActividad.entries) { f ->
-                    FilterChip(f == filtro, { onFiltro(f) }, { Text(f.etiqueta) }, Modifier.heightIn(min = 48.dp))
+                    ChipFiltro(f.etiqueta, f == filtro, { onFiltro(f) })
                 }
             }
         }
@@ -373,10 +370,16 @@ fun ActividadScreen(
             item { EstadoVacio(R.drawable.ic_history, "Sin registros con este filtro") }
         }
         porDia.forEach { (fecha, registros) ->
-            item(key = "dia-$fecha") {
-                Text(fecha.relativoA(datos.hoy), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = Espacio.space3))
+            item(key = "dia-$fecha") { EtiquetaSeccion(fecha.relativoA(datos.hoy), Modifier.padding(top = Espacio.space2)) }
+            // los registros de cada dia van juntos en una tarjeta
+            item(key = "registros-$fecha") {
+                TarjetaSeccion {
+                    registros.forEachIndexed { i, r ->
+                        if (i > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                        FilaRegistro(r, r.ninoId?.let { datos.ninos[it]?.nombreCompleto })
+                    }
+                }
             }
-            items(registros, key = { it.id }) { r -> FilaRegistro(r, r.ninoId?.let { datos.ninos[it]?.nombreCompleto }) }
         }
     }
 }
@@ -387,7 +390,9 @@ private fun FilaRegistro(r: RegistroActividad, nino: String?) {
         Modifier.fillMaxWidth().padding(vertical = Espacio.space1),
         horizontalArrangement = Arrangement.spacedBy(Espacio.space3),
     ) {
-        Icono(r.accion.icono, null, Modifier.size(24.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Box(Modifier.size(36.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceContainer), contentAlignment = Alignment.Center) {
+            Icono(r.accion.icono, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
         Column(Modifier.weight(1f)) {
             Text(r.detalle, style = MaterialTheme.typography.bodyLarge)
             Text(
