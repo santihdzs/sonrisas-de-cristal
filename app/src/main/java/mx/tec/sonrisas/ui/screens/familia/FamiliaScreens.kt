@@ -1,6 +1,36 @@
 package mx.tec.sonrisas.ui.screens.familia
 
 import androidx.annotation.DrawableRes
+import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import mx.tec.sonrisas.ui.components.EstadoPildora
+import mx.tec.sonrisas.ui.components.LocaleMx
+import mx.tec.sonrisas.ui.components.Pildora
+import mx.tec.sonrisas.ui.components.PildoraEstado
+import mx.tec.sonrisas.ui.components.TarjetaBase
+import mx.tec.sonrisas.ui.components.TipoTono
+import mx.tec.sonrisas.ui.components.sombraSuave
+import mx.tec.sonrisas.ui.components.tono
+import mx.tec.sonrisas.ui.theme.Elevacion
+import mx.tec.sonrisas.ui.theme.EstiloEtiquetaSeccion
+import mx.tec.sonrisas.ui.theme.Radio
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -14,11 +44,9 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -77,21 +105,39 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 
+/** selector de hijo en pildora blanca flotante; el elegido va en teal. Solo aparece con dos hijos o mas */
 @Composable
 fun SelectorHijos(hijos: Hijos, onSeleccion: (String) -> Unit, modifier: Modifier = Modifier) {
     if (hijos.lista.size < 2) return
-    LazyRow(modifier, horizontalArrangement = Arrangement.spacedBy(Espacio.space2)) {
-        items(hijos.lista, key = { it.id }) { n ->
-            val activo = n.id == hijos.seleccionado.id
-            FilterChip(
-                selected = activo,
-                onClick = { onSeleccion(n.id) },
-                label = { Text(primerNombre(n.nombre), style = MaterialTheme.typography.labelLarge) },
-                leadingIcon = {
-                    AvatarNino(n.nombre, n.apellidos, hijos.salas[n.salaId]?.estrella ?: ColorEstrella.AZUL, tamano = 28.dp)
-                },
-                modifier = Modifier.heightIn(min = 48.dp),
-            )
+    Surface(
+        shape = CircleShape,
+        color = SonrisasTheme.colors.superficieElevada,
+        modifier = modifier.sombraSuave(Elevacion.tarjeta, CircleShape),
+    ) {
+        Row(
+            Modifier.horizontalScroll(rememberScrollState()).padding(Espacio.space1).selectableGroup(),
+            horizontalArrangement = Arrangement.spacedBy(Espacio.space1),
+        ) {
+            hijos.lista.forEach { n ->
+                val activo = n.id == hijos.seleccionado.id
+                Row(
+                    modifier = Modifier
+                        .heightIn(min = 44.dp)
+                        .clip(CircleShape)
+                        .background(if (activo) MaterialTheme.colorScheme.primary else Color.Transparent)
+                        .selectable(selected = activo, role = Role.Tab, onClick = { onSeleccion(n.id) })
+                        .padding(start = 6.dp, end = Espacio.space4),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Espacio.space2),
+                ) {
+                    AvatarNino(n.nombre, n.apellidos, hijos.salas[n.salaId]?.estrella ?: ColorEstrella.AZUL, tamano = 32.dp)
+                    Text(
+                        primerNombre(n.nombre),
+                        style = MaterialTheme.typography.labelLarge,
+                        color = if (activo) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                    )
+                }
+            }
         }
     }
 }
@@ -104,6 +150,10 @@ fun SinHijos(modifier: Modifier = Modifier) {
     )
 }
 
+/**
+ * patron D (DISENO.md): fondo continuo arriba con el selector de hijo y tarjetas blancas flotantes
+ * (el dia y "Ahora mismo", la sala); abajo una hoja blanca con asistencia, comidas, siesta y demas.
+ */
 @Composable
 fun HoyScreen(
     datos: HoyDatos,
@@ -115,52 +165,74 @@ fun HoyScreen(
 ) {
     val n = datos.hijos.seleccionado
     val r = datos.resumen
+    val margen = Modifier.padding(horizontal = Espacio.space4)
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(Espacio.space4),
+        contentPadding = PaddingValues(top = Espacio.space1),
         verticalArrangement = Arrangement.spacedBy(Espacio.space3),
     ) {
-        item { SelectorHijos(datos.hijos, onSeleccion) }
-        item {
+        if (datos.hijos.lista.size >= 2) item { SelectorHijos(datos.hijos, onSeleccion, margen) }
+        items(r.incidentes.sortedByDescending { it.cuando }, key = { it.id }) { BannerIncidente(it, onIncidente, margen) }
+        item { TarjetaDia(datos, margen) }
+        datos.hijos.sala?.let { sala ->
+            item { TarjetaSalaFamilia(n, sala, datos.objetosNuevos, onObjetos = { onObjetos(sala) }, onMaterial = { onMaterial(sala) }, modifier = margen) }
+        }
+        item { HojaDelDia(datos, Modifier.padding(top = Espacio.space2)) }
+    }
+}
+
+/** tarjeta blanca con el avatar, "El dia de ..." y el bloque "Ahora mismo" con el horario desplegable */
+@Composable
+private fun TarjetaDia(datos: HoyDatos, modifier: Modifier = Modifier) {
+    val n = datos.hijos.seleccionado
+    var abierto by rememberSaveable { mutableStateOf(false) }
+    TarjetaBase(modifier.fillMaxWidth()) {
+        Column(Modifier.padding(Espacio.space4), verticalArrangement = Arrangement.spacedBy(Espacio.space4)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Espacio.space3)) {
                 AvatarNino(n.nombre, n.apellidos, datos.hijos.sala?.estrella ?: ColorEstrella.AZUL, tamano = 56.dp)
                 Column {
-                    Text("El día de ${n.nombre}", style = MaterialTheme.typography.headlineSmall)
+                    Text("El día de ${n.nombre}", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
                     Text(datos.ahora.toLocalDate().formatoLargo(), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
-        }
-        items(r.incidentes.sortedByDescending { it.cuando }, key = { it.id }) { BannerIncidente(it, onIncidente) }
-        item { TarjetaAhora(datos) }
-        datos.hijos.sala?.let { sala ->
-            item { TarjetaSalaFamilia(n, sala, datos.objetosNuevos, onObjetos = { onObjetos(sala) }, onMaterial = { onMaterial(sala) }) }
-        }
-        val asistencia = r.asistencia
-        if (asistencia == null) {
-            item {
-                TarjetaSeccion {
-                    EstadoVacio(
-                        R.drawable.ic_schedule,
-                        "Todavía no registramos la llegada de ${n.nombre} hoy.",
-                        mensaje = "Cuando la educadora la registre, aquí verás cómo va su día.",
-                    )
+            Surface(color = MaterialTheme.colorScheme.background, shape = RoundedCornerShape(Radio.r20), modifier = Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(Espacio.space4), verticalArrangement = Arrangement.spacedBy(Espacio.space1)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Espacio.space2)) {
+                        Icono(R.drawable.ic_schedule, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text("Ahora mismo", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    when (val a = datos.actividad) {
+                        is ActividadActual.Especial -> {
+                            Text(a.actividad.titulo, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
+                            FlowRowSimple {
+                                EstadoChip("Actividad especial", TipoEstado.INFO, R.drawable.ic_event)
+                                Text("${a.actividad.inicio.formatoHora()} a ${a.actividad.fin.formatoHora()}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                        is ActividadActual.Regular -> {
+                            Text(a.bloque.actividad, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
+                            Text("De ${a.bloque.inicio.formatoHora()} a ${a.bloque.fin.formatoHora()}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        ActividadActual.FueraDeHorario -> {
+                            Text("Fuera del horario", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
+                            Text("La estancia no tiene actividades en este momento.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                    TextButton(onClick = { abierto = !abierto }, modifier = Modifier.heightIn(min = 48.dp)) {
+                        Text(if (abierto) "Ocultar horario de hoy" else "Ver horario de hoy")
+                        Icono(if (abierto) R.drawable.ic_expand_less else R.drawable.ic_expand_more, null, Modifier.padding(start = Espacio.space1))
+                    }
+                    if (abierto) HorarioDelDia(datos.bloques, datos.especiales, datos.actividad)
                 }
             }
-        } else {
-            item { TarjetaAsistencia(n, asistencia) }
-            item { TarjetaComidas(r) }
-            item { TarjetaSiesta(r, datos.ahora.toLocalTime()) }
-            item { TarjetaBano(r) }
-            item { TarjetaAnimo(r) }
-            item { TarjetaNotas(r) }
         }
     }
 }
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun TarjetaSalaFamilia(nino: Nino, sala: Sala, objetosNuevos: Int, onObjetos: () -> Unit, onMaterial: () -> Unit) {
-    TarjetaSeccion {
+private fun TarjetaSalaFamilia(nino: Nino, sala: Sala, objetosNuevos: Int, onObjetos: () -> Unit, onMaterial: () -> Unit, modifier: Modifier = Modifier) {
+    TarjetaSeccion(modifier) {
         EstrellaSala("Sala ${sala.nombre}", sala.estrella, tamano = 24.dp)
         Text("Lo que comparte la sala de ${nino.nombre}.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(Espacio.space2), verticalArrangement = Arrangement.spacedBy(Espacio.space2)) {
@@ -170,17 +242,18 @@ private fun TarjetaSalaFamilia(nino: Nino, sala: Sala, objetosNuevos: Int, onObj
     }
 }
 
+/** un incidente es una alerta real: va arriba, en rojo apagado suave */
 @Composable
-private fun BannerIncidente(incidente: Incidente, onVer: (Incidente) -> Unit) {
+private fun BannerIncidente(incidente: Incidente, onVer: (Incidente) -> Unit, modifier: Modifier = Modifier) {
     Surface(
         color = MaterialTheme.colorScheme.errorContainer,
         contentColor = MaterialTheme.colorScheme.onErrorContainer,
-        shape = MaterialTheme.shapes.medium,
-        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(Radio.r20),
+        modifier = modifier.fillMaxWidth(),
     ) {
         Column(Modifier.padding(Espacio.space4), verticalArrangement = Arrangement.spacedBy(Espacio.space1)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Espacio.space2)) {
-                Icono(R.drawable.ic_error_fill, null)
+                Icono(R.drawable.ic_error_fill, null, tint = MaterialTheme.colorScheme.error)
                 Text("Incidente a las ${incidente.cuando.formatoHora()}", style = MaterialTheme.typography.titleMedium)
             }
             Text("${incidente.tipo.etiqueta}: ${incidente.descripcion}", style = MaterialTheme.typography.bodyLarge)
@@ -189,35 +262,6 @@ private fun BannerIncidente(incidente: Incidente, onVer: (Incidente) -> Unit) {
                 Text("Ver detalle", color = MaterialTheme.colorScheme.onErrorContainer)
             }
         }
-    }
-}
-
-@Composable
-private fun TarjetaAhora(datos: HoyDatos) {
-    var abierto by rememberSaveable { mutableStateOf(false) }
-    TarjetaSeccion(titulo = "Ahora mismo", icono = R.drawable.ic_schedule) {
-        when (val a = datos.actividad) {
-            is ActividadActual.Especial -> {
-                Text(a.actividad.titulo, style = MaterialTheme.typography.titleLarge)
-                FlowRowSimple {
-                    EstadoChip("Actividad especial", TipoEstado.INFO, R.drawable.ic_event)
-                    Text("${a.actividad.inicio.formatoHora()} a ${a.actividad.fin.formatoHora()}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
-            is ActividadActual.Regular -> {
-                Text(a.bloque.actividad, style = MaterialTheme.typography.titleLarge)
-                Text("De ${a.bloque.inicio.formatoHora()} a ${a.bloque.fin.formatoHora()}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            ActividadActual.FueraDeHorario -> {
-                Text("Fuera del horario", style = MaterialTheme.typography.titleLarge)
-                Text("La estancia no tiene actividades en este momento.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-        }
-        TextButton(onClick = { abierto = !abierto }, modifier = Modifier.heightIn(min = 48.dp)) {
-            Text(if (abierto) "Ocultar horario de hoy" else "Ver horario de hoy")
-            Icono(if (abierto) R.drawable.ic_expand_less else R.drawable.ic_expand_more, null, Modifier.padding(start = Espacio.space1))
-        }
-        if (abierto) HorarioDelDia(datos.bloques, datos.especiales, datos.actividad)
     }
 }
 
@@ -239,13 +283,13 @@ private fun HorarioDelDia(bloques: List<BloqueHorario>, especiales: List<Activid
     } + especiales.map { e ->
         Fila(e.inicio, e.fin, e.titulo, true, (actual as? ActividadActual.Especial)?.actividad?.id == e.id)
     }).sortedBy { it.inicio }
-    Column(verticalArrangement = Arrangement.spacedBy(Espacio.space1)) {
+    Column(verticalArrangement = Arrangement.spacedBy(Espacio.space2)) {
         filas.forEach { f ->
             Row(horizontalArrangement = Arrangement.spacedBy(Espacio.space3)) {
                 Text(
                     f.inicio.formatoHora(),
                     style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = if (f.activa) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 2.dp),
                 )
                 Column(Modifier.weight(1f)) {
@@ -260,24 +304,102 @@ private fun HorarioDelDia(bloques: List<BloqueHorario>, especiales: List<Activid
     }
 }
 
+/** hoja blanca de esquinas superiores redondeadas con el resumen del dia */
 @Composable
-private fun TarjetaAsistencia(n: Nino, a: Asistencia) {
-    TarjetaSeccion(titulo = "Asistencia", icono = R.drawable.ic_login) {
-        val entrega = n.persona(a.entregadoPorId)
-        Text(
-            "Llegó a las ${a.horaEntrada.formatoHora()}" + (entrega?.let { " con ${it.parentesco} (${primerNombre(it.nombre)})" } ?: ""),
-            style = MaterialTheme.typography.bodyLarge,
-        )
-        val salida = a.horaSalida
-        if (salida != null) {
-            val recoge = n.persona(a.recogidoPorId)
+private fun HojaDelDia(datos: HoyDatos, modifier: Modifier = Modifier) {
+    val n = datos.hijos.seleccionado
+    val r = datos.resumen
+    Surface(
+        color = SonrisasTheme.colors.superficieElevada,
+        shape = RoundedCornerShape(topStart = Radio.encabezado, topEnd = Radio.encabezado),
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        Column(
+            Modifier.padding(start = Espacio.space5, end = Espacio.space5, top = Espacio.space6, bottom = Espacio.space8),
+            verticalArrangement = Arrangement.spacedBy(Espacio.space6),
+        ) {
+            val asistencia = r.asistencia
+            if (asistencia == null) {
+                EstadoVacio(
+                    R.drawable.ic_schedule,
+                    "Todavía no registramos la llegada de ${n.nombre} hoy.",
+                    mensaje = "Cuando la educadora la registre, aquí verás cómo va su día.",
+                )
+            } else {
+                SeccionAsistencia(n, asistencia)
+                SeccionComidas(r)
+                SeccionSiesta(r)
+                SeccionBano(r)
+                SeccionAnimo(r)
+                SeccionNotas(r)
+            }
+        }
+    }
+}
+
+/** encabezado de cada seccion de la hoja: icono en circulo del color del tipo y titulo en mayusculas */
+@Composable
+private fun SeccionHoja(titulo: String, @DrawableRes icono: Int, tipo: TipoTono, contenido: @Composable ColumnScope.() -> Unit) {
+    val par = tono(tipo)
+    Column(verticalArrangement = Arrangement.spacedBy(Espacio.space3)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Espacio.space2)) {
+            Box(Modifier.size(32.dp).clip(CircleShape).background(par.suave), contentAlignment = Alignment.Center) {
+                Icono(icono, null, Modifier.size(18.dp), tint = par.texto)
+            }
             Text(
-                "Salió a las ${salida.formatoHora()}" + (recoge?.let { " con ${it.parentesco} (${primerNombre(it.nombre)})" } ?: ""),
-                style = MaterialTheme.typography.bodyLarge,
+                titulo.uppercase(LocaleMx),
+                style = EstiloEtiquetaSeccion,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.semantics { heading(); contentDescription = titulo },
             )
-            a.observacionesSalida?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-        } else {
-            EstadoChip("En la estancia", TipoEstado.EXITO, R.drawable.ic_check_circle_fill)
+        }
+        contenido()
+    }
+}
+
+@Composable
+private fun SeccionAsistencia(n: Nino, a: Asistencia) {
+    SeccionHoja("Asistencia", R.drawable.ic_login, TipoTono.LLEGADA_SALIDA) {
+        Row(horizontalArrangement = Arrangement.spacedBy(Espacio.space3)) {
+            val entrega = n.persona(a.entregadoPorId)
+            DatoHora(
+                "Llegada", a.horaEntrada.formatoHora(),
+                entrega?.let { "con ${it.parentesco} (${primerNombre(it.nombre)})" },
+                R.drawable.ic_check, MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.primary,
+                Modifier.weight(1f),
+            )
+            val salida = a.horaSalida
+            if (salida != null) {
+                val recoge = n.persona(a.recogidoPorId)
+                DatoHora(
+                    "Salida", salida.formatoHora(),
+                    recoge?.let { "con ${it.parentesco} (${primerNombre(it.nombre)})" },
+                    R.drawable.ic_logout, SonrisasTheme.colors.salio.suave, SonrisasTheme.colors.salio.texto,
+                    Modifier.weight(1f),
+                )
+            } else {
+                Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+                    PildoraEstado("En la estancia", EstadoPildora.PRESENTE)
+                }
+            }
+        }
+        a.observacionesSalida?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+    }
+}
+
+/** "Llegada 8:05 / con Mama (Laura)" con su icono en circulo */
+@Composable
+private fun DatoHora(etiqueta: String, hora: String, quien: String?, @DrawableRes icono: Int, fondo: Color, frente: Color, modifier: Modifier = Modifier) {
+    Row(modifier.semantics(mergeDescendants = true) {}, horizontalArrangement = Arrangement.spacedBy(Espacio.space2), verticalAlignment = Alignment.Top) {
+        Box(Modifier.size(40.dp).clip(CircleShape).background(fondo), contentAlignment = Alignment.Center) {
+            Icono(icono, null, Modifier.size(20.dp), tint = frente)
+        }
+        Column {
+            Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(Espacio.space1)) {
+                Text(etiqueta, style = MaterialTheme.typography.bodyLarge)
+                Text(hora, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
+            }
+            quien?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         }
     }
 }
@@ -294,23 +416,46 @@ private fun FilaDato(etiqueta: String, valor: String, apagado: Boolean = false) 
     }
 }
 
+/** tres mosaicos (desayuno, colacion, comida) en naranja suave con la porcion en pildora */
 @Composable
-private fun TarjetaComidas(r: ResumenDia) {
-    TarjetaSeccion(titulo = "Comidas", icono = R.drawable.ic_restaurant) {
-        TiempoComida.entries.forEach { t ->
-            val p = r.comidas[t]
-            FilaDato(t.etiqueta, p?.etiqueta ?: "Sin registro", apagado = p == null)
+private fun SeccionComidas(r: ResumenDia) {
+    val par = tono(TipoTono.ALIMENTO)
+    SeccionHoja("Comidas", R.drawable.ic_restaurant, TipoTono.ALIMENTO) {
+        Row(Modifier.height(IntrinsicSize.Min), horizontalArrangement = Arrangement.spacedBy(Espacio.space2)) {
+            TiempoComida.entries.forEach { t ->
+                val p = r.comidas[t]
+                Surface(color = par.suave, shape = RoundedCornerShape(Radio.r16), modifier = Modifier.weight(1f).fillMaxHeight()) {
+                    Column(
+                        Modifier.padding(vertical = Espacio.space3, horizontal = Espacio.space1).semantics(mergeDescendants = true) {},
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(Espacio.space2),
+                    ) {
+                        Icono(R.drawable.ic_restaurant, null, Modifier.size(22.dp), tint = par.texto)
+                        Text(t.etiqueta, style = MaterialTheme.typography.labelLarge, textAlign = TextAlign.Center)
+                        if (p != null) {
+                            Pildora(p.etiqueta, MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.onPrimary)
+                        } else {
+                            Pildora("Sin registro", SonrisasTheme.colors.superficieElevada, MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                }
+            }
         }
     }
 }
 
 @Composable
-private fun TarjetaSiesta(r: ResumenDia, ahora: LocalTime) {
-    TarjetaSeccion(titulo = "Siesta", icono = R.drawable.ic_bedtime) {
+private fun SeccionSiesta(r: ResumenDia) {
+    SeccionHoja("Siesta", R.drawable.ic_bedtime, TipoTono.SIESTA) {
         if (r.siestas.isEmpty()) {
             Text("Sin registro", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
         } else {
-            if (r.minutosSiesta > 0) Text("Durmió ${minutosTexto(r.minutosSiesta)} en total", style = MaterialTheme.typography.titleMedium)
+            if (r.minutosSiesta > 0) {
+                Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(Espacio.space2)) {
+                    Text(minutosTexto(r.minutosSiesta), style = MaterialTheme.typography.headlineSmall)
+                    Text("Durmió ${minutosTexto(r.minutosSiesta)} en total", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
             r.siestas.forEach { s ->
                 val texto = s.fin?.let { "De ${s.inicio.formatoHora()} a ${it.formatoHora()}" }
                     ?: "Duerme desde las ${s.inicio.formatoHora()}"
@@ -321,8 +466,8 @@ private fun TarjetaSiesta(r: ResumenDia, ahora: LocalTime) {
 }
 
 @Composable
-private fun TarjetaBano(r: ResumenDia) {
-    TarjetaSeccion(titulo = "Baño", icono = R.drawable.ic_wc) {
+private fun SeccionBano(r: ResumenDia) {
+    SeccionHoja("Baño", R.drawable.ic_wc, TipoTono.PANAL) {
         if (r.pipi == 0 && r.popo == 0) {
             Text("Sin registro", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
         } else {
@@ -335,14 +480,14 @@ private fun TarjetaBano(r: ResumenDia) {
 private fun veces(n: Int) = if (n == 1) "1 vez" else "$n veces"
 
 @Composable
-private fun TarjetaAnimo(r: ResumenDia) {
-    TarjetaSeccion(titulo = "Ánimo", icono = R.drawable.ic_mood) {
+private fun SeccionAnimo(r: ResumenDia) {
+    SeccionHoja("Ánimo", R.drawable.ic_mood, TipoTono.ANIMO) {
         val a = r.ultimoAnimo
         if (a == null) {
             Text("Sin registro", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
         } else {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Espacio.space2)) {
-                Icono(a.estado.icono, null, Modifier.size(32.dp))
+                Icono(a.estado.icono, null, Modifier.size(32.dp), tint = tono(TipoTono.ANIMO).texto)
                 Text(a.estado.etiqueta, style = MaterialTheme.typography.titleLarge)
             }
             Text(a.detallesAnimo(), style = MaterialTheme.typography.bodyLarge)
@@ -351,13 +496,13 @@ private fun TarjetaAnimo(r: ResumenDia) {
 }
 
 @Composable
-private fun TarjetaNotas(r: ResumenDia) {
-    TarjetaSeccion(titulo = "Notas de la educadora", icono = R.drawable.ic_edit_note) {
+private fun SeccionNotas(r: ResumenDia) {
+    SeccionHoja("Notas de la educadora", R.drawable.ic_edit_note, TipoTono.NOTA) {
         if (r.notas.isEmpty()) {
             Text("Sin notas por ahora", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         r.notas.forEachIndexed { i, nota ->
-            if (i > 0) HorizontalDivider()
+            if (i > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             Text(nota.texto, style = MaterialTheme.typography.bodyLarge)
             Text(nota.cuando.formatoHora(), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
