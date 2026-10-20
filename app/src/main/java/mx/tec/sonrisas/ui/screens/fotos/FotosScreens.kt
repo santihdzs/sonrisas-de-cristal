@@ -30,9 +30,9 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
@@ -70,7 +70,9 @@ import mx.tec.sonrisas.domain.TipoSala
 import mx.tec.sonrisas.domain.UsoFoto
 import mx.tec.sonrisas.domain.puedeAparecerEn
 import mx.tec.sonrisas.ui.components.AvatarNino
+import mx.tec.sonrisas.ui.components.BotonFlotante
 import mx.tec.sonrisas.ui.components.BotonPrincipal
+import mx.tec.sonrisas.ui.components.TarjetaBase
 import mx.tec.sonrisas.ui.components.CampoTexto
 import mx.tec.sonrisas.ui.components.EtiquetaSeccion
 import mx.tec.sonrisas.ui.components.TarjetaSeccion
@@ -85,6 +87,7 @@ import mx.tec.sonrisas.ui.components.icono
 import mx.tec.sonrisas.ui.components.primerNombre
 import mx.tec.sonrisas.ui.components.relativoA
 import mx.tec.sonrisas.ui.theme.Espacio
+import mx.tec.sonrisas.ui.theme.Radio
 import mx.tec.sonrisas.ui.theme.SonrisasTheme
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -100,15 +103,11 @@ fun GaleriaFotos(
 ) {
     Scaffold(
         modifier = modifier,
+        containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = WindowInsets(0),
         floatingActionButton = {
-            if (onAgregar != null) {
-                ExtendedFloatingActionButton(
-                    onClick = onAgregar,
-                    icon = { Icono(R.drawable.ic_add_a_photo, null) },
-                    text = { Text("Agregar foto") },
-                )
-            }
+            // solo la educadora puede agregar fotos
+            if (onAgregar != null) BotonFlotante("Agregar foto", R.drawable.ic_add_a_photo, onAgregar)
         },
     ) { padding ->
         val estadoGrid = rememberLazyGridState()
@@ -126,8 +125,8 @@ fun GaleriaFotos(
             state = estadoGrid,
             modifier = Modifier.fillMaxSize().padding(padding),
             contentPadding = PaddingValues(start = Espacio.space4, end = Espacio.space4, top = Espacio.space2, bottom = 128.dp),
-            horizontalArrangement = Arrangement.spacedBy(Espacio.space2),
-            verticalArrangement = Arrangement.spacedBy(Espacio.space2),
+            horizontalArrangement = Arrangement.spacedBy(Espacio.space3),
+            verticalArrangement = Arrangement.spacedBy(Espacio.space3),
         ) {
             if (encabezado != null) item(span = { GridItemSpan(maxLineSpan) }) { encabezado() }
             if (datos.grupos.isEmpty()) {
@@ -137,30 +136,27 @@ fun GaleriaFotos(
             }
             datos.grupos.forEach { grupo ->
                 item(span = { GridItemSpan(maxLineSpan) }, key = "dia-${grupo.fecha}") {
-                    Text(
-                        grupo.fecha.relativoA(datos.hoy),
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(top = Espacio.space3, bottom = Espacio.space1),
-                    )
+                    EtiquetaSeccion(grupo.fecha.relativoA(datos.hoy), Modifier.padding(top = Espacio.space1))
                 }
                 items(grupo.fotos, key = { it.id }) { foto ->
-                    Column(
-                        modifier = Modifier.clickable(onClickLabel = "Ver foto") { onFoto(foto) },
-                        verticalArrangement = Arrangement.spacedBy(Espacio.space1),
-                    ) {
-                        FotoActividad(
-                            foto.tema,
-                            datos.salas[foto.salaId]?.estrella ?: ColorEstrella.AZUL,
-                            Modifier.fillMaxWidth().aspectRatio(1f),
-                            descripcion = foto.descripcion,
-                        )
-                        Text(
-                            foto.descripcion,
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                        )
+                    // cada foto es una tarjeta blanca: imagen arriba y descripcion abajo
+                    TarjetaBase(onClick = { onFoto(foto) }, forma = RoundedCornerShape(Radio.r20)) {
+                        Column {
+                            FotoActividad(
+                                foto.tema,
+                                datos.salas[foto.salaId]?.estrella ?: ColorEstrella.AZUL,
+                                Modifier.fillMaxWidth().aspectRatio(1f),
+                                descripcion = foto.descripcion,
+                            )
+                            Text(
+                                foto.descripcion,
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.padding(horizontal = Espacio.space2, vertical = Espacio.space2),
+                            )
+                        }
                     }
                 }
             }
