@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -25,6 +26,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -35,6 +37,8 @@ import mx.tec.sonrisas.domain.Rol
 import mx.tec.sonrisas.domain.Sala
 import mx.tec.sonrisas.domain.TipoSala
 import mx.tec.sonrisas.domain.Usuario
+import mx.tec.sonrisas.ui.components.BannerAviso
+import mx.tec.sonrisas.ui.components.BotonFlotante
 import mx.tec.sonrisas.ui.components.BotonPrincipal
 import mx.tec.sonrisas.ui.components.CampoTexto
 import mx.tec.sonrisas.ui.components.tecladoNombres
@@ -141,11 +145,11 @@ fun SalasScreen(
     val sinColores = datos.salas.size >= ColorEstrella.entries.size
     Scaffold(
         modifier = modifier,
+        containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = WindowInsets(0),
         floatingActionButton = {
-            if (!sinColores) {
-                ExtendedFloatingActionButton(onClick = onNueva, icon = { Icono(R.drawable.ic_add, null) }, text = { Text("Registrar sala") })
-            }
+            // sin colores de estrella libres ya no se pueden registrar mas salas
+            if (!sinColores) BotonFlotante("Registrar sala", R.drawable.ic_add, onNueva)
         },
     ) { padding ->
         LazyColumn(
@@ -155,19 +159,27 @@ fun SalasScreen(
         ) {
             if (sinColores) {
                 item {
-                    Text(
-                        "Ya se usaron los ${ColorEstrella.entries.size} colores de estrella. Para identificar cada sala sin confusiones, una estancia tiene como máximo ${ColorEstrella.entries.size} salas.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                    BannerAviso(
+                        icono = R.drawable.ic_info,
+                    ) {
+                        Text(
+                            "Ya se usaron los ${ColorEstrella.entries.size} colores de estrella. Para identificar cada sala sin confusiones, una estancia tiene como máximo ${ColorEstrella.entries.size} salas.",
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
                 }
             }
             if (datos.salas.isEmpty()) {
                 item { EstadoVacio(R.drawable.ic_meeting_room, "Todavía no hay salas", mensaje = "Registra la primera sala para poder inscribir niños y asignar educadoras.") }
             }
             items(datos.salas, key = { it.sala.id }) { f ->
-                TarjetaSeccion(onClick = { onEditar(f.sala) }) {
-                    EstrellaSala("Sala ${f.sala.nombre}", f.sala.estrella)
+                TarjetaSeccion(
+                    onClick = { onEditar(f.sala) },
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        EstrellaSala("Sala ${f.sala.nombre}", f.sala.estrella, Modifier.weight(1f))
+                        Icono(R.drawable.ic_edit, "Editar sala ${f.sala.nombre}", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                     Text(
                         "${f.sala.tipo.etiqueta} · ${f.inscritos} ${if (f.inscritos == 1) "niño" else "niños"} · Estrella ${f.sala.estrella.etiqueta.lowercase()}",
                         style = MaterialTheme.typography.bodyMedium,
