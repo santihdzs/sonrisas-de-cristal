@@ -1,5 +1,13 @@
 package mx.tec.sonrisas.ui.screens.direccion
 
+import mx.tec.sonrisas.ui.components.DialogoConfirmar
+import androidx.compose.ui.draw.clip
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -16,15 +24,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -271,11 +276,11 @@ fun PersonalScreen(
 ) {
     Scaffold(
         modifier = modifier,
+        containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = WindowInsets(0),
         floatingActionButton = {
-            if (datos.salas.isNotEmpty()) {
-                ExtendedFloatingActionButton(onClick = onNueva, icon = { Icono(R.drawable.ic_person_add, null) }, text = { Text("Registrar educadora") })
-            }
+            // sin salas no hay a donde asignar una educadora
+            if (datos.salas.isNotEmpty()) BotonFlotante("Registrar educadora", R.drawable.ic_person_add, onNueva)
         },
     ) { padding ->
         LazyColumn(
@@ -294,8 +299,19 @@ fun PersonalScreen(
             items(datos.educadoras, key = { it.id }) { u ->
                 val sala = datos.sala(u.salaId)
                 TarjetaSeccion(onClick = { onEducadora(u) }) {
-                    Text(u.nombre, style = MaterialTheme.typography.titleMedium)
-                    Text("Usuario: ${u.usuario}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Espacio.space3)) {
+                        Box(
+                            Modifier.size(44.dp).clip(CircleShape).background(if (u.activo) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainer),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icono(R.drawable.ic_badge, null, Modifier.size(22.dp), tint = if (u.activo) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Column(Modifier.weight(1f)) {
+                            Text(u.nombre, style = MaterialTheme.typography.titleMedium)
+                            Text("Usuario: ${u.usuario}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Icono(R.drawable.ic_chevron_right, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                     if (u.activo) {
                         if (sala != null) EstrellaSala("Sala ${sala.nombre}", sala.estrella, tamano = 24.dp)
                         else Text("Sin sala asignada", style = MaterialTheme.typography.bodyMedium)
@@ -345,13 +361,18 @@ fun HojaPersonalForm(
                 if (u.activo) {
                     EtiquetaCampo("Sala asignada")
                     SelectorOpciones(salas.map { it.id }, hoja.salaId, { onCambiar(hoja.copy(salaId = it)) }, { id -> salas.first { it.id == id }.nombre })
-                    OutlinedButton(
+                    // accion destructiva: rojo apagado, sin contorno, y siempre confirma
+                    FilledTonalButton(
                         onClick = { onCambiar(hoja.copy(confirmarRetiro = true)) },
                         enabled = !hoja.guardando,
+                        colors = ButtonDefaults.filledTonalButtonColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                            contentColor = MaterialTheme.colorScheme.error,
+                        ),
                         modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
                     ) {
-                        Icono(R.drawable.ic_person_off, null, tint = MaterialTheme.colorScheme.error)
-                        Text("Retirar acceso", color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(start = Espacio.space2))
+                        Icono(R.drawable.ic_person_off, null)
+                        Text("Retirar acceso", modifier = Modifier.padding(start = Espacio.space2))
                     }
                 } else {
                     EstadoChip("Sin acceso a la app", TipoEstado.NEUTRO, R.drawable.ic_person_off)
@@ -363,13 +384,12 @@ fun HojaPersonalForm(
                 hoja.error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium) }
             }
             if (hoja.confirmarRetiro) {
-                AlertDialog(
-                    onDismissRequest = { onCambiar(hoja.copy(confirmarRetiro = false)) },
-                    icon = { Icono(R.drawable.ic_person_off, null) },
-                    title = { Text("¿Retirar el acceso de ${u.nombre}?") },
-                    text = { Text("Ya no podrá iniciar sesión ni verá a los niños de la sala. Su historial se conserva en el registro de actividad.") },
-                    confirmButton = { TextButton(onClick = onRetirar) { Text("Retirar acceso", color = MaterialTheme.colorScheme.error) } },
-                    dismissButton = { TextButton(onClick = { onCambiar(hoja.copy(confirmarRetiro = false)) }) { Text("Cancelar") } },
+                DialogoConfirmar(
+                    titulo = "¿Retirar el acceso de ${u.nombre}?",
+                    mensaje = "Ya no podrá iniciar sesión ni verá a los niños de la sala. Su historial se conserva en el registro de actividad.",
+                    confirmar = "Retirar acceso",
+                    onConfirmar = onRetirar,
+                    onCancelar = { onCambiar(hoja.copy(confirmarRetiro = false)) },
                 )
             }
         }
