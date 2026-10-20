@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -432,8 +433,12 @@ fun BotonAcceso(
     modifier: Modifier = Modifier,
     insignia: Int = 0,
 ) {
-    FilledTonalButton(onClick = onClick, modifier = modifier.heightIn(min = 48.dp)) {
-        Icono(icono, null)
+    FilledTonalButton(
+        onClick = onClick,
+        modifier = modifier.heightIn(min = 48.dp),
+        contentPadding = PaddingValues(start = Espacio.space3, end = Espacio.space4),
+    ) {
+        Icono(icono, null, Modifier.size(20.dp))
         Text(texto, modifier = Modifier.padding(start = Espacio.space2))
         if (insignia > 0) {
             Badge(

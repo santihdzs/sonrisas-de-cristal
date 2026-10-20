@@ -1,6 +1,7 @@
 package mx.tec.sonrisas.ui.components
 
 import androidx.activity.compose.LocalActivity
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -67,7 +68,7 @@ fun EncabezadoTeal(
             .clip(forma)
             .background(degradadoTeal())
             .statusBarsPadding()
-            .padding(start = Espacio.space5, end = Espacio.space5, top = Espacio.space3, bottom = Espacio.space6),
+            .padding(start = Espacio.space5, end = Espacio.space3, top = Espacio.space1, bottom = Espacio.space4),
         verticalArrangement = Arrangement.spacedBy(Espacio.space2),
     ) {
         CompositionLocalProvider(LocalContentColor provides Color.White) {
@@ -156,11 +157,17 @@ fun BarraDetalle(
 }
 
 /**
- * boton circular de perfil. Sobre teal es un circulo blanco translucido; sobre el fondo claro,
+ * boton circular con icono. Sobre teal es un circulo blanco translucido; sobre el fondo claro,
  * un circulo blanco con sombra suave.
  */
 @Composable
-fun BotonPerfil(onClick: () -> Unit, modifier: Modifier = Modifier, sobreTeal: Boolean = false) {
+fun BotonCircular(
+    @DrawableRes icono: Int,
+    descripcion: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    sobreTeal: Boolean = false,
+) {
     val forma = CircleShape
     Surface(
         onClick = onClick,
@@ -170,9 +177,15 @@ fun BotonPerfil(onClick: () -> Unit, modifier: Modifier = Modifier, sobreTeal: B
         modifier = (if (sobreTeal) modifier else modifier.sombraSuave(Elevacion.tarjeta, forma)).size(48.dp),
     ) {
         Box(contentAlignment = Alignment.Center) {
-            Icono(R.drawable.ic_account_circle, "Mi perfil", Modifier.size(28.dp))
+            Icono(icono, descripcion, Modifier.size(26.dp))
         }
     }
+}
+
+/** boton circular de perfil (arriba a la derecha) */
+@Composable
+fun BotonPerfil(onClick: () -> Unit, modifier: Modifier = Modifier, sobreTeal: Boolean = false) {
+    BotonCircular(R.drawable.ic_account_circle, "Mi perfil", onClick, modifier, sobreTeal)
 }
 
 /**

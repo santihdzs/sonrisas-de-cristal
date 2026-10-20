@@ -48,13 +48,13 @@ fun DonaConLeyenda(
     segmentos: List<SegmentoDona>,
     textoCentro: String,
     modifier: Modifier = Modifier,
-    tamano: Dp = 104.dp,
+    tamano: Dp = 76.dp,
 ) {
     val principal = segmentos.firstOrNull()?.valor ?: 0
     Row(
         modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(Espacio.space6),
+        horizontalArrangement = Arrangement.spacedBy(Espacio.space5),
     ) {
         Dona(
             segmentos,
@@ -64,14 +64,14 @@ fun DonaConLeyenda(
         ) {
             // la dona es un grafico de tamano fijo, asi que su texto no escala con la fuente del sistema
             val densidad = LocalDensity.current
-            val grande = with(densidad) { (tamano * 0.24f).toSp() }
-            val chico = with(densidad) { (tamano * 0.11f).toSp() }
+            val grande = with(densidad) { (tamano * 0.28f).toSp() }
+            val chico = with(densidad) { (tamano * 0.13f).toSp() }
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text("$principal", fontSize = grande, lineHeight = grande, fontWeight = FontWeight.Bold)
                 Text(textoCentro, fontSize = chico, lineHeight = chico, color = LocalContentColor.current.copy(alpha = 0.85f), textAlign = TextAlign.Center)
             }
         }
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Espacio.space2)) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Espacio.space1)) {
             segmentos.forEach { s ->
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -90,7 +90,7 @@ fun DonaConLeyenda(
 private fun Dona(
     segmentos: List<SegmentoDona>,
     modifier: Modifier = Modifier,
-    grosor: Dp = 12.dp,
+    grosor: Dp = 9.dp,
     pista: Color = Color.White.copy(alpha = 0.18f),
     centro: @Composable () -> Unit,
 ) {

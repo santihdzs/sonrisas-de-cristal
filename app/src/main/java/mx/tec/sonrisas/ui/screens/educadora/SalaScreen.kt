@@ -5,6 +5,8 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -16,7 +18,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.lazy.LazyColumn
@@ -47,8 +51,8 @@ import mx.tec.sonrisas.domain.Nino
 import mx.tec.sonrisas.domain.Sala
 import mx.tec.sonrisas.domain.TipoSala
 import mx.tec.sonrisas.ui.components.AvatarNino
-import mx.tec.sonrisas.ui.components.BannerAviso
 import mx.tec.sonrisas.ui.components.BotonAcceso
+import mx.tec.sonrisas.ui.components.BotonCircular
 import mx.tec.sonrisas.ui.components.BotonFlotante
 import mx.tec.sonrisas.ui.components.BotonPerfil
 import mx.tec.sonrisas.ui.components.ChipFiltro
@@ -120,9 +124,9 @@ fun SalaScreen(
             state = lista,
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(bottom = Espacio.finalConBoton),
-            verticalArrangement = Arrangement.spacedBy(Espacio.space3),
+            verticalArrangement = Arrangement.spacedBy(Espacio.space2),
         ) {
-            item { EncabezadoSala(datos, onPerfil) }
+            item { EncabezadoSala(datos, onPerfil, onImprimir, Modifier.padding(bottom = Espacio.space1)) }
             item {
                 Row(
                     Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = Espacio.space4),
@@ -130,7 +134,6 @@ fun SalaScreen(
                 ) {
                     BotonAcceso("Material de clase", R.drawable.ic_folder, onMaterial)
                     BotonAcceso("Objetos perdidos", R.drawable.ic_checkroom, onObjetos)
-                    BotonAcceso("Imprimir bitácora", R.drawable.ic_print, onImprimir)
                 }
             }
             item {
@@ -148,15 +151,14 @@ fun SalaScreen(
                     }
                 }
             }
-            if (conSalud > 0) {
-                item {
-                    BannerAviso(
-                        if (conSalud == 1) "1 niño con alerta de salud" else "$conSalud niños con alerta de salud",
-                        Modifier.padding(horizontal = Espacio.space4),
-                    )
-                }
+            // el aviso de salud va junto a la etiqueta para no ocupar un renglon propio
+            item {
+                EtiquetaSeccion(
+                    "Niños de la sala",
+                    Modifier.padding(horizontal = Espacio.space4),
+                    accion = if (conSalud > 0) ({ PildoraEstado("$conSalud con alerta de salud", EstadoPildora.SALUD) }) else null,
+                )
             }
-            item { EtiquetaSeccion("Niños de la sala", Modifier.padding(horizontal = Espacio.space4)) }
             if (visibles.isEmpty()) {
                 item { EstadoVacio(R.drawable.ic_child_care, "No hay niños en este filtro", mensaje = "Cambia el filtro para ver al resto de la sala.") }
             }
@@ -193,21 +195,31 @@ fun SalaScreen(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun EncabezadoSala(datos: SalaDatos, onPerfil: () -> Unit) {
+private fun EncabezadoSala(datos: SalaDatos, onPerfil: () -> Unit, onImprimir: () -> Unit, modifier: Modifier = Modifier) {
     val colores = SonrisasTheme.colors
     val sinLlegar = datos.ninos.count { it.estado == EstadoAsistencia.SIN_LLEGAR }
     val salieron = datos.ninos.count { it.estado == EstadoAsistencia.SALIO }
-    EncabezadoTeal("Mi sala", accion = { BotonPerfil(onPerfil, sobreTeal = true) }) {
-        ChipTranslucido("Sala ${datos.sala.nombre}", inicio = { GlifoEstrella(datos.sala.estrella, tamano = 20.dp) })
-        Text(datos.fecha.formatoLargo(), style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.85f))
-        Box(
-            Modifier
-                .padding(vertical = Espacio.space2)
-                .fillMaxWidth()
-                .height(1.dp)
-                .background(Color.White.copy(alpha = 0.15f)),
-        )
+    EncabezadoTeal(
+        "Mi sala",
+        modifier = modifier,
+        accion = {
+            Row(horizontalArrangement = Arrangement.spacedBy(Espacio.space2)) {
+                BotonCircular(R.drawable.ic_print, "Imprimir bitácora", onImprimir, sobreTeal = true)
+                BotonPerfil(onPerfil, sobreTeal = true)
+            }
+        },
+    ) {
+        // sala y fecha en un solo renglon; si no caben (letra grande), la fecha baja
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(Espacio.space3),
+            verticalArrangement = Arrangement.spacedBy(Espacio.space1),
+            itemVerticalAlignment = Alignment.CenterVertically,
+        ) {
+            ChipTranslucido("Sala ${datos.sala.nombre}", inicio = { GlifoEstrella(datos.sala.estrella, tamano = 20.dp) })
+            Text(datos.fecha.formatoLargo(), style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.85f))
+        }
         DonaConLeyenda(
             segmentos = listOf(
                 SegmentoDona("Presentes", datos.presentes, Color.White),
@@ -215,6 +227,7 @@ private fun EncabezadoSala(datos: SalaDatos, onPerfil: () -> Unit) {
                 SegmentoDona("Ya salieron", salieron, colores.acentoSobreTeal),
             ),
             textoCentro = "presentes",
+            modifier = Modifier.padding(top = Espacio.space2, end = Espacio.space2),
         )
     }
 }
@@ -232,28 +245,45 @@ private fun TarjetaNino(
     val n = item.nino
     val salud = textoSalud(n)
     TarjetaBase(modifier = modifier, onClick = onClick) {
-        Column(Modifier.fillMaxHeight().padding(14.dp), verticalArrangement = Arrangement.spacedBy(Espacio.space1)) {
-            Row(verticalAlignment = Alignment.Top) {
-                AvatarNino(n.nombre, n.apellidos, estrella, tamano = 52.dp, forma = FormaAvatar.CUADRADO)
-                Spacer(Modifier.weight(1f))
-                if (salud != null) {
-                    Box(
-                        Modifier.size(28.dp).clip(CircleShape).background(SonrisasTheme.colors.avisoContenedor),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icono(R.drawable.ic_warning_fill, salud, Modifier.size(16.dp), tint = SonrisasTheme.colors.aviso)
-                    }
+        Column(Modifier.fillMaxHeight().padding(Espacio.space3), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            // el boton de llegada o salida ocupa el hueco junto al avatar
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                AvatarConAlerta(n, estrella, salud)
+                Spacer(Modifier.weight(1f).widthIn(min = Espacio.space2))
+                when (item.estado) {
+                    EstadoAsistencia.SIN_LLEGAR -> BotonAsistencia("Llegada", R.drawable.ic_login, onLlegada)
+                    EstadoAsistencia.PRESENTE -> BotonAsistencia("Salida", R.drawable.ic_logout) { onSalida(item.asistencia!!) }
+                    EstadoAsistencia.SALIO -> Unit
                 }
             }
-            Spacer(Modifier.height(Espacio.space2))
+            Spacer(Modifier.height(Espacio.space1))
             Text(n.nombreCompleto, style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold))
             Text(edadTexto(n.fechaNacimiento, hoy), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(Modifier.weight(1f).heightIn(min = Espacio.space2))
             ChipAsistencia(item.asistencia, Modifier.fillMaxWidth())
-            when (item.estado) {
-                EstadoAsistencia.SIN_LLEGAR -> BotonAsistencia("Llegada", R.drawable.ic_login, onLlegada)
-                EstadoAsistencia.PRESENTE -> BotonAsistencia("Salida", R.drawable.ic_logout) { onSalida(item.asistencia!!) }
-                EstadoAsistencia.SALIO -> Unit
+        }
+    }
+}
+
+/** avatar de iniciales; si el niño tiene alergia o tema de salud, lleva un distintivo amarillo en la esquina */
+@Composable
+private fun AvatarConAlerta(n: Nino, estrella: ColorEstrella, salud: String?) {
+    Box {
+        AvatarNino(n.nombre, n.apellidos, estrella, tamano = 44.dp, forma = FormaAvatar.CUADRADO)
+        if (salud != null) {
+            Box(
+                Modifier
+                    .align(Alignment.BottomEnd)
+                    .offset(x = 6.dp, y = 6.dp)
+                    .size(22.dp)
+                    .clip(CircleShape)
+                    .background(SonrisasTheme.colors.superficieElevada)
+                    .padding(2.dp)
+                    .clip(CircleShape)
+                    .background(SonrisasTheme.colors.avisoContenedor),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icono(R.drawable.ic_warning_fill, salud, Modifier.size(12.dp), tint = SonrisasTheme.colors.aviso)
             }
         }
     }
@@ -261,9 +291,12 @@ private fun TarjetaNino(
 
 @Composable
 private fun BotonAsistencia(texto: String, icono: Int, onClick: () -> Unit) {
-    FilledTonalButton(onClick = onClick, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).padding(top = Espacio.space1)) {
+    FilledTonalButton(
+        onClick = onClick,
+        contentPadding = PaddingValues(start = Espacio.space3, end = Espacio.space3),
+    ) {
         Icono(icono, null, Modifier.size(18.dp))
-        Text(texto, modifier = Modifier.padding(start = Espacio.space2))
+        Text(texto, modifier = Modifier.padding(start = 6.dp), maxLines = 1)
     }
 }
 
