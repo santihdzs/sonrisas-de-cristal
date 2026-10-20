@@ -82,7 +82,10 @@ import mx.tec.sonrisas.domain.TiempoComida
 import mx.tec.sonrisas.domain.TipoIncidente
 import mx.tec.sonrisas.domain.TipoSala
 import mx.tec.sonrisas.ui.components.AvatarNino
+import mx.tec.sonrisas.ui.components.BarraAccionesInferior
 import mx.tec.sonrisas.ui.components.BotonAcceso
+import mx.tec.sonrisas.ui.components.BotonCircular
+import mx.tec.sonrisas.ui.components.TarjetaTeal
 import mx.tec.sonrisas.ui.components.BotonPrincipal
 import mx.tec.sonrisas.ui.components.EstadoChip
 import mx.tec.sonrisas.ui.components.EstadoVacio
@@ -519,30 +522,33 @@ fun SemanaScreen(
 ) {
     Scaffold(
         modifier = modifier,
+        containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = WindowInsets(0),
         bottomBar = {
-            Surface(color = MaterialTheme.colorScheme.surfaceContainer) {
-                BotonPrincipal("Compartir resumen", onCompartir, Modifier.padding(Espacio.space4))
+            BarraAccionesInferior(relleno = PaddingValues(Espacio.space4)) {
+                BotonPrincipal("Compartir resumen", onCompartir)
             }
         },
     ) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(Espacio.space4),
+            contentPadding = PaddingValues(start = Espacio.space4, end = Espacio.space4, top = Espacio.space1, bottom = Espacio.space4),
             verticalArrangement = Arrangement.spacedBy(Espacio.space3),
         ) {
-            item { SelectorHijos(datos.hijos, onSeleccion) }
+            if (datos.hijos.lista.size >= 2) item { SelectorHijos(datos.hijos, onSeleccion) }
+            // resumen de la semana en tarjeta teal (patron B), con imprimir bitacora a la derecha
             item {
-                Column {
-                    Text("La semana de ${datos.hijos.seleccionado.nombre}", style = MaterialTheme.typography.headlineSmall)
-                    Text(
-                        "Del ${datos.semana.lunes.formatoDiaMes()} al ${datos.semana.lunes.plusDays(4).formatoDiaMes()}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    TextButton(onClick = onImprimir, modifier = Modifier.heightIn(min = 48.dp)) {
-                        Icono(R.drawable.ic_print, null)
-                        Text("Imprimir bitácora", modifier = Modifier.padding(start = Espacio.space2))
+                TarjetaTeal {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text("La semana de ${datos.hijos.seleccionado.nombre}", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
+                            Text(
+                                "Del ${datos.semana.lunes.formatoDiaMes()} al ${datos.semana.lunes.plusDays(4).formatoDiaMes()}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color.White.copy(alpha = 0.85f),
+                            )
+                        }
+                        BotonCircular(R.drawable.ic_print, "Imprimir bitácora", onImprimir, sobreTeal = true)
                     }
                 }
             }
@@ -555,49 +561,53 @@ fun SemanaScreen(
 @Composable
 private fun FilaDia(dia: DiaSemana, hoy: LocalDate) {
     val titulo = dia.fecha.nombreDia() + (if (dia.fecha == hoy) " (hoy)" else "")
+    val gris = SonrisasTheme.colors.sinLlegar
     TarjetaSeccion {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text(titulo, style = MaterialTheme.typography.titleMedium)
+                Text(titulo, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
                 Text(dia.fecha.formatoDiaMes(), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             when (dia) {
-                is DiaSemana.Pendiente -> EstadoChip("Pendiente", TipoEstado.NEUTRO, R.drawable.ic_schedule)
-                is DiaSemana.NoAsistio -> EstadoChip("No asistió", TipoEstado.NEUTRO, R.drawable.ic_event_busy)
+                is DiaSemana.Pendiente -> Pildora("Pendiente", gris.suave, gris.texto, icono = R.drawable.ic_schedule)
+                is DiaSemana.NoAsistio -> Pildora("No asistió", gris.suave, gris.texto, icono = R.drawable.ic_event_busy)
                 is DiaSemana.Asistio -> dia.resumen.ultimoAnimo?.let {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Espacio.space1)) {
-                        Icono(it.estado.icono, null)
-                        Text(it.estado.etiqueta, style = MaterialTheme.typography.labelLarge)
-                    }
+                    val par = tono(TipoTono.ANIMO)
+                    Pildora(it.estado.etiqueta, par.suave, par.texto, icono = it.estado.icono)
                 }
             }
         }
         if (dia is DiaSemana.Asistio) {
             val r = dia.resumen
             val a = r.asistencia!!
-            Text(
+            FilaIcono(
+                R.drawable.ic_login, TipoTono.LLEGADA_SALIDA,
                 "Asistió de ${a.horaEntrada.formatoHora()}" + (a.horaSalida?.let { " a ${it.formatoHora()}" } ?: " (sigue en la estancia)"),
-                style = MaterialTheme.typography.bodyLarge,
             )
             val comidas = TiempoComida.entries.filter { it in r.comidas }.joinToString(", ") {
                 "${it.etiqueta.lowercase()} ${r.comidas.getValue(it).etiqueta.lowercase()}"
             }
-            if (comidas.isNotEmpty()) FilaIcono(R.drawable.ic_restaurant, comidas.replaceFirstChar { it.uppercase() })
-            if (r.minutosSiesta > 0) FilaIcono(R.drawable.ic_bedtime, "Siesta de ${minutosTexto(r.minutosSiesta)}")
+            if (comidas.isNotEmpty()) FilaIcono(R.drawable.ic_restaurant, TipoTono.ALIMENTO, comidas.replaceFirstChar { it.uppercase() })
+            if (r.minutosSiesta > 0) FilaIcono(R.drawable.ic_bedtime, TipoTono.SIESTA, "Siesta de ${minutosTexto(r.minutosSiesta)}")
             if (r.incidentes.isNotEmpty()) {
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(Espacio.space2)) {
-                    r.incidentes.forEach { EstadoChip("Incidente: ${it.tipo.etiqueta.lowercase()}", TipoEstado.ERROR, R.drawable.ic_error_fill) }
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(Espacio.space2), verticalArrangement = Arrangement.spacedBy(Espacio.space1)) {
+                    val esquema = MaterialTheme.colorScheme
+                    r.incidentes.forEach { Pildora("Incidente: ${it.tipo.etiqueta.lowercase()}", esquema.errorContainer, esquema.onErrorContainer, icono = R.drawable.ic_error_fill, colorIcono = esquema.error) }
                 }
             }
         }
     }
 }
 
+/** renglon con icono en circulo del color de su tipo */
 @Composable
-private fun FilaIcono(@DrawableRes icono: Int, texto: String) {
+private fun FilaIcono(@DrawableRes icono: Int, tipo: TipoTono, texto: String) {
+    val par = tono(tipo)
     Row(horizontalArrangement = Arrangement.spacedBy(Espacio.space2), verticalAlignment = Alignment.CenterVertically) {
-        Icono(icono, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(texto, style = MaterialTheme.typography.bodyMedium)
+        Box(Modifier.size(28.dp).clip(CircleShape).background(par.suave), contentAlignment = Alignment.Center) {
+            Icono(icono, null, Modifier.size(16.dp), tint = par.texto)
+        }
+        Text(texto, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
     }
 }
 
