@@ -28,6 +28,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.TextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -41,6 +42,7 @@ import mx.tec.sonrisas.domain.TipoAviso
 import mx.tec.sonrisas.domain.TipoSala
 import mx.tec.sonrisas.ui.components.BotonPrincipal
 import mx.tec.sonrisas.ui.components.CampoTexto
+import mx.tec.sonrisas.ui.components.EtiquetaSeccion
 import mx.tec.sonrisas.ui.components.FormaCampo
 import mx.tec.sonrisas.ui.components.coloresCampo
 import mx.tec.sonrisas.ui.components.coincideCon
@@ -257,17 +259,29 @@ fun PublicarAvisoScreen(form: AvisoForm, onCambiar: (AvisoForm) -> Unit, onPubli
             .padding(Espacio.space4),
         verticalArrangement = Arrangement.spacedBy(Espacio.space3),
     ) {
-        EtiquetaCampo("Tipo de aviso")
-        SelectorOpciones(TipoAviso.entries, form.tipo, { onCambiar(form.copy(tipo = it)) }, { it.etiqueta }, icono = { it.icono })
-        CampoTexto(form.titulo, { onCambiar(form.copy(titulo = it)) }, "Título", errores["titulo"])
-        CampoTexto(form.cuerpo, { onCambiar(form.copy(cuerpo = it)) }, "Mensaje", errores["cuerpo"], lineas = 4)
-        CampoFecha("Fecha del evento (opcional)", form.fecha, { onCambiar(form.copy(fecha = it)) }, opcional = true)
-        if (form.fecha != null) CampoHora("Hora del evento", form.hora, { onCambiar(form.copy(hora = it)) })
-        Text(
-            "Lo recibirán las familias y educadoras de esta estancia.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        EtiquetaSeccion("Tipo de aviso")
+        TarjetaSeccion {
+            SelectorOpciones(TipoAviso.entries, form.tipo, { onCambiar(form.copy(tipo = it)) }, { it.etiqueta }, icono = { it.icono })
+        }
+        EtiquetaSeccion("Contenido")
+        TarjetaSeccion {
+            CampoTexto(form.titulo, { onCambiar(form.copy(titulo = it)) }, "Título", errores["titulo"])
+            CampoTexto(form.cuerpo, { onCambiar(form.copy(cuerpo = it)) }, "Mensaje", errores["cuerpo"], lineas = 4)
+            CampoFecha("Fecha del evento (opcional)", form.fecha, { onCambiar(form.copy(fecha = it)) }, opcional = true)
+            if (form.fecha != null) CampoHora("Hora del evento", form.hora, { onCambiar(form.copy(hora = it)) })
+        }
+        // a quien le llega, en teal suave (es informacion, no alerta)
+        Surface(
+            color = MaterialTheme.colorScheme.primaryContainer,
+            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+            shape = MaterialTheme.shapes.medium,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Row(Modifier.padding(Espacio.space4), horizontalArrangement = Arrangement.spacedBy(Espacio.space3), verticalAlignment = Alignment.CenterVertically) {
+                Icono(R.drawable.ic_campaign, null)
+                Text("Lo recibirán las familias y educadoras de esta estancia.", style = MaterialTheme.typography.bodyMedium)
+            }
+        }
         form.error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium) }
         BotonPrincipal("Publicar aviso", onPublicar, guardando = form.guardando)
     }
