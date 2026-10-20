@@ -43,6 +43,7 @@ import mx.tec.sonrisas.data.RespuestaLogin
 import mx.tec.sonrisas.domain.AccionRegistro
 import mx.tec.sonrisas.domain.Usuario
 import java.time.LocalDateTime
+import java.time.format.DateTimeParseException
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 
@@ -69,7 +70,10 @@ private fun Conexion.huella(usuarioId: String): Boolean =
 
 fun Application.modulo(db: Db, proxyConfiable: Boolean = false, intentosLogin: Int = 10) {
     // detras de render u otro proxy la ip real viene en X-Forwarded-For; sin proxy ese encabezado lo podria inventar cualquiera
-    if (proxyConfiable) install(XForwardedHeaders)
+    // P4: la ULTIMA ip de la lista la agrega nuestro proxy (tunel o render); las anteriores las puede inventar el cliente
+    if (proxyConfiable) install(XForwardedHeaders) { useLastProxy() }
+    // P1: cabeceras de seguridad en cada respuesta (Seguridad.kt)
+    install(CabecerasSeguras)
     install(CallLogging)
     install(ContentNegotiation) { json(JsonApi) }
     install(StatusPages) {
@@ -77,6 +81,8 @@ fun Application.modulo(db: Db, proxyConfiable: Boolean = false, intentosLogin: I
         exception<ArchivoMuyGrande> { call, e -> call.respond(HttpStatusCode.PayloadTooLarge, Error(e.message!!)) }
         exception<BadRequestException> { call, _ -> call.respond(HttpStatusCode.BadRequest, Error("Revisa los datos enviados.")) }
         exception<IllegalArgumentException> { call, e -> call.respond(HttpStatusCode.BadRequest, Error(e.message ?: "Revisa los datos enviados.")) }
+        // P3: una fecha o un mes mal escritos son error del cliente (400), no del servidor (500)
+        exception<DateTimeParseException> { call, _ -> call.respond(HttpStatusCode.BadRequest, Error("Revisa el formato de la fecha.")) }
         exception<IllegalStateException> { call, e -> call.respond(HttpStatusCode.Conflict, Error(e.message ?: "No se pudo completar.")) }
         exception<Throwable> { call, e ->
             call.application.environment.log.error("error no controlado", e)
@@ -85,6 +91,11 @@ fun Application.modulo(db: Db, proxyConfiable: Boolean = false, intentosLogin: I
         }
     }
     install(RateLimit) {
+        // P4: limite general para toda la API, por ip; corta inundaciones (DoS) sin estorbar a la app
+        global {
+            rateLimiter(limit = 1000, refillPeriod = 1.minutes)
+            requestKey { it.request.origin.remoteHost }
+        }
         register(RateLimitName("login")) {
             rateLimiter(limit = intentosLogin, refillPeriod = 1.minutes)
             requestKey { it.request.origin.remoteHost }
@@ -104,24 +115,36 @@ fun Application.modulo(db: Db, proxyConfiable: Boolean = false, intentosLogin: I
         }
     }
 
+    val bloqueos = BloqueoCuentas()
+
     routing {
         get("/") { call.respondText("Sonrisas de Cristal: servidor activo") }
 
         rateLimit(RateLimitName("login")) {
             post("/auth/login") {
                 val p = call.receive<Login>()
+                // P3: textos de tamano razonable antes de tocar la base o calcular PBKDF2
+                if (p.usuario.length > 100 || p.contrasena.length > 200) throw IllegalArgumentException("Revisa los datos enviados.")
+                val clave = p.usuario.trim().lowercase()
+                // P4: tras 5 fallos la cuenta se bloquea 15 min, venga de la ip que venga
+                if (bloqueos.bloqueada(clave)) {
+                    call.respond(HttpStatusCode.TooManyRequests, Error("Demasiados intentos. Espera 15 minutos."))
+                    return@post
+                }
                 val encontrado = db.leer { c ->
                     val con = Conexion(c)
-                    with(con) { Tablas.usuarios.donde("usuario = ?", p.usuario.trim().lowercase()) }.firstOrNull()
+                    with(con) { Tablas.usuarios.donde("usuario = ?", clave) }.firstOrNull()
                         ?.let { u -> u to con.consultar("SELECT hash FROM claves WHERE usuario_id = ?", u.id) { it.getString(1) }.firstOrNull() }
                 }
                 val hash = encontrado?.second
                 // se verifica aunque la cuenta no exista, para que el tiempo de respuesta no delate que usuarios hay
                 val correcta = Claves.verificar(p.contrasena, hash ?: Claves.falso) && hash != null
                 if (encontrado == null || !correcta) {
+                    bloqueos.fallo(clave)
                     call.respond(HttpStatusCode.Unauthorized, Error("Usuario o contraseña incorrectos."))
                     return@post
                 }
+                bloqueos.exito(clave)
                 val u = encontrado.first
                 if (!u.activo) {
                     call.respond(HttpStatusCode.Forbidden, Error("Tu acceso a la app fue retirado."))

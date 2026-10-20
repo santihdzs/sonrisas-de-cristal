@@ -144,6 +144,8 @@ fun Route.rutasNinos(db: Db) {
     delete("/ninos/{id}") {
         escribe(db) {
             val n = deMiEstancia(call.parameters["id"]!!)
+            // P2: la app solo ofrece borrar expedientes en baja; el servidor no confia en eso y lo vuelve a revisar (409)
+            if (n.estado !is EstadoExpediente.BajaTemporal) throw IllegalStateException("Primero da de baja el expediente.")
             borrarTodo(n)
             registrar(AccionRegistro.BORRADO, "Eliminó definitivamente el expediente de ${n.nombreCompleto} y sus fotos")
         }

@@ -15,3 +15,5 @@ build/
 *.keystore
 /DEMO.md
 /backend/datos/
+# secretos locales de docker compose (la plantilla es .env.example)
+/.env
