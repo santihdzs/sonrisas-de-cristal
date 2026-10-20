@@ -14,13 +14,15 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Switch
@@ -32,10 +34,12 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import mx.tec.sonrisas.domain.PersonaAutorizada
 import mx.tec.sonrisas.ui.theme.Espacio
+import mx.tec.sonrisas.ui.theme.Radio
 import mx.tec.sonrisas.ui.theme.SonrisasTheme
 
 @Composable
@@ -198,7 +202,9 @@ fun CampoTexto(
     ayuda: String? = null,
     lineas: Int = 1,
 ) {
-    OutlinedTextField(
+    // sin contorno fino: fondo gris claro y esquinas de 12; el foco se nota en la etiqueta y el cursor teal
+    val esquema = MaterialTheme.colorScheme
+    TextField(
         value = valor,
         // en telefonos solo se aceptan digitos y espacios, aunque el teclado permita otros simbolos
         onValueChange = { if (teclado == tecladoTelefono) onCambio(it.filter { c -> c.isDigit() || c == ' ' }) else onCambio(it) },
@@ -208,6 +214,17 @@ fun CampoTexto(
         singleLine = lineas == 1,
         minLines = lineas,
         keyboardOptions = teclado,
+        shape = RoundedCornerShape(Radio.controlChico),
+        colors = TextFieldDefaults.colors(
+            focusedContainerColor = esquema.surfaceContainer,
+            unfocusedContainerColor = esquema.surfaceContainer,
+            disabledContainerColor = esquema.surfaceContainer,
+            errorContainerColor = esquema.errorContainer,
+            focusedIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent,
+            disabledIndicatorColor = Color.Transparent,
+            errorIndicatorColor = Color.Transparent,
+        ),
         modifier = modifier.fillMaxWidth(),
     )
 }

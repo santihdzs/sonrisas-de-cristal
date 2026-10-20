@@ -1,7 +1,6 @@
 package mx.tec.sonrisas.ui.components
 
 import androidx.annotation.DrawableRes
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -19,19 +18,18 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Button
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -51,6 +49,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -60,6 +59,7 @@ import androidx.compose.ui.unit.dp
 import mx.tec.sonrisas.R
 import mx.tec.sonrisas.domain.ColorEstrella
 import mx.tec.sonrisas.domain.TemaFoto
+import mx.tec.sonrisas.ui.theme.EstiloEtiquetaSeccion
 import mx.tec.sonrisas.ui.theme.Espacio
 import mx.tec.sonrisas.ui.theme.SonrisasTheme
 import java.time.LocalTime
@@ -74,6 +74,9 @@ fun Icono(
     Icon(painter = painterResource(id), contentDescription = descripcion, modifier = modifier, tint = tint)
 }
 
+enum class FormaAvatar { CIRCULO, CUADRADO }
+
+/** avatar de iniciales con el tono suave de la sala; en las tarjetas de Mi sala va cuadrado redondeado */
 @Composable
 fun AvatarNino(
     nombre: String,
@@ -81,6 +84,7 @@ fun AvatarNino(
     estrella: ColorEstrella,
     modifier: Modifier = Modifier,
     tamano: Dp = 48.dp,
+    forma: FormaAvatar = FormaAvatar.CIRCULO,
 ) {
     val par = SonrisasTheme.colors.estrella(estrella)
     // el avatar es un grafico de tamano fijo, asi que la letra no escala con la fuente del sistema
@@ -88,13 +92,13 @@ fun AvatarNino(
     Box(
         modifier = modifier
             .size(tamano)
-            .clip(CircleShape)
+            .clip(if (forma == FormaAvatar.CIRCULO) CircleShape else RoundedCornerShape(percent = 28))
             .background(par.suave),
         contentAlignment = Alignment.Center,
     ) {
         Text(
             text = iniciales(nombre, apellidos),
-            color = MaterialTheme.colorScheme.onSurface,
+            color = par.texto,
             fontSize = tamanoLetra,
             fontWeight = FontWeight.Bold,
             style = MaterialTheme.typography.titleMedium.copy(lineHeight = tamanoLetra),
@@ -152,18 +156,10 @@ fun EstadoChip(
         TipoEstado.INFO -> esquema.primaryContainer to esquema.onPrimaryContainer
         TipoEstado.NEUTRO -> esquema.surfaceContainerHighest to esquema.onSurfaceVariant
     }
-    Surface(color = fondo, contentColor = frente, shape = MaterialTheme.shapes.small, modifier = modifier) {
-        Row(
-            modifier = Modifier.padding(horizontal = Espacio.space2, vertical = Espacio.space1),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(Espacio.space1),
-        ) {
-            Icono(icono, null, Modifier.size(16.dp))
-            Text(texto, style = MaterialTheme.typography.labelMedium)
-        }
-    }
+    Pildora(texto, fondo, frente, modifier, icono = icono)
 }
 
+/** tarjeta blanca con titulo opcional; usa TarjetaBase (sin borde, sombra suave) */
 @Composable
 fun TarjetaSeccion(
     modifier: Modifier = Modifier,
@@ -173,9 +169,7 @@ fun TarjetaSeccion(
     accion: (@Composable () -> Unit)? = null,
     contenido: @Composable ColumnScope.() -> Unit,
 ) {
-    val colores = CardDefaults.outlinedCardColors(containerColor = SonrisasTheme.colors.superficieElevada)
-    val borde = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
-    val cuerpo: @Composable ColumnScope.() -> Unit = {
+    TarjetaBase(modifier = modifier.fillMaxWidth(), onClick = onClick) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(Espacio.space4),
             verticalArrangement = Arrangement.spacedBy(Espacio.space2),
@@ -196,11 +190,6 @@ fun TarjetaSeccion(
             }
             contenido()
         }
-    }
-    if (onClick != null) {
-        OutlinedCard(onClick = onClick, modifier = modifier.fillMaxWidth(), colors = colores, border = borde, content = cuerpo)
-    } else {
-        OutlinedCard(modifier = modifier.fillMaxWidth(), colors = colores, border = borde, content = cuerpo)
     }
 }
 
@@ -312,11 +301,11 @@ fun <T> SelectorOpciones(
             opciones.forEach { opcion ->
                 val activa = opcion == seleccionada
                 val esquema = MaterialTheme.colorScheme
+                // sin contorno: la opcion elegida se distingue por el fondo teal suave y el texto teal
                 Surface(
                     shape = MaterialTheme.shapes.medium,
-                    color = if (activa) esquema.primaryContainer else SonrisasTheme.colors.superficieElevada,
-                    contentColor = if (activa) esquema.onPrimaryContainer else esquema.onSurface,
-                    border = BorderStroke(if (activa) 2.dp else 1.dp, if (activa) esquema.primary else esquema.outlineVariant),
+                    color = if (activa) esquema.primaryContainer else esquema.surfaceContainer,
+                    contentColor = if (activa) esquema.primary else esquema.onSurface,
                     modifier = Modifier
                         .weight(1f)
                         .heightIn(min = 88.dp)
@@ -342,16 +331,13 @@ fun <T> SelectorOpciones(
         ) {
             opciones.forEach { opcion ->
                 val activa = opcion == seleccionada
-                FilterChip(
-                    selected = activa,
+                // los selectores viven en tarjetas y hojas blancas, asi que el chip sin elegir va gris
+                ChipFiltro(
+                    texto = etiqueta(opcion),
+                    seleccionado = activa,
                     onClick = { onSeleccion(opcion) },
-                    label = { Text(etiqueta(opcion), style = MaterialTheme.typography.labelLarge) },
-                    leadingIcon = when {
-                        activa -> ({ Icono(R.drawable.ic_check, null, Modifier.size(FilterChipDefaults.IconSize)) })
-                        icono != null -> ({ Icono(icono(opcion), null, Modifier.size(FilterChipDefaults.IconSize)) })
-                        else -> null
-                    },
-                    modifier = Modifier.heightIn(min = 48.dp),
+                    icono = icono?.invoke(opcion),
+                    fondoSinSeleccionar = MaterialTheme.colorScheme.surfaceContainer,
                 )
             }
         }
@@ -391,21 +377,49 @@ fun BannerAlergias(
         if (medicamentos.isNotBlank()) add("Medicamentos" to medicamentos)
     }
     if (lineas.isEmpty()) return
-    val colores = SonrisasTheme.colors
-    Surface(
-        color = colores.avisoContenedor,
-        contentColor = colores.enAvisoContenedor,
-        shape = MaterialTheme.shapes.medium,
-        modifier = modifier.fillMaxWidth(),
-    ) {
-        Row(Modifier.padding(Espacio.space4), horizontalArrangement = Arrangement.spacedBy(Espacio.space3)) {
-            Icono(R.drawable.ic_warning_fill, "Atención")
-            Column(verticalArrangement = Arrangement.spacedBy(Espacio.space1)) {
-                lineas.forEach { (titulo, valor) ->
-                    Text("$titulo: $valor", style = MaterialTheme.typography.bodyMedium)
-                }
-            }
+    BannerAviso(modifier = modifier, descripcionIcono = "Atención") {
+        lineas.forEach { (titulo, valor) ->
+            Text("$titulo: $valor", style = MaterialTheme.typography.bodyMedium)
         }
+    }
+}
+
+/** banner de aviso amarillo suave con icono de advertencia, sin borde (por ejemplo "1 niño con alerta de salud") */
+@Composable
+fun BannerAviso(
+    texto: String,
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
+) {
+    BannerAviso(modifier = modifier, onClick = onClick) {
+        Text(texto, style = MaterialTheme.typography.titleSmall)
+    }
+}
+
+@Composable
+fun BannerAviso(
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
+    descripcionIcono: String? = null,
+    @DrawableRes icono: Int = R.drawable.ic_warning_fill,
+    contenido: @Composable ColumnScope.() -> Unit,
+) {
+    val colores = SonrisasTheme.colors
+    val cuerpo: @Composable () -> Unit = {
+        Row(
+            Modifier.padding(Espacio.space4),
+            horizontalArrangement = Arrangement.spacedBy(Espacio.space3),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icono(icono, descripcionIcono, tint = colores.aviso)
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Espacio.space1), content = contenido)
+        }
+    }
+    val forma = MaterialTheme.shapes.medium
+    if (onClick != null) {
+        Surface(onClick = onClick, color = colores.avisoContenedor, contentColor = colores.enAvisoContenedor, shape = forma, modifier = modifier.fillMaxWidth(), content = cuerpo)
+    } else {
+        Surface(color = colores.avisoContenedor, contentColor = colores.enAvisoContenedor, shape = forma, modifier = modifier.fillMaxWidth(), content = cuerpo)
     }
 }
 
@@ -440,13 +454,77 @@ fun TituloSeccion(texto: String, modifier: Modifier = Modifier) {
     )
 }
 
-@Preview(showBackground = true)
+/** etiqueta de seccion: MAYUSCULAS pequeñas, semibold y gris ("NIÑOS DE LA SALA") */
+@Composable
+fun EtiquetaSeccion(texto: String, modifier: Modifier = Modifier, accion: (@Composable () -> Unit)? = null) {
+    Row(modifier.fillMaxWidth().padding(top = Espacio.space2), verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            texto.uppercase(LocaleMx),
+            style = EstiloEtiquetaSeccion,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            // el lector de pantalla lee el texto normal, no deletrea las mayusculas
+            modifier = Modifier.weight(1f).semantics { heading(); contentDescription = texto },
+        )
+        accion?.invoke()
+    }
+}
+
+/** boton flotante extendido en terracota, el unico uso fuerte del acento */
+@Composable
+fun BotonFlotante(
+    texto: String,
+    @DrawableRes icono: Int,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    ExtendedFloatingActionButton(
+        onClick = onClick,
+        icon = { Icono(icono, null) },
+        text = { Text(texto, style = MaterialTheme.typography.titleMedium) },
+        shape = CircleShape,
+        containerColor = MaterialTheme.colorScheme.tertiary,
+        contentColor = MaterialTheme.colorScheme.onTertiary,
+        modifier = modifier,
+    )
+}
+
+/**
+ * dialogo de confirmacion. Si la accion es destructiva (borrar), el boton de confirmar va en rojo apagado.
+ */
+@Composable
+fun DialogoConfirmar(
+    titulo: String,
+    confirmar: String,
+    onConfirmar: () -> Unit,
+    onCancelar: () -> Unit,
+    mensaje: String? = null,
+    destructivo: Boolean = true,
+    cancelar: String = "Cancelar",
+) {
+    AlertDialog(
+        onDismissRequest = onCancelar,
+        title = { Text(titulo) },
+        text = mensaje?.let { { Text(it) } },
+        confirmButton = {
+            TextButton(
+                onClick = onConfirmar,
+                colors = if (destructivo) ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error) else ButtonDefaults.textButtonColors(),
+                modifier = Modifier.heightIn(min = 48.dp),
+            ) { Text(confirmar) }
+        },
+        dismissButton = { TextButton(onClick = onCancelar, modifier = Modifier.heightIn(min = 48.dp)) { Text(cancelar) } },
+        containerColor = SonrisasTheme.colors.superficieElevada,
+    )
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFFF3F5F7)
 @Composable
 private fun ComponentesPreview() {
     SonrisasTheme {
         Column(Modifier.padding(Espacio.space4), verticalArrangement = Arrangement.spacedBy(Espacio.space3)) {
             Row(horizontalArrangement = Arrangement.spacedBy(Espacio.space2), verticalAlignment = Alignment.CenterVertically) {
                 AvatarNino("Sofía", "Ramírez Treviño", ColorEstrella.ROJO)
+                AvatarNino("Andrea", "Cantú Elizondo", ColorEstrella.NARANJA, tamano = 56.dp, forma = FormaAvatar.CUADRADO)
                 EstrellaSala("Maternales", ColorEstrella.ROJO)
             }
             Row(horizontalArrangement = Arrangement.spacedBy(Espacio.space2)) {
@@ -454,6 +532,12 @@ private fun ComponentesPreview() {
                 EstadoChip("Alergia", TipoEstado.AVISO, R.drawable.ic_warning)
             }
             BannerAlergias("Cacahuate", "", "")
+            BannerAviso("1 niño con alerta de salud")
+            EtiquetaSeccion("Niños de la sala")
+            TarjetaSeccion(titulo = "Asistencia", icono = R.drawable.ic_check_circle) {
+                Text("Llegada 8:05", style = MaterialTheme.typography.bodyLarge)
+            }
+            BotonFlotante("Registro grupal", R.drawable.ic_group_add, {})
             CampoHora("Hora", LocalTime.of(8, 5), {})
             SelectorOpciones(
                 opciones = listOf("Nada", "Poco", "Todo", "Pidió más"),

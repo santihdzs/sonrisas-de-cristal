@@ -6,45 +6,34 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
-import androidx.compose.material3.Badge
-import androidx.compose.material3.BadgedBox
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Density
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import kotlinx.coroutines.CoroutineScope
+import mx.tec.sonrisas.ui.components.BarraDetalle
+import mx.tec.sonrisas.ui.components.BarraInferiorFlotante
+import mx.tec.sonrisas.ui.components.BotonPerfil
+import mx.tec.sonrisas.ui.components.ItemBarraInferior
+import mx.tec.sonrisas.ui.theme.Espacio
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import mx.tec.sonrisas.R
-import mx.tec.sonrisas.ui.components.Icono
 
 /** un destino puede poner aqui su titulo cuando depende de los datos, como el nombre de una conversacion */
 const val TITULO_DINAMICO = "titulo"
@@ -89,7 +78,6 @@ fun NavHostController.irAPestana(ruta: String) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScaffoldRol(
     navController: NavHostController,
@@ -107,50 +95,32 @@ fun ScaffoldRol(
     val tituloDinamico by flujoTitulo.collectAsState()
     Scaffold(
         modifier = modifier,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            TopAppBar(
-                title = { Text(tituloDinamico ?: titulo(ruta), maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                navigationIcon = {
-                    if (!esPestana && navController.previousBackStackEntry != null) {
-                        IconButton(onClick = { navController.navigateUp() }) {
-                            Icono(R.drawable.ic_arrow_back, "Regresar")
-                        }
-                    }
-                },
-                actions = {
+            BarraDetalle(
+                titulo = tituloDinamico ?: titulo(ruta),
+                onRegresar = if (!esPestana && navController.previousBackStackEntry != null) ({ navController.navigateUp() }) else null,
+                acciones = {
                     if (ruta != Route.PERFIL && ruta != Route.ACERCA) {
-                        IconButton(onClick = { navController.navigate(Route.PERFIL) { launchSingleTop = true } }) {
-                            Icono(R.drawable.ic_account_circle, "Mi perfil")
-                        }
+                        BotonPerfil(
+                            onClick = { navController.navigate(Route.PERFIL) { launchSingleTop = true } },
+                            modifier = Modifier.padding(end = Espacio.space3),
+                        )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface),
             )
         },
         bottomBar = {
             if (esPestana && pestanas.size > 1) {
-                NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainer) {
+                BarraInferiorFlotante {
                     pestanas.forEach { p ->
-                        val seleccionada = destino?.hierarchy?.any { it.route == p.ruta } == true
-                        NavigationBarItem(
-                            selected = seleccionada,
+                        ItemBarraInferior(
+                            etiqueta = p.etiqueta,
+                            icono = p.icono,
+                            iconoSeleccionado = p.iconoLleno,
+                            seleccionado = destino?.hierarchy?.any { it.route == p.ruta } == true,
                             onClick = { navController.irAPestana(p.ruta) },
-                            icon = {
-                                BadgedBox(badge = {
-                                    if (p.insignia > 0) {
-                                        Badge(Modifier.semantics { contentDescription = "${p.insignia} sin leer" }) { Text("${p.insignia}") }
-                                    }
-                                }) {
-                                    Icono(if (seleccionada) p.iconoLleno else p.icono, null)
-                                }
-                            },
-                            label = {
-                                // con cinco pestanas y letra al 200 % las etiquetas se cortan; se limitan a 130 %
-                                val densidad = LocalDensity.current
-                                CompositionLocalProvider(LocalDensity provides Density(densidad.density, minOf(densidad.fontScale, 1.3f))) {
-                                    Text(p.etiqueta, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                }
-                            },
+                            insignia = p.insignia,
                         )
                     }
                 }
