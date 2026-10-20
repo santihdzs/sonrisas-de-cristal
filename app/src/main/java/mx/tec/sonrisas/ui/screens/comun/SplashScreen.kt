@@ -16,15 +16,18 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import mx.tec.sonrisas.R
+import mx.tec.sonrisas.ui.components.sombraSuave
+import mx.tec.sonrisas.ui.theme.Elevacion
 import mx.tec.sonrisas.ui.theme.Espacio
 import mx.tec.sonrisas.ui.theme.SonrisasTheme
 import mx.tec.sonrisas.ui.theme.fondoLogo
 
-/** el logo va tal cual, sobre una caja clara aunque el tema sea oscuro */
+/** el logo va tal cual, sobre una caja clara aunque el tema sea oscuro, con sombra suave como las tarjetas */
 @Composable
 fun LogoFundacion(modifier: Modifier = Modifier, tamano: Dp = 220.dp) {
     Box(
         modifier = modifier
+            .sombraSuave(Elevacion.tarjeta, MaterialTheme.shapes.large)
             .clip(MaterialTheme.shapes.large)
             .background(SonrisasTheme.fondoLogo)
             .padding(Espacio.space4),
@@ -40,14 +43,14 @@ fun LogoFundacion(modifier: Modifier = Modifier, tamano: Dp = 220.dp) {
 @Composable
 fun SplashScreen(modifier: Modifier = Modifier) {
     Box(
-        modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface),
+        modifier = modifier.fillMaxSize().background(MaterialTheme.colorScheme.background),
         contentAlignment = Alignment.Center,
     ) {
         LogoFundacion()
     }
 }
 
-@Preview
+@Preview(showBackground = true, backgroundColor = 0xFFF3F5F7)
 @Composable
 private fun SplashPreview() {
     SonrisasTheme { SplashScreen() }
