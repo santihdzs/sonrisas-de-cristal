@@ -70,6 +70,8 @@ private fun Conexion.huella(usuarioId: String): Boolean =
 fun Application.modulo(db: Db, proxyConfiable: Boolean = false, intentosLogin: Int = 10) {
     // detras de render u otro proxy la ip real viene en X-Forwarded-For; sin proxy ese encabezado lo podria inventar cualquiera
     if (proxyConfiable) install(XForwardedHeaders)
+    // P1: cabeceras de seguridad en cada respuesta (Seguridad.kt)
+    install(CabecerasSeguras)
     install(CallLogging)
     install(ContentNegotiation) { json(JsonApi) }
     install(StatusPages) {

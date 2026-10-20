@@ -1,5 +1,6 @@
 package mx.tec.sonrisas.servidor
 
+import io.ktor.server.application.createApplicationPlugin
 import mx.tec.sonrisas.domain.Usuario
 import java.security.MessageDigest
 import java.security.SecureRandom
@@ -67,4 +68,26 @@ object Sesiones {
     fun cerrar(c: Conexion, token: String) = c.ejecutar("DELETE FROM sesiones WHERE token_hash = ?", huella(token))
 
     fun cerrarTodas(c: Conexion, usuarioId: String) = c.ejecutar("DELETE FROM sesiones WHERE usuario_id = ?", usuarioId)
+}
+
+/**
+ * P1: cabeceras de seguridad en TODAS las respuestas, tambien en los errores.
+ * - HSTS: el navegador ya no vuelve a entrar por http (evita SSL stripping)
+ * - nosniff: nadie interpreta un archivo como si fuera de otro tipo (MIME sniffing)
+ * - X-Frame-Options y frame-ancestors: la API no se puede meter en un iframe (clickjacking)
+ * - CSP: una API de json no necesita cargar scripts ni recursos de ningun lado
+ * - Referrer-Policy: las urls con ids no se filtran en la cabecera Referer
+ * - no-store: ni proxies ni el telefono guardan en cache datos de ninos
+ */
+val CabecerasSeguras = createApplicationPlugin("CabecerasSeguras") {
+    onCall { call ->
+        with(call.response.headers) {
+            append("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+            append("X-Content-Type-Options", "nosniff")
+            append("X-Frame-Options", "DENY")
+            append("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'")
+            append("Referrer-Policy", "no-referrer")
+            append("Cache-Control", "no-store")
+        }
+    }
 }
