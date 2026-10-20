@@ -43,6 +43,7 @@ import mx.tec.sonrisas.data.RespuestaLogin
 import mx.tec.sonrisas.domain.AccionRegistro
 import mx.tec.sonrisas.domain.Usuario
 import java.time.LocalDateTime
+import java.time.format.DateTimeParseException
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 
@@ -79,6 +80,8 @@ fun Application.modulo(db: Db, proxyConfiable: Boolean = false, intentosLogin: I
         exception<ArchivoMuyGrande> { call, e -> call.respond(HttpStatusCode.PayloadTooLarge, Error(e.message!!)) }
         exception<BadRequestException> { call, _ -> call.respond(HttpStatusCode.BadRequest, Error("Revisa los datos enviados.")) }
         exception<IllegalArgumentException> { call, e -> call.respond(HttpStatusCode.BadRequest, Error(e.message ?: "Revisa los datos enviados.")) }
+        // P3: una fecha o un mes mal escritos son error del cliente (400), no del servidor (500)
+        exception<DateTimeParseException> { call, _ -> call.respond(HttpStatusCode.BadRequest, Error("Revisa el formato de la fecha.")) }
         exception<IllegalStateException> { call, e -> call.respond(HttpStatusCode.Conflict, Error(e.message ?: "No se pudo completar.")) }
         exception<Throwable> { call, e ->
             call.application.environment.log.error("error no controlado", e)
@@ -112,6 +115,8 @@ fun Application.modulo(db: Db, proxyConfiable: Boolean = false, intentosLogin: I
         rateLimit(RateLimitName("login")) {
             post("/auth/login") {
                 val p = call.receive<Login>()
+                // P3: textos de tamano razonable antes de tocar la base o calcular PBKDF2
+                if (p.usuario.length > 100 || p.contrasena.length > 200) throw IllegalArgumentException("Revisa los datos enviados.")
                 val encontrado = db.leer { c ->
                     val con = Conexion(c)
                     with(con) { Tablas.usuarios.donde("usuario = ?", p.usuario.trim().lowercase()) }.firstOrNull()
