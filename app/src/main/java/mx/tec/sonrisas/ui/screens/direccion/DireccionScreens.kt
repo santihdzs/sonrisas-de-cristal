@@ -43,10 +43,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.foundation.clickable
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.Scaffold
@@ -533,16 +530,28 @@ fun MasScreen(
         Triple("Registro de actividad", "Quién capturó o consultó cada dato", R.drawable.ic_history) to onActividad,
         Triple("Mi perfil", "Cuenta, desbloqueo con huella y cerrar sesión", R.drawable.ic_account_circle) to onPerfil,
     )
-    Column(modifier.fillMaxSize().padding(vertical = Espacio.space2)) {
+    // cada herramienta es una tarjeta con su icono en circulo teal suave
+    Column(
+        modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = Espacio.space4, vertical = Espacio.space2),
+        verticalArrangement = Arrangement.spacedBy(Espacio.space3),
+    ) {
         opciones.forEach { (o, accion) ->
-            ListItem(
-                headlineContent = { Text(o.first, style = MaterialTheme.typography.titleMedium) },
-                supportingContent = { Text(o.second) },
-                leadingContent = { Icono(o.third, null) },
-                trailingContent = { Icono(R.drawable.ic_chevron_right, null) },
-                colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),
-                modifier = Modifier.clickable(onClick = accion),
-            )
+            TarjetaBase(Modifier.fillMaxWidth(), onClick = accion) {
+                Row(
+                    Modifier.padding(horizontal = Espacio.space4, vertical = Espacio.space3),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Espacio.space3),
+                ) {
+                    Box(Modifier.size(44.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) {
+                        Icono(o.third, null, Modifier.size(22.dp), tint = MaterialTheme.colorScheme.primary)
+                    }
+                    Column(Modifier.weight(1f)) {
+                        Text(o.first, style = MaterialTheme.typography.titleMedium)
+                        Text(o.second, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Icono(R.drawable.ic_chevron_right, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
         }
     }
 }
