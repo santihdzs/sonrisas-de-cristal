@@ -22,6 +22,8 @@ data class SonrisasColors(
     val tealBloque: Color,
     /** segundo color del degradado del encabezado teal */
     val tealOscuro: Color,
+    /** teal claro que se lee sobre los bloques teal (por ejemplo "Ya salieron" en la dona de Mi sala) */
+    val acentoSobreTeal: Color,
     /** rojo vivo: solo alertas reales y el contador de notificaciones */
     val alertaViva: Color,
     val salio: ParEstrella,

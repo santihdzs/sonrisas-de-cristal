@@ -51,7 +51,7 @@ fun EducadoraApp(onCerrarSesion: () -> Unit) {
         Pestana(Route.MENSAJES, "Mensajes", R.drawable.ic_chat, R.drawable.ic_chat_fill, insignia = mensajesNoLeidos),
         Pestana(Route.AVISOS, "Avisos", R.drawable.ic_campaign, R.drawable.ic_campaign_fill, insignia = noLeidos),
     )
-    ScaffoldRol(navController, pestanas, snackbar, titulo = ::tituloEducadora) { padding ->
+    ScaffoldRol(navController, pestanas, snackbar, titulo = ::tituloEducadora, rutasConEncabezadoTeal = setOf(Route.SALA)) { padding ->
         NavHost(navController, startDestination = Route.SALA, modifier = Modifier.padding(padding)) {
             composable(Route.SALA) {
                 val vm: SalaViewModel = viewModel(factory = AppViewModelProvider.Factory)
@@ -72,6 +72,7 @@ fun EducadoraApp(onCerrarSesion: () -> Unit) {
                         onObjetos = { navController.navigate(Route.objetos(e.datos.sala.id)) },
                         onMaterial = { navController.navigate(Route.material(e.datos.sala.id)) },
                         onImprimir = { bitacoraVm.abrir(Objetivo.Sala(e.datos.sala.id, e.datos.sala.nombre)) },
+                        onPerfil = { navController.navigate(Route.PERFIL) { launchSingleTop = true } },
                     )
                 }
                 ImpresionBitacora(bitacoraVm)

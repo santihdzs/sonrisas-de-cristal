@@ -3,6 +3,8 @@ package mx.tec.sonrisas.ui.navigation
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,6 +24,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
@@ -85,6 +88,8 @@ fun ScaffoldRol(
     snackbar: SnackbarHostState,
     titulo: (ruta: String?) -> String,
     modifier: Modifier = Modifier,
+    /** pestañas que dibujan su propio encabezado teal detras de la barra de estado (patron A): no llevan barra superior */
+    rutasConEncabezadoTeal: Set<String> = emptySet(),
     content: @Composable (PaddingValues) -> Unit,
 ) {
     val entrada by navController.currentBackStackEntryAsState()
@@ -93,11 +98,12 @@ fun ScaffoldRol(
     val esPestana = pestanas.any { it.ruta == ruta }
     val flujoTitulo = remember(entrada) { entrada?.savedStateHandle?.getStateFlow<String?>(TITULO_DINAMICO, null) ?: MutableStateFlow(null) }
     val tituloDinamico by flujoTitulo.collectAsState()
+    val encabezadoPropio = ruta in rutasConEncabezadoTeal
     Scaffold(
         modifier = modifier,
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            BarraDetalle(
+            if (!encabezadoPropio) BarraDetalle(
                 titulo = tituloDinamico ?: titulo(ruta),
                 onRegresar = if (!esPestana && navController.previousBackStackEntry != null) ({ navController.navigateUp() }) else null,
                 acciones = {
@@ -127,7 +133,18 @@ fun ScaffoldRol(
             }
         },
         snackbarHost = { SnackbarHost(snackbar) },
-    ) { padding ->
+    ) { relleno ->
+        // con encabezado propio, el contenido sube hasta arriba para que el teal quede detras de la barra de estado
+        val direccion = LocalLayoutDirection.current
+        val padding = if (encabezadoPropio) {
+            PaddingValues(
+                start = relleno.calculateStartPadding(direccion),
+                end = relleno.calculateEndPadding(direccion),
+                bottom = relleno.calculateBottomPadding(),
+            )
+        } else {
+            relleno
+        }
         // en una tableta compartida en horizontal, las tarjetas no se estiran de lado a lado
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
             Box(Modifier.fillMaxHeight().widthIn(max = ANCHO_MAXIMO).fillMaxWidth()) { content(padding) }

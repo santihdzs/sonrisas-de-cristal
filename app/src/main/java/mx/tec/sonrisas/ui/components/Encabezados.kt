@@ -1,6 +1,6 @@
 package mx.tec.sonrisas.ui.components
 
-import androidx.annotation.DrawableRes
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -26,10 +26,12 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.progressBarRangeInfo
@@ -37,6 +39,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.core.view.WindowCompat
 import mx.tec.sonrisas.R
 import mx.tec.sonrisas.ui.theme.Elevacion
 import mx.tec.sonrisas.ui.theme.Espacio
@@ -55,6 +58,7 @@ fun EncabezadoTeal(
     accion: (@Composable () -> Unit)? = null,
     contenido: @Composable ColumnScope.() -> Unit = {},
 ) {
+    IconosClarosEnBarraDeEstado()
     val forma = RoundedCornerShape(bottomStart = Radio.encabezado, bottomEnd = Radio.encabezado)
     Column(
         modifier = modifier
@@ -77,6 +81,19 @@ fun EncabezadoTeal(
             }
             contenido()
         }
+    }
+}
+
+/** mientras el encabezado teal esta en pantalla, la hora y la bateria se dibujan en blanco */
+@Composable
+private fun IconosClarosEnBarraDeEstado() {
+    val ventana = LocalActivity.current?.window ?: return
+    val vista = LocalView.current
+    DisposableEffect(ventana, vista) {
+        val controlador = WindowCompat.getInsetsController(ventana, vista)
+        val antes = controlador.isAppearanceLightStatusBars
+        controlador.isAppearanceLightStatusBars = false
+        onDispose { controlador.isAppearanceLightStatusBars = antes }
     }
 }
 
@@ -158,16 +175,19 @@ fun BotonPerfil(onClick: () -> Unit, modifier: Modifier = Modifier, sobreTeal: B
     }
 }
 
-/** chip translucido para usar dentro de un bloque teal, como la sala en el encabezado de Mi sala */
+/**
+ * chip translucido para usar dentro de un bloque teal, como la sala en el encabezado de Mi sala.
+ * [inicio] es lo que va antes del texto (un icono o la estrella de la sala).
+ */
 @Composable
-fun ChipTranslucido(texto: String, modifier: Modifier = Modifier, @DrawableRes icono: Int? = null, colorIcono: Color = Color.White) {
+fun ChipTranslucido(texto: String, modifier: Modifier = Modifier, inicio: (@Composable () -> Unit)? = null) {
     Surface(shape = CircleShape, color = Color.White.copy(alpha = 0.16f), contentColor = Color.White, modifier = modifier) {
         Row(
             modifier = Modifier.padding(horizontal = Espacio.space3, vertical = 6.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            if (icono != null) Icono(icono, null, Modifier.size(16.dp), tint = colorIcono)
+            inicio?.invoke()
             Text(texto, style = MaterialTheme.typography.labelLarge)
         }
     }
@@ -200,7 +220,7 @@ private fun EncabezadosPreview() {
     SonrisasTheme {
         Column(verticalArrangement = Arrangement.spacedBy(Espacio.space4)) {
             EncabezadoTeal("Mi sala", accion = { BotonPerfil({}, sobreTeal = true) }) {
-                ChipTranslucido("Sala de ejemplo", icono = R.drawable.ic_star_fill)
+                ChipTranslucido("Sala de ejemplo", inicio = { Icono(R.drawable.ic_star_fill, null, Modifier.size(16.dp)) })
                 Text("Lunes 5 de octubre", style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.85f))
                 Text("9 de 14 presentes", style = MaterialTheme.typography.headlineSmall)
                 ProgresoDelgado(9 / 14f)
