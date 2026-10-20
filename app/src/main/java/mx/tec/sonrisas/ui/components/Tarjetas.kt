@@ -1,6 +1,7 @@
 package mx.tec.sonrisas.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
@@ -76,5 +77,29 @@ fun TarjetaTeal(
             .padding(relleno),
     ) {
         CompositionLocalProvider(LocalContentColor provides Color.White) { contenido() }
+    }
+}
+
+/**
+ * hoja blanca fija abajo de una pantalla de detalle (acciones rapidas de la ficha, boton de guardar
+ * del registro grupal): esquinas superiores redondeadas y sombra suave hacia arriba.
+ */
+@Composable
+fun BarraAccionesInferior(
+    modifier: Modifier = Modifier,
+    relleno: PaddingValues = PaddingValues(Espacio.space3),
+    contenido: @Composable ColumnScope.() -> Unit,
+) {
+    val forma = RoundedCornerShape(topStart = Radio.tarjeta, topEnd = Radio.tarjeta)
+    Surface(
+        color = SonrisasTheme.colors.superficieElevada,
+        shape = forma,
+        modifier = modifier.sombraSuave(Elevacion.barraInferior, forma),
+    ) {
+        Column(
+            Modifier.fillMaxWidth().padding(relleno),
+            verticalArrangement = Arrangement.spacedBy(Espacio.space2),
+            content = contenido,
+        )
     }
 }

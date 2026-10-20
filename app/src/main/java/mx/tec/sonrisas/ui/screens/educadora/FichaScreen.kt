@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -52,6 +51,7 @@ import mx.tec.sonrisas.domain.TiempoComida
 import mx.tec.sonrisas.domain.TipoEvacuacion
 import mx.tec.sonrisas.domain.TipoSala
 import mx.tec.sonrisas.ui.components.AvatarNino
+import mx.tec.sonrisas.ui.components.BarraAccionesInferior
 import mx.tec.sonrisas.ui.components.BannerAlergias
 import mx.tec.sonrisas.ui.components.BotonPrincipal
 import mx.tec.sonrisas.ui.components.CampoHora
@@ -68,7 +68,6 @@ import mx.tec.sonrisas.ui.components.Icono
 import mx.tec.sonrisas.ui.components.SelectorOpciones
 import mx.tec.sonrisas.ui.components.TarjetaBase
 import mx.tec.sonrisas.ui.components.TipoTono
-import mx.tec.sonrisas.ui.components.sombraSuave
 import mx.tec.sonrisas.ui.components.tipoTono
 import mx.tec.sonrisas.ui.components.tono
 import mx.tec.sonrisas.ui.components.detalle
@@ -77,9 +76,7 @@ import mx.tec.sonrisas.ui.components.formatoHora
 import mx.tec.sonrisas.ui.components.icono
 import mx.tec.sonrisas.ui.components.minutosTexto
 import mx.tec.sonrisas.ui.components.titulo
-import mx.tec.sonrisas.ui.theme.Elevacion
 import mx.tec.sonrisas.ui.theme.Espacio
-import mx.tec.sonrisas.ui.theme.Radio
 import mx.tec.sonrisas.ui.theme.SonrisasTheme
 import java.time.Duration
 import java.time.LocalDate
@@ -264,35 +261,25 @@ private fun FilaLinea(item: ItemLinea, datos: FichaDatos, ahora: LocalTime, onBo
 
 @Composable
 private fun AccionesRapidas(habilitadas: Boolean, onAbrir: (HojaRapida) -> Unit, onIncidente: () -> Unit) {
-    val forma = RoundedCornerShape(topStart = Radio.tarjeta, topEnd = Radio.tarjeta)
-    Surface(
-        color = SonrisasTheme.colors.superficieElevada,
-        shape = forma,
-        modifier = Modifier.sombraSuave(Elevacion.barraInferior, forma),
-    ) {
-        Column(
-            Modifier.fillMaxWidth().padding(Espacio.space3),
-            verticalArrangement = Arrangement.spacedBy(Espacio.space2),
-        ) {
-            if (!habilitadas) {
-                Text(
-                    "Registra la llegada para anotar comidas, siesta y más.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(Espacio.space2)) {
-                BotonRapido("Comida", R.drawable.ic_restaurant, habilitadas, TipoTono.ALIMENTO, Modifier.weight(1f)) { onAbrir(HojaRapida.COMIDA) }
-                BotonRapido("Siesta", R.drawable.ic_bedtime, habilitadas, TipoTono.SIESTA, Modifier.weight(1f)) { onAbrir(HojaRapida.SIESTA) }
-                BotonRapido("Baño", R.drawable.ic_wc, habilitadas, TipoTono.PANAL, Modifier.weight(1f)) { onAbrir(HojaRapida.BANO) }
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(Espacio.space2)) {
-                BotonRapido("Ánimo", R.drawable.ic_mood, habilitadas, TipoTono.ANIMO, Modifier.weight(1f)) { onAbrir(HojaRapida.ANIMO) }
-                BotonRapido("Nota", R.drawable.ic_edit_note, habilitadas, TipoTono.NOTA, Modifier.weight(1f)) { onAbrir(HojaRapida.NOTA) }
-                BotonRapido("Incidente", R.drawable.ic_healing, true, TipoTono.INCIDENTE, Modifier.weight(1f), onClick = onIncidente)
-            }
+    BarraAccionesInferior {
+        if (!habilitadas) {
+            Text(
+                "Registra la llegada para anotar comidas, siesta y más.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
+            )
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(Espacio.space2)) {
+            BotonRapido("Comida", R.drawable.ic_restaurant, habilitadas, TipoTono.ALIMENTO, Modifier.weight(1f)) { onAbrir(HojaRapida.COMIDA) }
+            BotonRapido("Siesta", R.drawable.ic_bedtime, habilitadas, TipoTono.SIESTA, Modifier.weight(1f)) { onAbrir(HojaRapida.SIESTA) }
+            BotonRapido("Baño", R.drawable.ic_wc, habilitadas, TipoTono.PANAL, Modifier.weight(1f)) { onAbrir(HojaRapida.BANO) }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(Espacio.space2)) {
+            BotonRapido("Ánimo", R.drawable.ic_mood, habilitadas, TipoTono.ANIMO, Modifier.weight(1f)) { onAbrir(HojaRapida.ANIMO) }
+            BotonRapido("Nota", R.drawable.ic_edit_note, habilitadas, TipoTono.NOTA, Modifier.weight(1f)) { onAbrir(HojaRapida.NOTA) }
+            BotonRapido("Incidente", R.drawable.ic_healing, true, TipoTono.INCIDENTE, Modifier.weight(1f), onClick = onIncidente)
         }
     }
 }
