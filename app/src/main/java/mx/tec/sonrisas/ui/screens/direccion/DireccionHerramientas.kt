@@ -9,7 +9,11 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import mx.tec.sonrisas.ui.components.BarraAccionesInferior
 import mx.tec.sonrisas.ui.components.CampoTexto
+import mx.tec.sonrisas.ui.components.ProgresoDelgado
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.ui.text.style.TextAlign
 import mx.tec.sonrisas.ui.components.ChipFiltro
 import mx.tec.sonrisas.ui.components.DialogoConfirmar
 import mx.tec.sonrisas.ui.components.EtiquetaSeccion
@@ -98,59 +102,72 @@ fun ReporteScreen(
     val salas = datos.salas.associateBy { it.id }
     Scaffold(
         modifier = modifier,
+        containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = WindowInsets(0),
         bottomBar = {
-            Surface(color = MaterialTheme.colorScheme.surfaceContainer) {
-                BotonPrincipal("Compartir reporte", onCompartir, Modifier.padding(Espacio.space4))
+            BarraAccionesInferior(relleno = PaddingValues(Espacio.space4)) {
+                BotonPrincipal("Compartir reporte", onCompartir)
             }
         },
     ) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(Espacio.space4),
+            contentPadding = PaddingValues(start = Espacio.space4, end = Espacio.space4, top = Espacio.space1, bottom = Espacio.space4),
             verticalArrangement = Arrangement.spacedBy(Espacio.space3),
         ) {
             if (datos.esFundacion) {
                 item {
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(Espacio.space2)) {
                         items(datos.estancias, key = { it.id }) { e ->
-                            FilterChip(datos.estanciaId == e.id, { onEstancia(e.id) }, { Text(e.nombre) }, Modifier.heightIn(min = 48.dp))
+                            ChipFiltro(e.nombre, datos.estanciaId == e.id, { onEstancia(e.id) })
                         }
                     }
                 }
             }
             item { ChipsSala(datos.salas, datos.salaId, onSala) }
+            // mes y cifras del mes en tarjeta teal (patron B)
             item {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = onAnterior) { Icono(R.drawable.ic_chevron_left, "Mes anterior") }
-                    Text(r.mes.atDay(1).formatoMes(), style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
-                    IconButton(onClick = onSiguiente, enabled = datos.puedeAvanzar) { Icono(R.drawable.ic_chevron_right, "Mes siguiente") }
-                }
-            }
-            item {
-                TarjetaSeccion {
-                    Row(horizontalArrangement = Arrangement.spacedBy(Espacio.space4)) {
+                TarjetaTeal {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(onClick = onAnterior) { Icono(R.drawable.ic_chevron_left, "Mes anterior") }
+                        Text(r.mes.atDay(1).formatoMes(), style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
+                        IconButton(
+                            onClick = onSiguiente,
+                            enabled = datos.puedeAvanzar,
+                            colors = IconButtonDefaults.iconButtonColors(contentColor = Color.White, disabledContentColor = Color.White.copy(alpha = 0.35f)),
+                        ) { Icono(R.drawable.ic_chevron_right, "Mes siguiente") }
+                    }
+                    Row(Modifier.padding(top = Espacio.space3), horizontalArrangement = Arrangement.spacedBy(Espacio.space4)) {
                         Column(Modifier.weight(1f)) {
                             Text("${r.promedio} %", style = MaterialTheme.typography.displaySmall)
-                            Text("asistencia promedio", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("asistencia promedio", style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.85f))
                         }
                         Column(Modifier.weight(1f)) {
                             Text("${r.diasHabiles}", style = MaterialTheme.typography.headlineSmall)
-                            Text("días hábiles", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("días hábiles", style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.85f))
+                        }
+                    }
+                    ProgresoDelgado(r.promedio / 100f, Modifier.padding(top = Espacio.space3))
+                }
+            }
+            if (datos.salaId == null && r.salas.isNotEmpty()) {
+                item { EtiquetaSeccion("Por sala") }
+                item {
+                    TarjetaSeccion {
+                        r.salas.forEachIndexed { i, s ->
+                            FilaPorcentaje(s.nombre, "${s.inscritos} niños", s.promedio, salas[s.salaId]?.estrella, primera = i == 0)
                         }
                     }
                 }
             }
-            if (datos.salaId == null && r.salas.isNotEmpty()) {
-                item { TituloSeccion("Por sala") }
-                items(r.salas, key = { "sala-${it.salaId}" }) { s ->
-                    FilaPorcentaje(s.nombre, "${s.inscritos} niños", s.promedio, salas[s.salaId]?.estrella)
-                }
-            }
             if (r.filas.isNotEmpty()) {
-                item { TituloSeccion("Por niño") }
-                items(r.filas, key = { it.ninoId }) { f ->
-                    FilaPorcentaje(f.nombre, "${f.asistidos} de ${f.habiles} días", f.porcentaje, null)
+                item { EtiquetaSeccion("Por niño") }
+                item {
+                    TarjetaSeccion {
+                        r.filas.forEachIndexed { i, f ->
+                            FilaPorcentaje(f.nombre, "${f.asistidos} de ${f.habiles} días", f.porcentaje, null, primera = i == 0)
+                        }
+                    }
                 }
             } else if (datos.esFundacion) {
                 item {
@@ -165,17 +182,24 @@ fun ReporteScreen(
     }
 }
 
+/** renglon con nombre, detalle, porcentaje y una barra delgada; la sala usa su color, el niño teal */
 @Composable
-private fun FilaPorcentaje(titulo: String, detalle: String, porcentaje: Int, estrella: ColorEstrella?) {
-    Column {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Espacio.space3), modifier = Modifier.padding(vertical = Espacio.space2)) {
+private fun FilaPorcentaje(titulo: String, detalle: String, porcentaje: Int, estrella: ColorEstrella?, primera: Boolean) {
+    val esquema = MaterialTheme.colorScheme
+    Column(verticalArrangement = Arrangement.spacedBy(Espacio.space1)) {
+        if (!primera) HorizontalDivider(Modifier.padding(bottom = Espacio.space2), color = esquema.outlineVariant)
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Espacio.space3)) {
             Column(Modifier.weight(1f)) {
                 if (estrella != null) EstrellaSala(titulo, estrella, tamano = 24.dp) else Text(titulo, style = MaterialTheme.typography.bodyLarge)
-                Text(detalle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(detalle, style = MaterialTheme.typography.bodyMedium, color = esquema.onSurfaceVariant)
             }
             Text("$porcentaje %", style = MaterialTheme.typography.titleMedium)
         }
-        HorizontalDivider()
+        ProgresoDelgado(
+            porcentaje / 100f,
+            color = estrella?.let { SonrisasTheme.colors.estrella(it).glifo } ?: esquema.primary,
+            pista = esquema.surfaceContainer,
+        )
     }
 }
 
