@@ -10,6 +10,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import mx.tec.sonrisas.ui.components.EtiquetaSeccion
 import mx.tec.sonrisas.ui.components.BotonFlotante
+import mx.tec.sonrisas.ui.components.BannerAviso
+import mx.tec.sonrisas.ui.components.DialogoConfirmar
+import mx.tec.sonrisas.ui.components.FormaAvatar
+import androidx.compose.material3.ButtonDefaults
 import mx.tec.sonrisas.ui.components.ChipFiltro
 import mx.tec.sonrisas.ui.components.SelectorSegmentado
 import mx.tec.sonrisas.ui.components.sombraSuave
@@ -37,13 +41,12 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
+import androidx.compose.foundation.clickable
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.Scaffold
@@ -57,7 +60,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.foundation.clickable
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import mx.tec.sonrisas.R
@@ -400,19 +402,24 @@ fun ExpedienteScreen(
             .padding(Espacio.space4),
         verticalArrangement = Arrangement.spacedBy(Espacio.space3),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Espacio.space3)) {
-            AvatarNino(n.nombre, n.apellidos, datos.sala?.estrella ?: ColorEstrella.AZUL, tamano = 64.dp)
-            Column {
-                Text(n.nombreCompleto, style = MaterialTheme.typography.headlineSmall)
-                datos.sala?.let { EstrellaSala("Sala ${it.nombre}", it.estrella, tamano = 24.dp) }
+        TarjetaBase(Modifier.fillMaxWidth()) {
+            Row(Modifier.padding(Espacio.space4), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Espacio.space3)) {
+                AvatarNino(n.nombre, n.apellidos, datos.sala?.estrella ?: ColorEstrella.AZUL, tamano = 64.dp, forma = FormaAvatar.CUADRADO)
+                Column(verticalArrangement = Arrangement.spacedBy(Espacio.space1)) {
+                    Text(n.nombreCompleto, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
+                    datos.sala?.let { EstrellaSala("Sala ${it.nombre}", it.estrella, tamano = 24.dp) }
+                }
             }
         }
         if (baja != null) {
-            EstadoChip("Baja temporal desde el ${baja.fechaBaja.formatoCorto()}", TipoEstado.AVISO, R.drawable.ic_warning_fill)
-            Text(
-                "Si no se reactiva, el expediente y sus fotos se eliminarán el ${baja.eliminarEl.formatoLargo().lowercase()}.",
-                style = MaterialTheme.typography.bodyMedium,
-            )
+            // eliminacion temporal: aviso amarillo con la fecha en que se borra definitivamente
+            BannerAviso {
+                Text("Baja temporal desde el ${baja.fechaBaja.formatoCorto()}", style = MaterialTheme.typography.titleSmall)
+                Text(
+                    "Si no se reactiva, el expediente y sus fotos se eliminarán el ${baja.eliminarEl.formatoLargo().lowercase()}.",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
         }
         TarjetaSeccion(titulo = "Datos generales", icono = R.drawable.ic_badge) {
             Dato("Fecha de nacimiento", n.fechaNacimiento.formatoCorto())
@@ -442,44 +449,43 @@ fun ExpedienteScreen(
             Autorizacion("Actividades internas de la estancia", n.permisoImagenInterna)
             Autorizacion("Redes sociales de la fundación", n.permisoImagenRedes)
         }
-        OutlinedButton(onClick = onImprimir, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+        FilledTonalButton(onClick = onImprimir, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
             Icono(R.drawable.ic_print, null)
             Text("Imprimir bitácora", modifier = Modifier.padding(start = Espacio.space2))
         }
+        // dar de baja (eliminacion temporal) y eliminar son destructivas: rojo apagado y siempre confirman
+        val rojoApagado = ButtonDefaults.filledTonalButtonColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer,
+            contentColor = MaterialTheme.colorScheme.error,
+        )
         if (baja == null) {
             BotonPrincipal("Editar expediente", onEditar, guardando = false)
-            OutlinedButton(onClick = { confirmar = "baja" }, enabled = !trabajando, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+            FilledTonalButton(onClick = { confirmar = "baja" }, enabled = !trabajando, colors = rojoApagado, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
                 Text("Dar de baja")
             }
         } else {
             BotonPrincipal("Reactivar", onReactivar, guardando = trabajando)
-            OutlinedButton(onClick = { confirmar = "eliminar" }, enabled = !trabajando, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                Text("Eliminar definitivamente", color = MaterialTheme.colorScheme.error)
+            FilledTonalButton(onClick = { confirmar = "eliminar" }, enabled = !trabajando, colors = rojoApagado, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                Icono(R.drawable.ic_delete_forever, null)
+                Text("Eliminar definitivamente", modifier = Modifier.padding(start = Espacio.space2))
             }
         }
     }
     when (confirmar) {
-        "baja" -> AlertDialog(
-            onDismissRequest = { confirmar = null },
-            title = { Text("¿Dar de baja a ${n.nombre}?") },
-            text = {
-                Text(
-                    "El expediente pasa a baja temporal durante $DIAS_PERIODO_BAJA días. En ese periodo puedes reactivarlo. " +
-                        "Al terminar, el expediente y todas sus fotos se eliminan de forma definitiva.",
-                )
-            },
-            confirmButton = { TextButton(onClick = { confirmar = null; onBaja() }) { Text("Dar de baja") } },
-            dismissButton = { TextButton(onClick = { confirmar = null }) { Text("Cancelar") } },
+        "baja" -> DialogoConfirmar(
+            titulo = "¿Dar de baja a ${n.nombre}?",
+            mensaje = "El expediente pasa a baja temporal durante $DIAS_PERIODO_BAJA días. En ese periodo puedes reactivarlo. " +
+                "Al terminar, el expediente y todas sus fotos se eliminan de forma definitiva.",
+            confirmar = "Dar de baja",
+            onConfirmar = { confirmar = null; onBaja() },
+            onCancelar = { confirmar = null },
         )
-        "eliminar" -> AlertDialog(
-            onDismissRequest = { confirmar = null },
-            icon = { Icono(R.drawable.ic_delete_forever, null) },
-            title = { Text("¿Eliminar definitivamente?") },
-            text = { Text("Se borrarán el expediente de ${n.nombreCompleto}, su bitácora y todas las fotos donde aparece. No se puede deshacer.") },
-            confirmButton = {
-                TextButton(onClick = { confirmar = null; onEliminar() }) { Text("Eliminar", color = MaterialTheme.colorScheme.error) }
-            },
-            dismissButton = { TextButton(onClick = { confirmar = null }) { Text("Cancelar") } },
+        "eliminar" -> DialogoConfirmar(
+            titulo = "¿Eliminar definitivamente?",
+            mensaje = "Se borrarán el expediente de ${n.nombreCompleto}, su bitácora y todas las fotos donde aparece. No se puede deshacer.",
+            confirmar = "Eliminar",
+            onConfirmar = { confirmar = null; onEliminar() },
+            onCancelar = { confirmar = null },
         )
     }
 }
