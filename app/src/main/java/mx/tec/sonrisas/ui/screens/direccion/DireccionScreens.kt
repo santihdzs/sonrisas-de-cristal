@@ -5,6 +5,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import mx.tec.sonrisas.ui.theme.Radio
 import androidx.compose.material3.Surface
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -564,58 +566,73 @@ fun FundacionScreen(
     onEstancia: (Estancia) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(Espacio.space4),
-        verticalArrangement = Arrangement.spacedBy(Espacio.space3),
-    ) {
-        item {
-            Column {
-                Text("${datos.total}", style = MaterialTheme.typography.displaySmall)
-                Text("niños inscritos en todas las estancias", style = MaterialTheme.typography.bodyLarge)
-                Text("${datos.presentes} presentes ahora", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Scaffold(
+        modifier = modifier,
+        containerColor = MaterialTheme.colorScheme.background,
+        contentWindowInsets = WindowInsets(0),
+        floatingActionButton = { BotonFlotante("Registrar estancia", R.drawable.ic_add, onRegistrar) },
+    ) { padding ->
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(padding),
+            contentPadding = PaddingValues(start = Espacio.space4, end = Espacio.space4, top = Espacio.space1, bottom = 128.dp),
+            verticalArrangement = Arrangement.spacedBy(Espacio.space3),
+        ) {
+            // tarjeta teal del patron B con los totales de la fundacion y el acceso al reporte
+            item {
+                val fraccion = if (datos.total == 0) 0f else datos.presentes / datos.total.toFloat()
+                TarjetaTeal {
+                    Text("Todas las estancias", style = MaterialTheme.typography.labelLarge, color = Color.White.copy(alpha = 0.85f))
+                    Text(if (datos.total == 1) "1 niño inscrito" else "${datos.total} niños inscritos", style = MaterialTheme.typography.headlineSmall)
+                    Text("${datos.presentes} presentes ahora", style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.85f))
+                    ProgresoDelgado(fraccion, Modifier.padding(top = Espacio.space3, bottom = Espacio.space4))
+                    BotonTranslucido("Ver reporte de asistencia", R.drawable.ic_bar_chart, onReporte, Modifier.fillMaxWidth())
+                }
             }
-        }
-        item {
-            FilledTonalButton(onClick = onRegistrar, modifier = Modifier.heightIn(min = 48.dp)) {
-                Icono(R.drawable.ic_add, null)
-                Text("Registrar estancia", modifier = Modifier.padding(start = Espacio.space2))
+            item { EtiquetaSeccion("Estancias") }
+            items(datos.estancias, key = { it.estancia.id }) { r ->
+                TarjetaSeccion(onClick = { onEstancia(r.estancia) }) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Espacio.space3)) {
+                        Box(Modifier.size(44.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) {
+                            Icono(R.drawable.ic_apartment, null, Modifier.size(22.dp), tint = MaterialTheme.colorScheme.primary)
+                        }
+                        Column(Modifier.weight(1f)) {
+                            Text(r.estancia.nombre, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
+                            Text(
+                                listOf(r.estancia.colonia, r.estancia.telefono).filter { it.isNotBlank() }.joinToString(" · "),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        Icono(R.drawable.ic_edit, "Editar ${r.estancia.nombre}", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Row(Modifier.padding(top = Espacio.space2), horizontalArrangement = Arrangement.spacedBy(Espacio.space2)) {
+                        Cifra("${r.inscritos}", "inscritos", Modifier.weight(1f))
+                        Cifra("${r.presentesHoy}", "presentes hoy", Modifier.weight(1f))
+                        Cifra("${r.promedioMes} %", "asistencia del mes", Modifier.weight(1f))
+                    }
+                }
             }
-        }
-        items(datos.estancias, key = { it.estancia.id }) { r ->
-            TarjetaSeccion(
-                titulo = r.estancia.nombre,
-                icono = R.drawable.ic_apartment,
-                onClick = { onEstancia(r.estancia) },
-                accion = { Icono(R.drawable.ic_edit, "Editar ${r.estancia.nombre}", tint = MaterialTheme.colorScheme.onSurfaceVariant) },
-            ) {
+            item {
                 Text(
-                    listOf(r.estancia.colonia, r.estancia.telefono).filter { it.isNotBlank() }.joinToString(" · "),
+                    "La fundación ve datos consolidados. Las bitácoras, expedientes y fotos de cada niño solo los ve el personal de su estancia.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                Row(horizontalArrangement = Arrangement.spacedBy(Espacio.space4)) {
-                    Cifra("${r.inscritos}", "inscritos", Modifier.weight(1f))
-                    Cifra("${r.presentesHoy}", "presentes hoy", Modifier.weight(1f))
-                    Cifra("${r.promedioMes} %", "asistencia del mes", Modifier.weight(1f))
-                }
             }
         }
-        item {
-            Text(
-                "La fundación ve datos consolidados. Las bitácoras, expedientes y fotos de cada niño solo los ve el personal de su estancia.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        item { BotonPrincipal("Ver reporte de asistencia", onReporte) }
     }
 }
 
+/** cifra en un cuadro gris claro: valor grande y etiqueta abajo */
 @Composable
 private fun Cifra(valor: String, etiqueta: String, modifier: Modifier = Modifier) {
-    Column(modifier) {
-        Text(valor, style = MaterialTheme.typography.titleLarge)
+    Column(
+        modifier
+            .clip(RoundedCornerShape(Radio.r16))
+            .background(MaterialTheme.colorScheme.surfaceContainerLow)
+            .padding(horizontal = Espacio.space3, vertical = Espacio.space2),
+    ) {
+        Text(valor, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
         Text(etiqueta, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

@@ -34,7 +34,11 @@ fun FundacionApp(onCerrarSesion: () -> Unit) {
     val credenciales: CredencialesViewModel = viewModel(factory = AppViewModelProvider.Factory)
     // una sola pestana, asi que no se muestra barra inferior
     val pestanas = listOf(Pestana(Route.FUNDACION, "Resumen", R.drawable.ic_apartment, R.drawable.ic_apartment_fill))
-    ScaffoldRol(navController, pestanas, snackbar, titulo = ::tituloFundacion) { padding ->
+    ScaffoldRol(
+        navController, pestanas, snackbar, titulo = ::tituloFundacion,
+        // patron B: titulo grande en el resumen, igual que las pestañas de la direccion
+        rutasConTituloGrande = setOf(Route.FUNDACION, Route.PERFIL),
+    ) { padding ->
         NavHost(navController, startDestination = Route.FUNDACION, modifier = Modifier.padding(padding)) {
             composable(Route.FUNDACION) {
                 val vm: FundacionViewModel = viewModel(factory = AppViewModelProvider.Factory)
