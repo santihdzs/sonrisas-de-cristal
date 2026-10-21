@@ -1,6 +1,7 @@
 package mx.tec.sonrisas.ui.screens.direccion
 
 import mx.tec.sonrisas.ui.components.DialogoConfirmar
+import mx.tec.sonrisas.ui.components.EtiquetaSeccion
 import androidx.compose.ui.draw.clip
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.ButtonDefaults
@@ -27,7 +28,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -80,13 +80,15 @@ fun EstanciaFormScreen(
             .padding(Espacio.space4),
         verticalArrangement = Arrangement.spacedBy(Espacio.space3),
     ) {
-        TarjetaSeccion(titulo = "Datos de la estancia", icono = R.drawable.ic_apartment) {
+        EtiquetaSeccion("Datos de la estancia")
+        TarjetaSeccion {
             CampoTexto(form.nombre, { onCambiar(form.copy(nombre = it)) }, "Nombre", errores["nombre"], teclado = tecladoNombres, ayuda = "Por ejemplo: Estancia San Bernabé")
             CampoTexto(form.colonia, { onCambiar(form.copy(colonia = it)) }, "Colonia o dirección", errores["colonia"])
             CampoTexto(form.telefono, { onCambiar(form.copy(telefono = it)) }, "Teléfono", errores["telefono"], teclado = tecladoTelefono, ayuda = "10 dígitos")
         }
         if (datos.nueva) {
-            TarjetaSeccion(titulo = "Cuenta de dirección", icono = R.drawable.ic_key) {
+            EtiquetaSeccion("Cuenta de dirección")
+            TarjetaSeccion {
                 Text(
                     "Creamos la cuenta de quien dirige la estancia. Al guardar verás su usuario y una contraseña temporal.",
                     style = MaterialTheme.typography.bodyMedium,
@@ -95,18 +97,25 @@ fun EstanciaFormScreen(
                 CampoTexto(form.direccion, { onCambiar(form.copy(direccion = it)) }, "Nombre completo", errores["direccion"], teclado = tecladoNombres)
             }
         } else {
-            TarjetaSeccion(titulo = "Cuentas de dirección", icono = R.drawable.ic_key) {
+            EtiquetaSeccion("Cuentas de dirección")
+            TarjetaSeccion {
                 if (datos.cuentas.isEmpty()) {
                     Text("Esta estancia todavía no tiene una cuenta de dirección.", style = MaterialTheme.typography.bodyLarge)
                 }
                 datos.cuentas.forEachIndexed { i, c ->
-                    if (i > 0) HorizontalDivider()
-                    Column {
-                        Text(c.nombre, style = MaterialTheme.typography.titleMedium)
-                        Text("Usuario: ${c.usuario}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    if (i > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    // cada cuenta con su llave en circulo teal suave
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Espacio.space3)) {
+                        Box(Modifier.size(40.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) {
+                            Icono(R.drawable.ic_key, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
+                        }
+                        Column {
+                            Text(c.nombre, style = MaterialTheme.typography.titleMedium)
+                            Text("Usuario: ${c.usuario}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
                     }
                 }
-                OutlinedButton(onClick = onNuevaCuenta, modifier = Modifier.heightIn(min = 48.dp)) {
+                FilledTonalButton(onClick = onNuevaCuenta, modifier = Modifier.heightIn(min = 48.dp)) {
                     Icono(R.drawable.ic_person_add, null)
                     Text("Crear cuenta de dirección", modifier = Modifier.padding(start = Espacio.space2))
                 }
