@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Avisos - Dirección (Sonrisas de Cristal)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            primary: '#2E7D74',
+            'primary-dark': '#2A7269',
+            terracotta: '#D97A56',
+            'page-bg': '#F3F5F7',
+            'text-main': '#1B1F23',
+            'text-muted': '#6B7280',
+          },
+          boxShadow: {
+            soft: '0 4px 20px -2px rgba(0, 0, 0, 0.05), 0 2px 6px -1px rgba(0, 0, 0, 0.02)',
+            card: '0 8px 24px -4px rgba(27, 31, 35, 0.06), 0 2px 6px -2px rgba(27, 31, 35, 0.03)',
+            nav: '0 10px 30px -5px rgba(0, 0, 0, 0.08), 0 4px 12px -2px rgba(0, 0, 0, 0.04)',
+            fab: '0 8px 24px -2px rgba(217, 122, 86, 0.35)',
+          },
+          borderRadius: {
+            '4xl': '28px',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .material-symbols-rounded {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+    .material-symbols-rounded.filled {
+      font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    /* Hide scrollbars for clean UI */
+    ::-webkit-scrollbar {
+      display: none;
+    }
+    * {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+  </style>
+</head>
+<body class="bg-page-bg font-sans text-text-main antialiased min-h-screen flex justify-center selection:bg-teal-100 selection:text-teal-900">
+
+  <!-- Mobile Device Container (9:16 ratio style, standard 390px / Android width) -->
+  <div class="w-full max-w-[412px] bg-page-bg min-h-screen relative flex flex-col pb-36">
+
+    <!-- 0. STATUS BAR AREA (Light background, dark icons) -->
+    <header class="w-full pt-3 px-6 pb-2 flex justify-between items-center z-20 text-xs font-semibold text-gray-800">
+      <span class="tracking-tight text-sm font-semibold">9:41</span>
+      <div class="flex items-center space-x-2 text-gray-700">
+        <span class="material-symbols-rounded text-[18px]">signal_cellular_alt</span>
+        <span class="material-symbols-rounded text-[18px]">wifi</span>
+        <span class="material-symbols-rounded text-[20px]">battery_full</span>
+      </div>
+    </header>
+
+    <!-- 1. PAGE TITLE ROW (on light background) -->
+    <section class="px-5 pt-3 pb-3 flex justify-between items-center">
+      <div>
+        <h1 class="text-3xl font-bold tracking-tight text-text-main leading-tight">Avisos</h1>
+      </div>
+      <button type="button" aria-label="Perfil de usuario" class="w-11 h-11 rounded-full bg-white shadow-soft flex items-center justify-center text-gray-700 hover:bg-gray-50 active:scale-95 transition-transform border border-black/[0.02]">
+        <span class="material-symbols-rounded text-2xl text-gray-700">account_circle</span>
+      </button>
+    </section>
+
+    <!-- 2. TEAL SUMMARY CARD (INSET, FLOATING, COMPACT, ALL 4 CORNERS 28dp) -->
+    <div class="px-4 mt-1">
+      <section class="w-full bg-gradient-to-br from-primary to-primary-dark rounded-4xl p-5 text-white shadow-card flex items-center justify-between relative overflow-hidden">
+        <!-- Subtle background glow/ambient accent -->
+        <div class="absolute -top-12 -right-12 w-32 h-32 rounded-full bg-white/10 blur-xl pointer-events-none"></div>
+
+        <div class="space-y-0.5 relative z-10">
+          <h2 class="text-2xl font-bold tracking-tight leading-snug">3 avisos publicados</h2>
+          <p class="text-sm font-normal text-white/80 tracking-wide">Estancia San Bernabé</p>
+        </div>
+
+        <div class="w-12 h-12 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center relative z-10 flex-shrink-0 ml-3">
+          <span class="material-symbols-rounded filled text-white text-2xl">campaign</span>
+        </div>
+      </section>
+    </div>
+
+    <!-- 3. SECTION LABEL -->
+    <div class="px-5 mt-7 mb-3">
+      <span class="text-xs font-semibold tracking-wider text-text-muted uppercase">ÚLTIMOS AVISOS</span>
+    </div>
+
+    <!-- 4. ANNOUNCEMENT CARDS (Vertical stack, 24dp radius, soft shadow, no outline, 12dp gap) -->
+    <main class="px-4 space-y-3 flex-1">
+
+      <!-- Card 1: Junta -->
+      <article class="bg-white rounded-3xl p-5 shadow-card hover:shadow-lg transition-shadow duration-200">
+        <!-- Tag -->
+        <div class="mb-3">
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#E6F4F1] text-primary">
+            <span class="material-symbols-rounded filled text-sm">groups</span>
+            Junta
+          </span>
+        </div>
+
+        <!-- Title -->
+        <h3 class="text-lg font-bold text-text-main leading-snug mb-2">
+          Junta de padres de familia
+        </h3>
+
+        <!-- Date Row -->
+        <div class="flex items-center gap-1.5 text-primary text-sm font-semibold mb-3">
+          <span class="material-symbols-rounded text-base">calendar_today</span>
+          <span>Viernes 16 de octubre, 17:30</span>
+        </div>
+
+        <!-- Message Body -->
+        <p class="text-sm text-gray-600 leading-relaxed font-normal mb-4">
+          Te esperamos en el salón de usos múltiples para revisar los avances del bimestre y el calendario de actividades. La junta dura una hora aproximadamente.
+        </p>
+
+        <!-- Footer -->
+        <div class="pt-3 border-t border-gray-100 flex items-center text-xs text-text-muted">
+          <span>Publicado el 5 de octubre, 10:19</span>
+        </div>
+      </article>
+
+      <!-- Card 2: Suspensión -->
+      <article class="bg-white rounded-3xl p-5 shadow-card hover:shadow-lg transition-shadow duration-200">
+        <!-- Tag -->
+        <div class="mb-3">
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#FDF0EB] text-terracotta">
+            <span class="material-symbols-rounded text-sm">event_busy</span>
+            Suspensión
+          </span>
+        </div>
+
+        <!-- Title -->
+        <h3 class="text-lg font-bold text-text-main leading-snug mb-2">
+          Suspensión de labores por el Día de la Revolución
+        </h3>
+
+        <!-- Date Row -->
+        <div class="flex items-center gap-1.5 text-primary text-sm font-semibold mb-3">
+          <span class="material-symbols-rounded text-base">calendar_today</span>
+          <span>Lunes 16 de noviembre, 7:15</span>
+        </div>
+
+        <!-- Message Body -->
+        <p class="text-sm text-gray-600 leading-relaxed font-normal mb-4">
+          La estancia permanecerá cerrada el lunes 16 de noviembre por ser día feriado oficial. Reanudamos actividades al día siguiente en el horario de siempre.
+        </p>
+
+        <!-- Footer -->
+        <div class="pt-3 border-t border-gray-100 flex items-center text-xs text-text-muted">
+          <span>Publicado el 3 de octubre, 10:18</span>
+        </div>
+      </article>
+
+      <!-- Card 3: Campaña -->
+      <article class="bg-white rounded-3xl p-5 shadow-card hover:shadow-lg transition-shadow duration-200">
+        <!-- Tag -->
+        <div class="mb-3">
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#E8F1FC] text-[#2563EB]">
+            <span class="material-symbols-rounded filled text-sm">vaccines</span>
+            Campaña
+          </span>
+        </div>
+
+        <!-- Title -->
+        <h3 class="text-lg font-bold text-text-main leading-snug mb-2">
+          Campaña de vacunación contra la influenza
+        </h3>
+
+        <!-- Date Row -->
+        <div class="flex items-center gap-1.5 text-primary text-sm font-semibold mb-3">
+          <span class="material-symbols-rounded text-base">calendar_today</span>
+          <span>Miércoles 14 de octubre, 9:00</span>
+        </div>
+
+        <!-- Message Body -->
+        <p class="text-sm text-gray-600 leading-relaxed font-normal mb-4">
+          Personal del centro de salud aplicará la vacuna contra la influenza a niñas y niños de 6 meses en adelante. Trae la cartilla de vacunación de tu hija o hijo.
+        </p>
+
+        <!-- Footer -->
+        <div class="pt-3 border-t border-gray-100 flex items-center text-xs text-text-muted">
+          <span>Publicado el 2 de octubre, 9:40</span>
+        </div>
+      </article>
+
+    </main>
+
+    <!-- 5. EXTENDED FAB: "Publicar aviso" with campaign icon, filled terracotta #D97A56, floating ABOVE bottom bar -->
+    <div class="fixed bottom-24 right-5 z-40 max-w-[412px] pointer-events-auto">
+      <button type="button" class="flex items-center gap-2.5 bg-terracotta text-white font-semibold text-sm px-5 py-3.5 rounded-2xl shadow-fab active:scale-95 transition-all hover:brightness-105">
+        <span class="material-symbols-rounded filled text-xl">campaign</span>
+        <span>Publicar aviso</span>
+      </button>
+    </div>
+
+    <!-- 6. FLOATING BOTTOM NAVIGATION: Detached white pill bar (28dp radius, soft shadow, 16dp margins) -->
+    <nav class="fixed bottom-4 left-4 right-4 max-w-[380px] mx-auto z-30">
+      <div class="bg-white rounded-4xl py-2 px-3 shadow-nav flex justify-around items-center border border-black/[0.03]">
+        
+        <!-- Tab 1: Inicio -->
+        <button type="button" class="flex flex-col items-center justify-center py-1 px-3 min-w-[64px] text-gray-400 hover:text-gray-600 transition-colors">
+          <span class="material-symbols-rounded text-2xl">grid_view</span>
+          <span class="text-[11px] font-medium mt-0.5 tracking-tight">Inicio</span>
+        </button>
+
+        <!-- Tab 2: Niños -->
+        <button type="button" class="flex flex-col items-center justify-center py-1 px-3 min-w-[64px] text-gray-400 hover:text-gray-600 transition-colors">
+          <span class="material-symbols-rounded text-2xl">face</span>
+          <span class="text-[11px] font-medium mt-0.5 tracking-tight">Niños</span>
+        </button>
+
+        <!-- Tab 3: Avisos (SELECTED: soft teal pill behind icon, teal icon & label) -->
+        <button type="button" class="flex flex-col items-center justify-center py-1 px-3 min-w-[64px] text-primary">
+          <div class="bg-[#D2EBE7] px-5 py-1 rounded-full flex items-center justify-center mb-0.5">
+            <span class="material-symbols-rounded filled text-xl text-primary">campaign</span>
+          </div>
+          <span class="text-[11px] font-bold text-primary tracking-tight">Avisos</span>
+        </button>
+
+        <!-- Tab 4: Más -->
+        <button type="button" class="flex flex-col items-center justify-center py-1 px-3 min-w-[64px] text-gray-400 hover:text-gray-600 transition-colors">
+          <span class="material-symbols-rounded text-2xl">more_horiz</span>
+          <span class="text-[11px] font-medium mt-0.5 tracking-tight">Más</span>
+        </button>
+
+      </div>
+    </nav>
+
+    <!-- Bottom Gesture Area for Android -->
+    <div class="fixed bottom-1 left-0 right-0 flex justify-center pointer-events-none z-50">
+      <div class="w-28 h-1 bg-gray-400/40 rounded-full"></div>
+    </div>
+
+  </div>
+
+</body>
+</html>

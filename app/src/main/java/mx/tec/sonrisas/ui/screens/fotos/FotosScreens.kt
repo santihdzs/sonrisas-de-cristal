@@ -1,8 +1,8 @@
 package mx.tec.sonrisas.ui.screens.fotos
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,18 +29,15 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -56,7 +53,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -72,10 +69,15 @@ import mx.tec.sonrisas.domain.TipoSala
 import mx.tec.sonrisas.domain.UsoFoto
 import mx.tec.sonrisas.domain.puedeAparecerEn
 import mx.tec.sonrisas.ui.components.AvatarNino
+import mx.tec.sonrisas.ui.components.BotonFlotante
 import mx.tec.sonrisas.ui.components.BotonPrincipal
+import mx.tec.sonrisas.ui.components.TarjetaBase
+import mx.tec.sonrisas.ui.components.CampoTexto
+import mx.tec.sonrisas.ui.components.DialogoConfirmar
+import mx.tec.sonrisas.ui.components.EtiquetaSeccion
+import mx.tec.sonrisas.ui.components.TarjetaSeccion
 import mx.tec.sonrisas.ui.components.EstadoChip
 import mx.tec.sonrisas.ui.components.EstadoVacio
-import mx.tec.sonrisas.ui.components.EtiquetaCampo
 import mx.tec.sonrisas.ui.components.FotoActividad
 import mx.tec.sonrisas.ui.components.Icono
 import mx.tec.sonrisas.ui.components.TipoEstado
@@ -85,6 +87,7 @@ import mx.tec.sonrisas.ui.components.icono
 import mx.tec.sonrisas.ui.components.primerNombre
 import mx.tec.sonrisas.ui.components.relativoA
 import mx.tec.sonrisas.ui.theme.Espacio
+import mx.tec.sonrisas.ui.theme.Radio
 import mx.tec.sonrisas.ui.theme.SonrisasTheme
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -100,15 +103,11 @@ fun GaleriaFotos(
 ) {
     Scaffold(
         modifier = modifier,
+        containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = WindowInsets(0),
         floatingActionButton = {
-            if (onAgregar != null) {
-                ExtendedFloatingActionButton(
-                    onClick = onAgregar,
-                    icon = { Icono(R.drawable.ic_add_a_photo, null) },
-                    text = { Text("Agregar foto") },
-                )
-            }
+            // solo la educadora puede agregar fotos
+            if (onAgregar != null) BotonFlotante("Agregar foto", R.drawable.ic_add_a_photo, onAgregar)
         },
     ) { padding ->
         val estadoGrid = rememberLazyGridState()
@@ -126,8 +125,8 @@ fun GaleriaFotos(
             state = estadoGrid,
             modifier = Modifier.fillMaxSize().padding(padding),
             contentPadding = PaddingValues(start = Espacio.space4, end = Espacio.space4, top = Espacio.space2, bottom = 128.dp),
-            horizontalArrangement = Arrangement.spacedBy(Espacio.space2),
-            verticalArrangement = Arrangement.spacedBy(Espacio.space2),
+            horizontalArrangement = Arrangement.spacedBy(Espacio.space3),
+            verticalArrangement = Arrangement.spacedBy(Espacio.space3),
         ) {
             if (encabezado != null) item(span = { GridItemSpan(maxLineSpan) }) { encabezado() }
             if (datos.grupos.isEmpty()) {
@@ -137,38 +136,33 @@ fun GaleriaFotos(
             }
             datos.grupos.forEach { grupo ->
                 item(span = { GridItemSpan(maxLineSpan) }, key = "dia-${grupo.fecha}") {
-                    Text(
-                        grupo.fecha.relativoA(datos.hoy),
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.padding(top = Espacio.space3, bottom = Espacio.space1),
-                    )
+                    EtiquetaSeccion(grupo.fecha.relativoA(datos.hoy), Modifier.padding(top = Espacio.space1))
                 }
                 items(grupo.fotos, key = { it.id }) { foto ->
-                    Column(
-                        modifier = Modifier.clickable(onClickLabel = "Ver foto") { onFoto(foto) },
-                        verticalArrangement = Arrangement.spacedBy(Espacio.space1),
-                    ) {
-                        FotoActividad(
-                            foto.tema,
-                            datos.salas[foto.salaId]?.estrella ?: ColorEstrella.AZUL,
-                            Modifier.fillMaxWidth().aspectRatio(1f),
-                            descripcion = foto.descripcion,
-                        )
-                        Text(
-                            foto.descripcion,
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                        )
+                    // cada foto es una tarjeta blanca: imagen arriba y descripcion abajo
+                    TarjetaBase(onClick = { onFoto(foto) }, forma = RoundedCornerShape(Radio.r20)) {
+                        Column {
+                            FotoActividad(
+                                foto.tema,
+                                datos.salas[foto.salaId]?.estrella ?: ColorEstrella.AZUL,
+                                Modifier.fillMaxWidth().aspectRatio(1f),
+                                descripcion = foto.descripcion,
+                            )
+                            Text(
+                                foto.descripcion,
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.padding(horizontal = Espacio.space2, vertical = Espacio.space2),
+                            )
+                        }
                     }
                 }
             }
         }
     }
 }
-
-private val oraciones = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -189,12 +183,14 @@ fun AgregarFotoScreen(
             .padding(Espacio.space4),
         verticalArrangement = Arrangement.spacedBy(Espacio.space3),
     ) {
-        Text("Elige la foto", style = MaterialTheme.typography.titleLarge)
+        EtiquetaSeccion("Elige la foto")
+        // texto pendiente del equipo (ver CLAUDE.md): no se cambia sin preguntar
         Text(
             "En la versión final la cámara vive dentro de la app y la foto no pasa por la galería del teléfono. En esta demostración elige una imagen de ejemplo.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        TarjetaSeccion {
         FlowRow(
             Modifier.selectableGroup(),
             horizontalArrangement = Arrangement.spacedBy(Espacio.space2),
@@ -219,28 +215,32 @@ fun AgregarFotoScreen(
                 }
             }
         }
-        OutlinedTextField(
-            value = form.descripcion,
-            onValueChange = { onCambiar(form.copy(descripcion = it)) },
-            label = { Text("Descripción") },
-            supportingText = { Text("Por ejemplo: pintamos con las manos.") },
-            keyboardOptions = oraciones,
-            modifier = Modifier.fillMaxWidth(),
+        CampoTexto(
+            valor = form.descripcion,
+            onCambio = { onCambiar(form.copy(descripcion = it)) },
+            etiqueta = "Descripción",
+            error = null,
+            ayuda = "Por ejemplo: pintamos con las manos.",
         )
-        EtiquetaCampo("¿Quién puede verla?")
-        Column(Modifier.selectableGroup()) {
+        }
+        EtiquetaSeccion("¿Quién puede verla?")
+        Column(Modifier.selectableGroup(), verticalArrangement = Arrangement.spacedBy(Espacio.space2)) {
             UsoFoto.entries.forEach { uso ->
+                // cada opcion es una tarjeta sin contorno; la elegida se pinta de teal suave
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(min = 56.dp)
-                        .selectable(form.uso == uso, role = Role.RadioButton) { onUso(uso) },
+                        .clip(MaterialTheme.shapes.medium)
+                        .background(if (form.uso == uso) MaterialTheme.colorScheme.primaryContainer else SonrisasTheme.colors.superficieElevada)
+                        .selectable(form.uso == uso, role = Role.RadioButton) { onUso(uso) }
+                        .padding(horizontal = Espacio.space2, vertical = Espacio.space2),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(Espacio.space2),
                 ) {
                     RadioButton(selected = form.uso == uso, onClick = null)
                     Column {
-                        Text(uso.etiqueta, style = MaterialTheme.typography.bodyLarge)
+                        Text(uso.etiqueta, style = MaterialTheme.typography.titleSmall)
                         Text(
                             if (uso == UsoFoto.INTERNA) "Solo la verán las familias de los niños que etiquetes."
                             else "Además puede publicarse en las redes de la fundación.",
@@ -251,7 +251,7 @@ fun AgregarFotoScreen(
                 }
             }
         }
-        EtiquetaCampo("¿Quién aparece?")
+        EtiquetaSeccion("¿Quién aparece?")
         if (datos.ninos.isEmpty()) {
             Text(
                 "Todavía no llega nadie hoy. Registra las llegadas para poder etiquetar.",
@@ -259,12 +259,16 @@ fun AgregarFotoScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(Espacio.space2),
-            verticalArrangement = Arrangement.spacedBy(Espacio.space2),
-        ) {
-            datos.ninos.forEach { n ->
-                NinoEtiquetable(n, datos.sala.estrella, n.id in form.etiquetados, n.puedeAparecerEn(form.uso)) { onAlternar(n) }
+        if (datos.ninos.isNotEmpty()) {
+            TarjetaSeccion {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(Espacio.space2),
+                    verticalArrangement = Arrangement.spacedBy(Espacio.space2),
+                ) {
+                    datos.ninos.forEach { n ->
+                        NinoEtiquetable(n, datos.sala.estrella, n.id in form.etiquetados, n.puedeAparecerEn(form.uso)) { onAlternar(n) }
+                    }
+                }
             }
         }
         form.faltante?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
@@ -335,38 +339,49 @@ fun FotoDetalleScreen(
     ) {
         FotoActividad(
             foto.tema, datos.sala?.estrella ?: ColorEstrella.AZUL,
-            Modifier.fillMaxWidth().aspectRatio(4f / 3f), tamanoIcono = 96.dp, descripcion = foto.descripcion,
+            Modifier.fillMaxWidth().aspectRatio(4f / 3f).clip(RoundedCornerShape(Radio.tarjeta)),
+            tamanoIcono = 96.dp, descripcion = foto.descripcion,
         )
-        Text(foto.descripcion, style = MaterialTheme.typography.headlineSmall)
-        Text(
-            listOfNotNull(foto.cuando.formatoFechaHora(), datos.sala?.let { "Sala ${it.nombre}" }).joinToString(" · "),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        EstadoChip(
-            if (foto.uso == UsoFoto.INTERNA) "Solo para las familias" else "También para redes",
-            TipoEstado.NEUTRO,
-            if (foto.uso == UsoFoto.INTERNA) R.drawable.ic_lock else R.drawable.ic_public,
-        )
-        Text(if (esFamilia) "Aparece" else "Aparecen", style = MaterialTheme.typography.titleMedium)
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(Espacio.space3), verticalArrangement = Arrangement.spacedBy(Espacio.space2)) {
-            datos.etiquetados.forEach { n ->
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Espacio.space2)) {
-                    AvatarNino(n.nombre, n.apellidos, datos.sala?.estrella ?: ColorEstrella.AZUL, tamano = 32.dp)
-                    Text(if (esFamilia) n.nombre else n.nombreCompleto, style = MaterialTheme.typography.bodyLarge)
-                }
-            }
-        }
-        if (esFamilia) {
+        TarjetaSeccion {
+            Text(foto.descripcion, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
             Text(
-                "Por privacidad solo ves el nombre de tu hijo o hija.",
+                listOfNotNull(foto.cuando.formatoFechaHora(), datos.sala?.let { "Sala ${it.nombre}" }).joinToString(" · "),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            EstadoChip(
+                if (foto.uso == UsoFoto.INTERNA) "Solo para las familias" else "También para redes",
+                TipoEstado.NEUTRO,
+                if (foto.uso == UsoFoto.INTERNA) R.drawable.ic_lock else R.drawable.ic_public,
+            )
         }
-        OutlinedButton(
+        // la familia solo ve el nombre de su hijo; el personal ve nombres completos
+        EtiquetaSeccion(if (esFamilia) "Aparece" else "Aparecen")
+        TarjetaSeccion {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(Espacio.space3), verticalArrangement = Arrangement.spacedBy(Espacio.space2)) {
+                datos.etiquetados.forEach { n ->
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Espacio.space2)) {
+                        AvatarNino(n.nombre, n.apellidos, datos.sala?.estrella ?: ColorEstrella.AZUL, tamano = 32.dp)
+                        Text(if (esFamilia) n.nombre else n.nombreCompleto, style = MaterialTheme.typography.bodyLarge)
+                    }
+                }
+            }
+            if (esFamilia) {
+                Text(
+                    "Por privacidad solo ves el nombre de tu hijo o hija.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        // accion destructiva en rojo apagado, sin contorno; la familia solo pide que se borre
+        FilledTonalButton(
             onClick = { confirmar = true },
             enabled = !borrando,
+            colors = ButtonDefaults.filledTonalButtonColors(
+                containerColor = MaterialTheme.colorScheme.errorContainer,
+                contentColor = MaterialTheme.colorScheme.error,
+            ),
             modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
         ) {
             Icono(R.drawable.ic_delete, null)
@@ -374,18 +389,15 @@ fun FotoDetalleScreen(
         }
     }
     if (confirmar) {
-        AlertDialog(
-            onDismissRequest = { confirmar = false },
-            icon = { Icono(R.drawable.ic_delete, null) },
-            title = { Text("¿Borrar esta foto?") },
-            text = { Text("Esta foto se borrará para todas las familias. No se puede deshacer.") },
-            confirmButton = {
-                TextButton(onClick = {
-                    confirmar = false
-                    onBorrar()
-                }) { Text("Borrar foto", color = MaterialTheme.colorScheme.error) }
+        DialogoConfirmar(
+            titulo = "¿Borrar esta foto?",
+            mensaje = "Esta foto se borrará para todas las familias. No se puede deshacer.",
+            confirmar = "Borrar foto",
+            onConfirmar = {
+                confirmar = false
+                onBorrar()
             },
-            dismissButton = { TextButton(onClick = { confirmar = false }) { Text("Cancelar") } },
+            onCancelar = { confirmar = false },
         )
     }
 }

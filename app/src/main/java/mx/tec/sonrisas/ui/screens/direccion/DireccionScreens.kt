@@ -1,5 +1,32 @@
 package mx.tec.sonrisas.ui.screens.direccion
 
+import androidx.annotation.DrawableRes
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import mx.tec.sonrisas.ui.theme.Radio
+import androidx.compose.material3.Surface
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import mx.tec.sonrisas.ui.components.EtiquetaSeccion
+import mx.tec.sonrisas.ui.components.BotonFlotante
+import mx.tec.sonrisas.ui.components.BannerAviso
+import mx.tec.sonrisas.ui.components.DialogoConfirmar
+import mx.tec.sonrisas.ui.components.FormaAvatar
+import androidx.compose.material3.ButtonDefaults
+import mx.tec.sonrisas.ui.components.ChipFiltro
+import mx.tec.sonrisas.ui.components.SelectorSegmentado
+import mx.tec.sonrisas.ui.components.sombraSuave
+import mx.tec.sonrisas.ui.theme.Elevacion
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import mx.tec.sonrisas.ui.components.Pildora
+import mx.tec.sonrisas.ui.components.ProgresoDelgado
+import mx.tec.sonrisas.ui.components.TarjetaBase
+import mx.tec.sonrisas.ui.components.TarjetaTeal
+import kotlin.math.roundToInt
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -16,21 +43,12 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -41,7 +59,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.foundation.clickable
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import mx.tec.sonrisas.R
@@ -68,7 +85,6 @@ import mx.tec.sonrisas.ui.components.EstrellaSala
 import mx.tec.sonrisas.ui.components.Icono
 import mx.tec.sonrisas.ui.components.TarjetaSeccion
 import mx.tec.sonrisas.ui.components.TipoEstado
-import mx.tec.sonrisas.ui.components.TituloSeccion
 import mx.tec.sonrisas.ui.components.coincideCon
 import mx.tec.sonrisas.ui.components.edadTexto
 import mx.tec.sonrisas.ui.components.etiqueta
@@ -97,93 +113,147 @@ fun InicioScreen(
 ) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(Espacio.space4),
+        contentPadding = PaddingValues(start = Espacio.space4, end = Espacio.space4, top = Espacio.space1, bottom = Espacio.space6),
         verticalArrangement = Arrangement.spacedBy(Espacio.space3),
     ) {
         item {
-            Column {
-                Text("Hoy en la estancia", style = MaterialTheme.typography.headlineSmall)
-                Text(
-                    listOfNotNull(datos.estancia?.nombre, datos.hoy.formatoLargo()).joinToString(" · "),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+            Text(
+                listOfNotNull(datos.estancia?.nombre, datos.hoy.formatoLargo()).joinToString(" · "),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
-        item {
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(Espacio.space2), verticalArrangement = Arrangement.spacedBy(Espacio.space2)) {
-                FilledTonalButton(onClick = onInscribir, modifier = Modifier.heightIn(min = 48.dp)) {
-                    Icono(R.drawable.ic_person_add, null)
-                    Text("Inscribir niño", modifier = Modifier.padding(start = Espacio.space2))
-                }
-                FilledTonalButton(onClick = onPublicarAviso, modifier = Modifier.heightIn(min = 48.dp)) {
-                    Icono(R.drawable.ic_campaign, null)
-                    Text("Publicar aviso", modifier = Modifier.padding(start = Espacio.space2))
-                }
-            }
-        }
-        items(datos.salas, key = { it.sala.id }) { s ->
-            TarjetaSeccion {
-                EstrellaSala("Sala ${s.sala.nombre}", s.sala.estrella)
-                s.educadora?.let { Text("Educadora: $it", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Espacio.space3)) {
-                    Text("${s.presentes} de ${s.inscritos} presentes", style = MaterialTheme.typography.titleMedium)
-                }
-                LinearProgressIndicator(
-                    progress = { if (s.inscritos == 0) 0f else s.presentes / s.inscritos.toFloat() },
-                    modifier = Modifier.fillMaxWidth(),
-                    drawStopIndicator = {},
-                )
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(Espacio.space1)) {
-                    TextButton(onClick = { onMaterial(s.sala) }, modifier = Modifier.heightIn(min = 48.dp)) {
-                        Icono(R.drawable.ic_folder, null)
-                        Text("Material", modifier = Modifier.padding(start = Espacio.space2))
-                    }
-                    TextButton(onClick = { onImprimir(s.sala) }, modifier = Modifier.heightIn(min = 48.dp)) {
-                        Icono(R.drawable.ic_print, null)
-                        Text("Bitácora", modifier = Modifier.padding(start = Espacio.space2))
-                    }
-                    TextButton(onClick = { onObjetos(s.sala) }, modifier = Modifier.heightIn(min = 48.dp)) {
-                        Icono(R.drawable.ic_checkroom, null)
-                        Text("Objetos perdidos", modifier = Modifier.padding(start = Espacio.space2))
-                    }
-                }
-            }
-        }
-        item { TituloSeccion("Incidentes de hoy") }
+        item { ResumenHoy(datos, onInscribir, onPublicarAviso) }
+        item { EtiquetaSeccion("Salas") }
+        items(datos.salas, key = { it.sala.id }) { s -> TarjetaSalaInicio(s, onMaterial, onImprimir, onObjetos) }
+        item { EtiquetaSeccion("Incidentes de hoy") }
         if (datos.incidentes.isEmpty()) {
             item {
-                Row(horizontalArrangement = Arrangement.spacedBy(Espacio.space2), verticalAlignment = Alignment.CenterVertically) {
-                    Icono(R.drawable.ic_check_circle, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("Sin incidentes registrados hoy.", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                TarjetaBase(Modifier.fillMaxWidth()) {
+                    Row(
+                        Modifier.padding(Espacio.space4),
+                        horizontalArrangement = Arrangement.spacedBy(Espacio.space3),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Box(Modifier.size(40.dp).clip(CircleShape).background(SonrisasTheme.colors.exitoContenedor), contentAlignment = Alignment.Center) {
+                            Icono(R.drawable.ic_check, null, Modifier.size(20.dp), tint = SonrisasTheme.colors.exito)
+                        }
+                        Text("Sin incidentes registrados hoy.", style = MaterialTheme.typography.bodyLarge)
+                    }
                 }
             }
         }
         items(datos.incidentes, key = { it.first.id }) { (inc, nino) ->
+            val esquema = MaterialTheme.colorScheme
             TarjetaSeccion(onClick = { onIncidente(inc) }) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Espacio.space2)) {
-                    EstadoChip(inc.tipo.etiqueta, TipoEstado.ERROR, R.drawable.ic_error_fill)
+                    Pildora(inc.tipo.etiqueta, esquema.errorContainer, esquema.onErrorContainer, icono = R.drawable.ic_error_fill, colorIcono = esquema.error)
                     Text(inc.cuando.formatoHora(), style = MaterialTheme.typography.labelLarge)
-                    Text(inc.folio, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(inc.folio, style = MaterialTheme.typography.labelMedium, color = esquema.onSurfaceVariant)
                 }
-                Text(nino.nombreCompleto, style = MaterialTheme.typography.titleMedium)
-                Text(inc.descripcion, style = MaterialTheme.typography.bodyMedium)
+                Text(nino.nombreCompleto, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
+                Text(inc.descripcion, style = MaterialTheme.typography.bodyMedium, color = esquema.onSurfaceVariant)
             }
         }
         item {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                TituloSeccion("Últimos avisos", Modifier.weight(1f))
+            EtiquetaSeccion("Últimos avisos", accion = {
                 TextButton(onClick = onVerAvisos, modifier = Modifier.heightIn(min = 48.dp)) { Text("Ver todos") }
-            }
+            })
         }
         if (datos.avisos.isEmpty()) {
             item { Text("Todavía no hay avisos publicados.", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         }
         items(datos.avisos, key = { it.id }) { a ->
-            TarjetaSeccion {
-                EstadoChip(a.tipo.etiqueta, TipoEstado.NEUTRO, a.tipo.icono)
-                Text(a.titulo, style = MaterialTheme.typography.titleMedium)
-                Text("Publicado el ${a.publicadoEl.formatoFechaHora()}", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            TarjetaBase(Modifier.fillMaxWidth()) {
+                Row(
+                    Modifier.padding(Espacio.space4),
+                    horizontalArrangement = Arrangement.spacedBy(Espacio.space3),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Box(Modifier.size(44.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) {
+                        Icono(a.tipo.icono, null, Modifier.size(22.dp), tint = MaterialTheme.colorScheme.primary)
+                    }
+                    Column(Modifier.weight(1f)) {
+                        Text(a.titulo, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
+                        Text(
+                            "${a.tipo.etiqueta} · Publicado el ${a.publicadoEl.formatoFechaHora()}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** tarjeta teal del patron B: presentes de toda la estancia y las dos acciones rapidas */
+@Composable
+private fun ResumenHoy(datos: InicioDatos, onInscribir: () -> Unit, onPublicarAviso: () -> Unit) {
+    val presentes = datos.salas.sumOf { it.presentes }
+    val inscritos = datos.salas.sumOf { it.inscritos }
+    val fraccion = if (inscritos == 0) 0f else presentes / inscritos.toFloat()
+    TarjetaTeal {
+        Text("Hoy en la estancia", style = MaterialTheme.typography.labelLarge, color = Color.White.copy(alpha = 0.85f))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("$presentes de $inscritos presentes", style = MaterialTheme.typography.headlineSmall, modifier = Modifier.weight(1f))
+            Text("${(fraccion * 100).roundToInt()} %", style = MaterialTheme.typography.titleMedium)
+        }
+        ProgresoDelgado(fraccion, Modifier.padding(top = Espacio.space2, bottom = Espacio.space4))
+        Row(horizontalArrangement = Arrangement.spacedBy(Espacio.space3)) {
+            BotonTranslucido("Inscribir niño", R.drawable.ic_person_add, onInscribir, Modifier.weight(1f))
+            BotonTranslucido("Publicar aviso", R.drawable.ic_campaign, onPublicarAviso, Modifier.weight(1f))
+        }
+    }
+}
+
+/** boton en pildora blanca translucida para usar dentro de la tarjeta teal */
+@Composable
+private fun BotonTranslucido(texto: String, @DrawableRes icono: Int, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    Surface(
+        onClick = onClick,
+        shape = CircleShape,
+        color = Color.White.copy(alpha = 0.18f),
+        contentColor = Color.White,
+        modifier = modifier.heightIn(min = 48.dp),
+    ) {
+        Row(
+            Modifier.padding(horizontal = Espacio.space3, vertical = Espacio.space3),
+            horizontalArrangement = Arrangement.spacedBy(Espacio.space2, Alignment.CenterHorizontally),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icono(icono, null, Modifier.size(20.dp))
+            Text(texto, style = MaterialTheme.typography.labelLarge, maxLines = 1)
+        }
+    }
+}
+
+/** sala con su estrella, educadora, presentes y una barra del color de la sala; abajo sus accesos */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun TarjetaSalaInicio(s: SalaResumen, onMaterial: (Sala) -> Unit, onImprimir: (Sala) -> Unit, onObjetos: (Sala) -> Unit) {
+    val par = SonrisasTheme.colors.estrella(s.sala.estrella)
+    val fraccion = if (s.inscritos == 0) 0f else s.presentes / s.inscritos.toFloat()
+    TarjetaSeccion {
+        EstrellaSala("Sala ${s.sala.nombre}", s.sala.estrella)
+        s.educadora?.let { Text("Educadora: $it", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("${s.presentes} de ${s.inscritos} presentes", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+            Text("${(fraccion * 100).roundToInt()} %", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        ProgresoDelgado(fraccion, color = par.glifo, pista = MaterialTheme.colorScheme.surfaceContainer)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(Espacio.space1)) {
+            TextButton(onClick = { onMaterial(s.sala) }, modifier = Modifier.heightIn(min = 48.dp)) {
+                Icono(R.drawable.ic_folder, null)
+                Text("Material", modifier = Modifier.padding(start = Espacio.space2))
+            }
+            TextButton(onClick = { onImprimir(s.sala) }, modifier = Modifier.heightIn(min = 48.dp)) {
+                Icono(R.drawable.ic_print, null)
+                Text("Bitácora", modifier = Modifier.padding(start = Espacio.space2))
+            }
+            TextButton(onClick = { onObjetos(s.sala) }, modifier = Modifier.heightIn(min = 48.dp)) {
+                Icono(R.drawable.ic_checkroom, null)
+                Text("Objetos perdidos", modifier = Modifier.padding(start = Espacio.space2))
             }
         }
     }
@@ -207,44 +277,68 @@ fun NinosScreen(
         .filter { if (bajas) it.estado is EstadoExpediente.BajaTemporal else it.activo }
         .filter { salaId == null || it.salaId == salaId }
         .filter { it.nombreCompleto.coincideCon(busqueda) }
+    val activos = datos.ninos.count { it.activo }
+    val enBaja = datos.ninos.count { it.estado is EstadoExpediente.BajaTemporal }
     Scaffold(
         modifier = modifier,
+        containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = WindowInsets(0),
-        floatingActionButton = {
-            ExtendedFloatingActionButton(onClick = onInscribir, icon = { Icono(R.drawable.ic_person_add, null) }, text = { Text("Inscribir niño") })
-        },
+        floatingActionButton = { BotonFlotante("Inscribir niño", R.drawable.ic_person_add, onInscribir) },
     ) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(start = Espacio.space4, end = Espacio.space4, top = Espacio.space2, bottom = 128.dp),
-            verticalArrangement = Arrangement.spacedBy(Espacio.space2),
+            contentPadding = PaddingValues(start = Espacio.space4, end = Espacio.space4, top = Espacio.space1, bottom = 128.dp),
+            verticalArrangement = Arrangement.spacedBy(Espacio.space3),
         ) {
+            // tarjeta teal del patron B con el conteo de niños
             item {
-                OutlinedTextField(
+                TarjetaTeal {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text(if (activos == 1) "1 niño activo" else "$activos niños activos", style = MaterialTheme.typography.headlineSmall)
+                            if (enBaja > 0) {
+                                Text("$enBaja en baja temporal", style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.85f))
+                            }
+                        }
+                        Box(Modifier.size(48.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.18f)), contentAlignment = Alignment.Center) {
+                            Icono(R.drawable.ic_groups, null)
+                        }
+                    }
+                }
+            }
+            item {
+                // buscador en pildora blanca, sin contorno
+                TextField(
                     value = busqueda,
                     onValueChange = onBuscar,
-                    label = { Text("Buscar por nombre") },
-                    leadingIcon = { Icono(R.drawable.ic_search, null) },
+                    placeholder = { Text("Buscar por nombre") },
+                    leadingIcon = { Icono(R.drawable.ic_search, null, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
+                    shape = CircleShape,
+                    colors = TextFieldDefaults.colors(
+                        focusedContainerColor = SonrisasTheme.colors.superficieElevada,
+                        unfocusedContainerColor = SonrisasTheme.colors.superficieElevada,
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                    ),
+                    modifier = Modifier.fillMaxWidth().sombraSuave(Elevacion.tarjeta, CircleShape).semantics { contentDescription = "Buscar por nombre" },
                 )
             }
             item {
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(Espacio.space2)) {
-                    item {
-                        FilterChip(salaId == null, { onSala(null) }, { Text("Todas") }, Modifier.heightIn(min = 48.dp))
-                    }
-                    items(datos.salas, key = { it.id }) { s ->
-                        FilterChip(salaId == s.id, { onSala(s.id) }, { Text(s.nombre) }, Modifier.heightIn(min = 48.dp))
-                    }
+                    item { ChipFiltro("Todas", salaId == null, { onSala(null) }) }
+                    items(datos.salas, key = { it.id }) { s -> ChipFiltro(s.nombre, salaId == s.id, { onSala(s.id) }) }
                 }
             }
             item {
-                SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-                    SegmentedButton(!bajas, { onBajas(false) }, SegmentedButtonDefaults.itemShape(0, 2), Modifier.heightIn(min = 48.dp)) { Text("Activos") }
-                    SegmentedButton(bajas, { onBajas(true) }, SegmentedButtonDefaults.itemShape(1, 2), Modifier.heightIn(min = 48.dp)) { Text("Baja temporal") }
-                }
+                SelectorSegmentado(
+                    opciones = listOf(false, true),
+                    seleccionada = bajas,
+                    onSeleccion = onBajas,
+                    etiqueta = { if (it) "Baja temporal" else "Activos" },
+                )
             }
+            item { EtiquetaSeccion(if (bajas) "Baja temporal" else "Niños") }
             if (filtrados.isEmpty()) {
                 item {
                     EstadoVacio(
@@ -256,20 +350,26 @@ fun NinosScreen(
             }
             items(filtrados, key = { it.id }) { n ->
                 val sala = salas[n.salaId]
-                ListItem(
-                    headlineContent = { Text(n.nombreCompleto, style = MaterialTheme.typography.titleMedium) },
-                    supportingContent = {
-                        val estado = n.estado
-                        Text(
-                            if (estado is EstadoExpediente.BajaTemporal) "Se elimina el ${estado.eliminarEl.formatoCorto()}"
-                            else listOfNotNull(sala?.let { "Sala ${it.nombre}" }, edadTexto(n.fechaNacimiento, datos.hoy)).joinToString(" · "),
-                        )
-                    },
-                    leadingContent = { AvatarNino(n.nombre, n.apellidos, sala?.estrella ?: ColorEstrella.AZUL) },
-                    trailingContent = { Icono(R.drawable.ic_chevron_right, null) },
-                    colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),
-                    modifier = Modifier.clip(MaterialTheme.shapes.medium).clickable { onNino(n) },
-                )
+                val estado = n.estado
+                TarjetaBase(Modifier.fillMaxWidth(), onClick = { onNino(n) }) {
+                    Row(
+                        Modifier.padding(horizontal = Espacio.space4, vertical = Espacio.space3),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(Espacio.space3),
+                    ) {
+                        AvatarNino(n.nombre, n.apellidos, sala?.estrella ?: ColorEstrella.AZUL)
+                        Column(Modifier.weight(1f)) {
+                            Text(n.nombreCompleto, style = MaterialTheme.typography.titleMedium)
+                            Text(
+                                if (estado is EstadoExpediente.BajaTemporal) "Se elimina el ${estado.eliminarEl.formatoCorto()}"
+                                else listOfNotNull(sala?.let { "Sala ${it.nombre}" }, edadTexto(n.fechaNacimiento, datos.hoy)).joinToString(" · "),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = if (estado is EstadoExpediente.BajaTemporal) SonrisasTheme.colors.enAvisoContenedor else MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        Icono(R.drawable.ic_chevron_right, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
             }
         }
     }
@@ -301,19 +401,24 @@ fun ExpedienteScreen(
             .padding(Espacio.space4),
         verticalArrangement = Arrangement.spacedBy(Espacio.space3),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Espacio.space3)) {
-            AvatarNino(n.nombre, n.apellidos, datos.sala?.estrella ?: ColorEstrella.AZUL, tamano = 64.dp)
-            Column {
-                Text(n.nombreCompleto, style = MaterialTheme.typography.headlineSmall)
-                datos.sala?.let { EstrellaSala("Sala ${it.nombre}", it.estrella, tamano = 24.dp) }
+        TarjetaBase(Modifier.fillMaxWidth()) {
+            Row(Modifier.padding(Espacio.space4), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Espacio.space3)) {
+                AvatarNino(n.nombre, n.apellidos, datos.sala?.estrella ?: ColorEstrella.AZUL, tamano = 64.dp, forma = FormaAvatar.CUADRADO)
+                Column(verticalArrangement = Arrangement.spacedBy(Espacio.space1)) {
+                    Text(n.nombreCompleto, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
+                    datos.sala?.let { EstrellaSala("Sala ${it.nombre}", it.estrella, tamano = 24.dp) }
+                }
             }
         }
         if (baja != null) {
-            EstadoChip("Baja temporal desde el ${baja.fechaBaja.formatoCorto()}", TipoEstado.AVISO, R.drawable.ic_warning_fill)
-            Text(
-                "Si no se reactiva, el expediente y sus fotos se eliminarán el ${baja.eliminarEl.formatoLargo().lowercase()}.",
-                style = MaterialTheme.typography.bodyMedium,
-            )
+            // eliminacion temporal: aviso amarillo con la fecha en que se borra definitivamente
+            BannerAviso {
+                Text("Baja temporal desde el ${baja.fechaBaja.formatoCorto()}", style = MaterialTheme.typography.titleSmall)
+                Text(
+                    "Si no se reactiva, el expediente y sus fotos se eliminarán el ${baja.eliminarEl.formatoLargo().lowercase()}.",
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
         }
         TarjetaSeccion(titulo = "Datos generales", icono = R.drawable.ic_badge) {
             Dato("Fecha de nacimiento", n.fechaNacimiento.formatoCorto())
@@ -343,44 +448,43 @@ fun ExpedienteScreen(
             Autorizacion("Actividades internas de la estancia", n.permisoImagenInterna)
             Autorizacion("Redes sociales de la fundación", n.permisoImagenRedes)
         }
-        OutlinedButton(onClick = onImprimir, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+        FilledTonalButton(onClick = onImprimir, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
             Icono(R.drawable.ic_print, null)
             Text("Imprimir bitácora", modifier = Modifier.padding(start = Espacio.space2))
         }
+        // dar de baja (eliminacion temporal) y eliminar son destructivas: rojo apagado y siempre confirman
+        val rojoApagado = ButtonDefaults.filledTonalButtonColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer,
+            contentColor = MaterialTheme.colorScheme.error,
+        )
         if (baja == null) {
             BotonPrincipal("Editar expediente", onEditar, guardando = false)
-            OutlinedButton(onClick = { confirmar = "baja" }, enabled = !trabajando, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+            FilledTonalButton(onClick = { confirmar = "baja" }, enabled = !trabajando, colors = rojoApagado, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
                 Text("Dar de baja")
             }
         } else {
             BotonPrincipal("Reactivar", onReactivar, guardando = trabajando)
-            OutlinedButton(onClick = { confirmar = "eliminar" }, enabled = !trabajando, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                Text("Eliminar definitivamente", color = MaterialTheme.colorScheme.error)
+            FilledTonalButton(onClick = { confirmar = "eliminar" }, enabled = !trabajando, colors = rojoApagado, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                Icono(R.drawable.ic_delete_forever, null)
+                Text("Eliminar definitivamente", modifier = Modifier.padding(start = Espacio.space2))
             }
         }
     }
     when (confirmar) {
-        "baja" -> AlertDialog(
-            onDismissRequest = { confirmar = null },
-            title = { Text("¿Dar de baja a ${n.nombre}?") },
-            text = {
-                Text(
-                    "El expediente pasa a baja temporal durante $DIAS_PERIODO_BAJA días. En ese periodo puedes reactivarlo. " +
-                        "Al terminar, el expediente y todas sus fotos se eliminan de forma definitiva.",
-                )
-            },
-            confirmButton = { TextButton(onClick = { confirmar = null; onBaja() }) { Text("Dar de baja") } },
-            dismissButton = { TextButton(onClick = { confirmar = null }) { Text("Cancelar") } },
+        "baja" -> DialogoConfirmar(
+            titulo = "¿Dar de baja a ${n.nombre}?",
+            mensaje = "El expediente pasa a baja temporal durante $DIAS_PERIODO_BAJA días. En ese periodo puedes reactivarlo. " +
+                "Al terminar, el expediente y todas sus fotos se eliminan de forma definitiva.",
+            confirmar = "Dar de baja",
+            onConfirmar = { confirmar = null; onBaja() },
+            onCancelar = { confirmar = null },
         )
-        "eliminar" -> AlertDialog(
-            onDismissRequest = { confirmar = null },
-            icon = { Icono(R.drawable.ic_delete_forever, null) },
-            title = { Text("¿Eliminar definitivamente?") },
-            text = { Text("Se borrarán el expediente de ${n.nombreCompleto}, su bitácora y todas las fotos donde aparece. No se puede deshacer.") },
-            confirmButton = {
-                TextButton(onClick = { confirmar = null; onEliminar() }) { Text("Eliminar", color = MaterialTheme.colorScheme.error) }
-            },
-            dismissButton = { TextButton(onClick = { confirmar = null }) { Text("Cancelar") } },
+        "eliminar" -> DialogoConfirmar(
+            titulo = "¿Eliminar definitivamente?",
+            mensaje = "Se borrarán el expediente de ${n.nombreCompleto}, su bitácora y todas las fotos donde aparece. No se puede deshacer.",
+            confirmar = "Eliminar",
+            onConfirmar = { confirmar = null; onEliminar() },
+            onCancelar = { confirmar = null },
         )
     }
 }
@@ -428,16 +532,28 @@ fun MasScreen(
         Triple("Registro de actividad", "Quién capturó o consultó cada dato", R.drawable.ic_history) to onActividad,
         Triple("Mi perfil", "Cuenta, desbloqueo con huella y cerrar sesión", R.drawable.ic_account_circle) to onPerfil,
     )
-    Column(modifier.fillMaxSize().padding(vertical = Espacio.space2)) {
+    // cada herramienta es una tarjeta con su icono en circulo teal suave
+    Column(
+        modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = Espacio.space4, vertical = Espacio.space2),
+        verticalArrangement = Arrangement.spacedBy(Espacio.space3),
+    ) {
         opciones.forEach { (o, accion) ->
-            ListItem(
-                headlineContent = { Text(o.first, style = MaterialTheme.typography.titleMedium) },
-                supportingContent = { Text(o.second) },
-                leadingContent = { Icono(o.third, null) },
-                trailingContent = { Icono(R.drawable.ic_chevron_right, null) },
-                colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface),
-                modifier = Modifier.clickable(onClick = accion),
-            )
+            TarjetaBase(Modifier.fillMaxWidth(), onClick = accion) {
+                Row(
+                    Modifier.padding(horizontal = Espacio.space4, vertical = Espacio.space3),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(Espacio.space3),
+                ) {
+                    Box(Modifier.size(44.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) {
+                        Icono(o.third, null, Modifier.size(22.dp), tint = MaterialTheme.colorScheme.primary)
+                    }
+                    Column(Modifier.weight(1f)) {
+                        Text(o.first, style = MaterialTheme.typography.titleMedium)
+                        Text(o.second, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Icono(R.drawable.ic_chevron_right, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
         }
     }
 }
@@ -450,58 +566,73 @@ fun FundacionScreen(
     onEstancia: (Estancia) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    LazyColumn(
-        modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(Espacio.space4),
-        verticalArrangement = Arrangement.spacedBy(Espacio.space3),
-    ) {
-        item {
-            Column {
-                Text("${datos.total}", style = MaterialTheme.typography.displaySmall)
-                Text("niños inscritos en todas las estancias", style = MaterialTheme.typography.bodyLarge)
-                Text("${datos.presentes} presentes ahora", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Scaffold(
+        modifier = modifier,
+        containerColor = MaterialTheme.colorScheme.background,
+        contentWindowInsets = WindowInsets(0),
+        floatingActionButton = { BotonFlotante("Registrar estancia", R.drawable.ic_add, onRegistrar) },
+    ) { padding ->
+        LazyColumn(
+            modifier = Modifier.fillMaxSize().padding(padding),
+            contentPadding = PaddingValues(start = Espacio.space4, end = Espacio.space4, top = Espacio.space1, bottom = 128.dp),
+            verticalArrangement = Arrangement.spacedBy(Espacio.space3),
+        ) {
+            // tarjeta teal del patron B con los totales de la fundacion y el acceso al reporte
+            item {
+                val fraccion = if (datos.total == 0) 0f else datos.presentes / datos.total.toFloat()
+                TarjetaTeal {
+                    Text("Todas las estancias", style = MaterialTheme.typography.labelLarge, color = Color.White.copy(alpha = 0.85f))
+                    Text(if (datos.total == 1) "1 niño inscrito" else "${datos.total} niños inscritos", style = MaterialTheme.typography.headlineSmall)
+                    Text("${datos.presentes} presentes ahora", style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.85f))
+                    ProgresoDelgado(fraccion, Modifier.padding(top = Espacio.space3, bottom = Espacio.space4))
+                    BotonTranslucido("Ver reporte de asistencia", R.drawable.ic_bar_chart, onReporte, Modifier.fillMaxWidth())
+                }
             }
-        }
-        item {
-            FilledTonalButton(onClick = onRegistrar, modifier = Modifier.heightIn(min = 48.dp)) {
-                Icono(R.drawable.ic_add, null)
-                Text("Registrar estancia", modifier = Modifier.padding(start = Espacio.space2))
+            item { EtiquetaSeccion("Estancias") }
+            items(datos.estancias, key = { it.estancia.id }) { r ->
+                TarjetaSeccion(onClick = { onEstancia(r.estancia) }) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Espacio.space3)) {
+                        Box(Modifier.size(44.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) {
+                            Icono(R.drawable.ic_apartment, null, Modifier.size(22.dp), tint = MaterialTheme.colorScheme.primary)
+                        }
+                        Column(Modifier.weight(1f)) {
+                            Text(r.estancia.nombre, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
+                            Text(
+                                listOf(r.estancia.colonia, r.estancia.telefono).filter { it.isNotBlank() }.joinToString(" · "),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        Icono(R.drawable.ic_edit, "Editar ${r.estancia.nombre}", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Row(Modifier.padding(top = Espacio.space2), horizontalArrangement = Arrangement.spacedBy(Espacio.space2)) {
+                        Cifra("${r.inscritos}", "inscritos", Modifier.weight(1f))
+                        Cifra("${r.presentesHoy}", "presentes hoy", Modifier.weight(1f))
+                        Cifra("${r.promedioMes} %", "asistencia del mes", Modifier.weight(1f))
+                    }
+                }
             }
-        }
-        items(datos.estancias, key = { it.estancia.id }) { r ->
-            TarjetaSeccion(
-                titulo = r.estancia.nombre,
-                icono = R.drawable.ic_apartment,
-                onClick = { onEstancia(r.estancia) },
-                accion = { Icono(R.drawable.ic_edit, "Editar ${r.estancia.nombre}", tint = MaterialTheme.colorScheme.onSurfaceVariant) },
-            ) {
+            item {
                 Text(
-                    listOf(r.estancia.colonia, r.estancia.telefono).filter { it.isNotBlank() }.joinToString(" · "),
+                    "La fundación ve datos consolidados. Las bitácoras, expedientes y fotos de cada niño solo los ve el personal de su estancia.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                Row(horizontalArrangement = Arrangement.spacedBy(Espacio.space4)) {
-                    Cifra("${r.inscritos}", "inscritos", Modifier.weight(1f))
-                    Cifra("${r.presentesHoy}", "presentes hoy", Modifier.weight(1f))
-                    Cifra("${r.promedioMes} %", "asistencia del mes", Modifier.weight(1f))
-                }
             }
         }
-        item {
-            Text(
-                "La fundación ve datos consolidados. Las bitácoras, expedientes y fotos de cada niño solo los ve el personal de su estancia.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        item { BotonPrincipal("Ver reporte de asistencia", onReporte) }
     }
 }
 
+/** cifra en un cuadro gris claro: valor grande y etiqueta abajo */
 @Composable
 private fun Cifra(valor: String, etiqueta: String, modifier: Modifier = Modifier) {
-    Column(modifier) {
-        Text(valor, style = MaterialTheme.typography.titleLarge)
+    Column(
+        modifier
+            .clip(RoundedCornerShape(Radio.r16))
+            .background(MaterialTheme.colorScheme.surfaceContainerLow)
+            .padding(horizontal = Espacio.space3, vertical = Espacio.space2),
+    ) {
+        Text(valor, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
         Text(etiqueta, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

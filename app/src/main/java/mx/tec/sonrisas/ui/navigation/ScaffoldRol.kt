@@ -3,48 +3,42 @@ package mx.tec.sonrisas.ui.navigation
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
-import androidx.compose.material3.Badge
-import androidx.compose.material3.BadgedBox
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.Density
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import kotlinx.coroutines.CoroutineScope
+import mx.tec.sonrisas.ui.components.BarraDetalle
+import mx.tec.sonrisas.ui.components.BarraInferiorFlotante
+import mx.tec.sonrisas.ui.components.BotonPerfil
+import mx.tec.sonrisas.ui.components.ItemBarraInferior
+import mx.tec.sonrisas.ui.components.TituloPantalla
+import mx.tec.sonrisas.ui.theme.Espacio
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import mx.tec.sonrisas.R
-import mx.tec.sonrisas.ui.components.Icono
 
 /** un destino puede poner aqui su titulo cuando depende de los datos, como el nombre de una conversacion */
 const val TITULO_DINAMICO = "titulo"
@@ -89,7 +83,6 @@ fun NavHostController.irAPestana(ruta: String) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScaffoldRol(
     navController: NavHostController,
@@ -97,6 +90,10 @@ fun ScaffoldRol(
     snackbar: SnackbarHostState,
     titulo: (ruta: String?) -> String,
     modifier: Modifier = Modifier,
+    /** pestañas que dibujan su propio encabezado teal detras de la barra de estado (patron A): no llevan barra superior */
+    rutasConEncabezadoTeal: Set<String> = emptySet(),
+    /** pantallas con titulo grande del patron B en lugar de la barra de detalle; las comparten todos los roles */
+    rutasConTituloGrande: Set<String> = setOf(Route.AVISOS, Route.PERFIL),
     content: @Composable (PaddingValues) -> Unit,
 ) {
     val entrada by navController.currentBackStackEntryAsState()
@@ -105,59 +102,63 @@ fun ScaffoldRol(
     val esPestana = pestanas.any { it.ruta == ruta }
     val flujoTitulo = remember(entrada) { entrada?.savedStateHandle?.getStateFlow<String?>(TITULO_DINAMICO, null) ?: MutableStateFlow(null) }
     val tituloDinamico by flujoTitulo.collectAsState()
+    val encabezadoPropio = ruta in rutasConEncabezadoTeal
     Scaffold(
         modifier = modifier,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            TopAppBar(
-                title = { Text(tituloDinamico ?: titulo(ruta), maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                navigationIcon = {
-                    if (!esPestana && navController.previousBackStackEntry != null) {
-                        IconButton(onClick = { navController.navigateUp() }) {
-                            Icono(R.drawable.ic_arrow_back, "Regresar")
-                        }
-                    }
-                },
-                actions = {
-                    if (ruta != Route.PERFIL && ruta != Route.ACERCA) {
-                        IconButton(onClick = { navController.navigate(Route.PERFIL) { launchSingleTop = true } }) {
-                            Icono(R.drawable.ic_account_circle, "Mi perfil")
-                        }
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.surface),
-            )
+            val tituloActual = tituloDinamico ?: titulo(ruta)
+            val onRegresar: (() -> Unit)? = if (!esPestana && navController.previousBackStackEntry != null) ({ navController.navigateUp() }) else null
+            val accionPerfil: (@Composable () -> Unit)? = if (ruta != Route.PERFIL && ruta != Route.ACERCA) {
+                { BotonPerfil(onClick = { navController.navigate(Route.PERFIL) { launchSingleTop = true } }) }
+            } else {
+                null
+            }
+            when {
+                encabezadoPropio -> Unit
+                // patron B: titulo grande sobre el fondo claro
+                ruta in rutasConTituloGrande -> TituloPantalla(
+                    tituloActual,
+                    Modifier.statusBarsPadding().padding(top = Espacio.space2),
+                    onRegresar = onRegresar,
+                    accion = accionPerfil,
+                )
+                else -> BarraDetalle(
+                    titulo = tituloActual,
+                    onRegresar = onRegresar,
+                    acciones = { accionPerfil?.let { Box(Modifier.padding(end = Espacio.space3)) { it() } } },
+                )
+            }
         },
         bottomBar = {
             if (esPestana && pestanas.size > 1) {
-                NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainer) {
+                BarraInferiorFlotante {
                     pestanas.forEach { p ->
-                        val seleccionada = destino?.hierarchy?.any { it.route == p.ruta } == true
-                        NavigationBarItem(
-                            selected = seleccionada,
+                        ItemBarraInferior(
+                            etiqueta = p.etiqueta,
+                            icono = p.icono,
+                            iconoSeleccionado = p.iconoLleno,
+                            seleccionado = destino?.hierarchy?.any { it.route == p.ruta } == true,
                             onClick = { navController.irAPestana(p.ruta) },
-                            icon = {
-                                BadgedBox(badge = {
-                                    if (p.insignia > 0) {
-                                        Badge(Modifier.semantics { contentDescription = "${p.insignia} sin leer" }) { Text("${p.insignia}") }
-                                    }
-                                }) {
-                                    Icono(if (seleccionada) p.iconoLleno else p.icono, null)
-                                }
-                            },
-                            label = {
-                                // con cinco pestanas y letra al 200 % las etiquetas se cortan; se limitan a 130 %
-                                val densidad = LocalDensity.current
-                                CompositionLocalProvider(LocalDensity provides Density(densidad.density, minOf(densidad.fontScale, 1.3f))) {
-                                    Text(p.etiqueta, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                }
-                            },
+                            insignia = p.insignia,
                         )
                     }
                 }
             }
         },
         snackbarHost = { SnackbarHost(snackbar) },
-    ) { padding ->
+    ) { relleno ->
+        // con encabezado propio, el contenido sube hasta arriba para que el teal quede detras de la barra de estado
+        val direccion = LocalLayoutDirection.current
+        val padding = if (encabezadoPropio) {
+            PaddingValues(
+                start = relleno.calculateStartPadding(direccion),
+                end = relleno.calculateEndPadding(direccion),
+                bottom = relleno.calculateBottomPadding(),
+            )
+        } else {
+            relleno
+        }
         // en una tableta compartida en horizontal, las tarjetas no se estiran de lado a lado
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
             Box(Modifier.fillMaxHeight().widthIn(max = ANCHO_MAXIMO).fillMaxWidth()) { content(padding) }

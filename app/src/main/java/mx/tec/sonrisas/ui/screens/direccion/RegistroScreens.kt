@@ -1,10 +1,20 @@
 package mx.tec.sonrisas.ui.screens.direccion
 
+import mx.tec.sonrisas.ui.components.DialogoConfirmar
+import mx.tec.sonrisas.ui.components.EtiquetaSeccion
+import androidx.compose.ui.draw.clip
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -15,16 +25,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -35,6 +42,8 @@ import mx.tec.sonrisas.domain.Rol
 import mx.tec.sonrisas.domain.Sala
 import mx.tec.sonrisas.domain.TipoSala
 import mx.tec.sonrisas.domain.Usuario
+import mx.tec.sonrisas.ui.components.BannerAviso
+import mx.tec.sonrisas.ui.components.BotonFlotante
 import mx.tec.sonrisas.ui.components.BotonPrincipal
 import mx.tec.sonrisas.ui.components.CampoTexto
 import mx.tec.sonrisas.ui.components.tecladoNombres
@@ -71,13 +80,15 @@ fun EstanciaFormScreen(
             .padding(Espacio.space4),
         verticalArrangement = Arrangement.spacedBy(Espacio.space3),
     ) {
-        TarjetaSeccion(titulo = "Datos de la estancia", icono = R.drawable.ic_apartment) {
+        EtiquetaSeccion("Datos de la estancia")
+        TarjetaSeccion {
             CampoTexto(form.nombre, { onCambiar(form.copy(nombre = it)) }, "Nombre", errores["nombre"], teclado = tecladoNombres, ayuda = "Por ejemplo: Estancia San Bernabé")
             CampoTexto(form.colonia, { onCambiar(form.copy(colonia = it)) }, "Colonia o dirección", errores["colonia"])
             CampoTexto(form.telefono, { onCambiar(form.copy(telefono = it)) }, "Teléfono", errores["telefono"], teclado = tecladoTelefono, ayuda = "10 dígitos")
         }
         if (datos.nueva) {
-            TarjetaSeccion(titulo = "Cuenta de dirección", icono = R.drawable.ic_key) {
+            EtiquetaSeccion("Cuenta de dirección")
+            TarjetaSeccion {
                 Text(
                     "Creamos la cuenta de quien dirige la estancia. Al guardar verás su usuario y una contraseña temporal.",
                     style = MaterialTheme.typography.bodyMedium,
@@ -86,18 +97,25 @@ fun EstanciaFormScreen(
                 CampoTexto(form.direccion, { onCambiar(form.copy(direccion = it)) }, "Nombre completo", errores["direccion"], teclado = tecladoNombres)
             }
         } else {
-            TarjetaSeccion(titulo = "Cuentas de dirección", icono = R.drawable.ic_key) {
+            EtiquetaSeccion("Cuentas de dirección")
+            TarjetaSeccion {
                 if (datos.cuentas.isEmpty()) {
                     Text("Esta estancia todavía no tiene una cuenta de dirección.", style = MaterialTheme.typography.bodyLarge)
                 }
                 datos.cuentas.forEachIndexed { i, c ->
-                    if (i > 0) HorizontalDivider()
-                    Column {
-                        Text(c.nombre, style = MaterialTheme.typography.titleMedium)
-                        Text("Usuario: ${c.usuario}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    if (i > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    // cada cuenta con su llave en circulo teal suave
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Espacio.space3)) {
+                        Box(Modifier.size(40.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) {
+                            Icono(R.drawable.ic_key, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
+                        }
+                        Column {
+                            Text(c.nombre, style = MaterialTheme.typography.titleMedium)
+                            Text("Usuario: ${c.usuario}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
                     }
                 }
-                OutlinedButton(onClick = onNuevaCuenta, modifier = Modifier.heightIn(min = 48.dp)) {
+                FilledTonalButton(onClick = onNuevaCuenta, modifier = Modifier.heightIn(min = 48.dp)) {
                     Icono(R.drawable.ic_person_add, null)
                     Text("Crear cuenta de dirección", modifier = Modifier.padding(start = Espacio.space2))
                 }
@@ -141,11 +159,11 @@ fun SalasScreen(
     val sinColores = datos.salas.size >= ColorEstrella.entries.size
     Scaffold(
         modifier = modifier,
+        containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = WindowInsets(0),
         floatingActionButton = {
-            if (!sinColores) {
-                ExtendedFloatingActionButton(onClick = onNueva, icon = { Icono(R.drawable.ic_add, null) }, text = { Text("Registrar sala") })
-            }
+            // sin colores de estrella libres ya no se pueden registrar mas salas
+            if (!sinColores) BotonFlotante("Registrar sala", R.drawable.ic_add, onNueva)
         },
     ) { padding ->
         LazyColumn(
@@ -155,19 +173,27 @@ fun SalasScreen(
         ) {
             if (sinColores) {
                 item {
-                    Text(
-                        "Ya se usaron los ${ColorEstrella.entries.size} colores de estrella. Para identificar cada sala sin confusiones, una estancia tiene como máximo ${ColorEstrella.entries.size} salas.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                    BannerAviso(
+                        icono = R.drawable.ic_info,
+                    ) {
+                        Text(
+                            "Ya se usaron los ${ColorEstrella.entries.size} colores de estrella. Para identificar cada sala sin confusiones, una estancia tiene como máximo ${ColorEstrella.entries.size} salas.",
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
                 }
             }
             if (datos.salas.isEmpty()) {
                 item { EstadoVacio(R.drawable.ic_meeting_room, "Todavía no hay salas", mensaje = "Registra la primera sala para poder inscribir niños y asignar educadoras.") }
             }
             items(datos.salas, key = { it.sala.id }) { f ->
-                TarjetaSeccion(onClick = { onEditar(f.sala) }) {
-                    EstrellaSala("Sala ${f.sala.nombre}", f.sala.estrella)
+                TarjetaSeccion(
+                    onClick = { onEditar(f.sala) },
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        EstrellaSala("Sala ${f.sala.nombre}", f.sala.estrella, Modifier.weight(1f))
+                        Icono(R.drawable.ic_edit, "Editar sala ${f.sala.nombre}", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                     Text(
                         "${f.sala.tipo.etiqueta} · ${f.inscritos} ${if (f.inscritos == 1) "niño" else "niños"} · Estrella ${f.sala.estrella.etiqueta.lowercase()}",
                         style = MaterialTheme.typography.bodyMedium,
@@ -259,11 +285,11 @@ fun PersonalScreen(
 ) {
     Scaffold(
         modifier = modifier,
+        containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = WindowInsets(0),
         floatingActionButton = {
-            if (datos.salas.isNotEmpty()) {
-                ExtendedFloatingActionButton(onClick = onNueva, icon = { Icono(R.drawable.ic_person_add, null) }, text = { Text("Registrar educadora") })
-            }
+            // sin salas no hay a donde asignar una educadora
+            if (datos.salas.isNotEmpty()) BotonFlotante("Registrar educadora", R.drawable.ic_person_add, onNueva)
         },
     ) { padding ->
         LazyColumn(
@@ -282,8 +308,19 @@ fun PersonalScreen(
             items(datos.educadoras, key = { it.id }) { u ->
                 val sala = datos.sala(u.salaId)
                 TarjetaSeccion(onClick = { onEducadora(u) }) {
-                    Text(u.nombre, style = MaterialTheme.typography.titleMedium)
-                    Text("Usuario: ${u.usuario}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Espacio.space3)) {
+                        Box(
+                            Modifier.size(44.dp).clip(CircleShape).background(if (u.activo) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainer),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icono(R.drawable.ic_badge, null, Modifier.size(22.dp), tint = if (u.activo) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Column(Modifier.weight(1f)) {
+                            Text(u.nombre, style = MaterialTheme.typography.titleMedium)
+                            Text("Usuario: ${u.usuario}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Icono(R.drawable.ic_chevron_right, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                     if (u.activo) {
                         if (sala != null) EstrellaSala("Sala ${sala.nombre}", sala.estrella, tamano = 24.dp)
                         else Text("Sin sala asignada", style = MaterialTheme.typography.bodyMedium)
@@ -333,13 +370,18 @@ fun HojaPersonalForm(
                 if (u.activo) {
                     EtiquetaCampo("Sala asignada")
                     SelectorOpciones(salas.map { it.id }, hoja.salaId, { onCambiar(hoja.copy(salaId = it)) }, { id -> salas.first { it.id == id }.nombre })
-                    OutlinedButton(
+                    // accion destructiva: rojo apagado, sin contorno, y siempre confirma
+                    FilledTonalButton(
                         onClick = { onCambiar(hoja.copy(confirmarRetiro = true)) },
                         enabled = !hoja.guardando,
+                        colors = ButtonDefaults.filledTonalButtonColors(
+                            containerColor = MaterialTheme.colorScheme.errorContainer,
+                            contentColor = MaterialTheme.colorScheme.error,
+                        ),
                         modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
                     ) {
-                        Icono(R.drawable.ic_person_off, null, tint = MaterialTheme.colorScheme.error)
-                        Text("Retirar acceso", color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(start = Espacio.space2))
+                        Icono(R.drawable.ic_person_off, null)
+                        Text("Retirar acceso", modifier = Modifier.padding(start = Espacio.space2))
                     }
                 } else {
                     EstadoChip("Sin acceso a la app", TipoEstado.NEUTRO, R.drawable.ic_person_off)
@@ -351,13 +393,12 @@ fun HojaPersonalForm(
                 hoja.error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium) }
             }
             if (hoja.confirmarRetiro) {
-                AlertDialog(
-                    onDismissRequest = { onCambiar(hoja.copy(confirmarRetiro = false)) },
-                    icon = { Icono(R.drawable.ic_person_off, null) },
-                    title = { Text("¿Retirar el acceso de ${u.nombre}?") },
-                    text = { Text("Ya no podrá iniciar sesión ni verá a los niños de la sala. Su historial se conserva en el registro de actividad.") },
-                    confirmButton = { TextButton(onClick = onRetirar) { Text("Retirar acceso", color = MaterialTheme.colorScheme.error) } },
-                    dismissButton = { TextButton(onClick = { onCambiar(hoja.copy(confirmarRetiro = false)) }) { Text("Cancelar") } },
+                DialogoConfirmar(
+                    titulo = "¿Retirar el acceso de ${u.nombre}?",
+                    mensaje = "Ya no podrá iniciar sesión ni verá a los niños de la sala. Su historial se conserva en el registro de actividad.",
+                    confirmar = "Retirar acceso",
+                    onConfirmar = onRetirar,
+                    onCancelar = { onCambiar(hoja.copy(confirmarRetiro = false)) },
                 )
             }
         }

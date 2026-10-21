@@ -1,24 +1,30 @@
 package mx.tec.sonrisas.ui.screens.comun
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import mx.tec.sonrisas.R
@@ -31,6 +37,7 @@ import mx.tec.sonrisas.ui.components.AvatarNino
 import mx.tec.sonrisas.ui.components.EstrellaSala
 import mx.tec.sonrisas.ui.components.Icono
 import mx.tec.sonrisas.ui.components.TarjetaSeccion
+import mx.tec.sonrisas.ui.components.TarjetaTeal
 import mx.tec.sonrisas.ui.components.etiqueta
 import mx.tec.sonrisas.ui.theme.Espacio
 import mx.tec.sonrisas.ui.theme.SonrisasTheme
@@ -51,11 +58,19 @@ fun PerfilScreen(
             .padding(Espacio.space4),
         verticalArrangement = Arrangement.spacedBy(Espacio.space3),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Espacio.space3)) {
-            Icono(iconoRol(datos.rol), null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-            Column {
-                Text(datos.nombre, style = MaterialTheme.typography.headlineSmall)
-                Text("${datos.rol.etiqueta} · ${datos.usuario}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        // tarjeta teal del patron B con el icono del rol, el nombre y la cuenta
+        TarjetaTeal {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Espacio.space4)) {
+                Box(
+                    Modifier.size(56.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.18f)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icono(iconoRol(datos.rol), null, Modifier.size(28.dp))
+                }
+                Column {
+                    Text(datos.nombre, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
+                    Text("${datos.rol.etiqueta} · ${datos.usuario}", style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.85f))
+                }
             }
         }
         if (datos.rol != Rol.FAMILIAR) {
@@ -107,15 +122,15 @@ fun PerfilScreen(
                 Icono(R.drawable.ic_chevron_right, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
-        HorizontalDivider(Modifier.padding(vertical = Espacio.space2))
-        OutlinedButton(onClick = onCerrarSesion, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+        // salir no borra nada, asi que va en tono neutro (teal suave), no en rojo
+        FilledTonalButton(onClick = onCerrarSesion, modifier = Modifier.fillMaxWidth().padding(top = Espacio.space2).heightIn(min = 48.dp)) {
             Icono(R.drawable.ic_logout, null)
             Text("Cerrar sesión", modifier = Modifier.padding(start = Espacio.space2))
         }
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, backgroundColor = 0xFFF3F5F7)
 @Composable
 private fun PerfilPreview() {
     val sala = Sala("s", "e", "Maternales", TipoSala.MATERNALES, ColorEstrella.ROJO)
@@ -127,7 +142,7 @@ private fun PerfilPreview() {
     }
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, backgroundColor = 0xFFF3F5F7)
 @Composable
 private fun PerfilFamiliaPreview() {
     val sala = Sala("s", "e", "Maternales", TipoSala.MATERNALES, ColorEstrella.ROJO)

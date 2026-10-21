@@ -1,9 +1,28 @@
 package mx.tec.sonrisas.ui.screens.direccion
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import mx.tec.sonrisas.ui.components.BarraAccionesInferior
+import mx.tec.sonrisas.ui.components.CampoTexto
+import mx.tec.sonrisas.ui.components.ProgresoDelgado
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.ui.text.style.TextAlign
+import mx.tec.sonrisas.ui.components.ChipFiltro
+import mx.tec.sonrisas.ui.components.DialogoConfirmar
+import mx.tec.sonrisas.ui.components.EtiquetaSeccion
+import mx.tec.sonrisas.ui.components.GlifoEstrella
+import mx.tec.sonrisas.ui.components.TarjetaBase
+import mx.tec.sonrisas.ui.components.TarjetaTeal
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -11,22 +30,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,7 +44,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import mx.tec.sonrisas.R
@@ -57,7 +66,6 @@ import mx.tec.sonrisas.ui.components.EstrellaSala
 import mx.tec.sonrisas.ui.components.HojaModal
 import mx.tec.sonrisas.ui.components.Icono
 import mx.tec.sonrisas.ui.components.TarjetaSeccion
-import mx.tec.sonrisas.ui.components.TituloSeccion
 import mx.tec.sonrisas.ui.components.formatoHora
 import mx.tec.sonrisas.ui.components.formatoMes
 import mx.tec.sonrisas.ui.components.icono
@@ -72,10 +80,8 @@ import java.time.YearMonth
 @Composable
 private fun ChipsSala(salas: List<Sala>, seleccion: String?, onSala: (String?) -> Unit, conTodas: Boolean = true) {
     LazyRow(horizontalArrangement = Arrangement.spacedBy(Espacio.space2)) {
-        if (conTodas) item { FilterChip(seleccion == null, { onSala(null) }, { Text("Todas") }, Modifier.heightIn(min = 48.dp)) }
-        items(salas, key = { it.id }) { s ->
-            FilterChip(seleccion == s.id, { onSala(s.id) }, { Text(s.nombre) }, Modifier.heightIn(min = 48.dp))
-        }
+        if (conTodas) item { ChipFiltro("Todas", seleccion == null, { onSala(null) }) }
+        items(salas, key = { it.id }) { s -> ChipFiltro(s.nombre, seleccion == s.id, { onSala(s.id) }) }
     }
 }
 
@@ -93,59 +99,72 @@ fun ReporteScreen(
     val salas = datos.salas.associateBy { it.id }
     Scaffold(
         modifier = modifier,
+        containerColor = MaterialTheme.colorScheme.background,
         contentWindowInsets = WindowInsets(0),
         bottomBar = {
-            Surface(color = MaterialTheme.colorScheme.surfaceContainer) {
-                BotonPrincipal("Compartir reporte", onCompartir, Modifier.padding(Espacio.space4))
+            BarraAccionesInferior(relleno = PaddingValues(Espacio.space4)) {
+                BotonPrincipal("Compartir reporte", onCompartir)
             }
         },
     ) { padding ->
         LazyColumn(
             modifier = Modifier.fillMaxSize().padding(padding),
-            contentPadding = PaddingValues(Espacio.space4),
+            contentPadding = PaddingValues(start = Espacio.space4, end = Espacio.space4, top = Espacio.space1, bottom = Espacio.space4),
             verticalArrangement = Arrangement.spacedBy(Espacio.space3),
         ) {
             if (datos.esFundacion) {
                 item {
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(Espacio.space2)) {
                         items(datos.estancias, key = { it.id }) { e ->
-                            FilterChip(datos.estanciaId == e.id, { onEstancia(e.id) }, { Text(e.nombre) }, Modifier.heightIn(min = 48.dp))
+                            ChipFiltro(e.nombre, datos.estanciaId == e.id, { onEstancia(e.id) })
                         }
                     }
                 }
             }
             item { ChipsSala(datos.salas, datos.salaId, onSala) }
+            // mes y cifras del mes en tarjeta teal (patron B)
             item {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = onAnterior) { Icono(R.drawable.ic_chevron_left, "Mes anterior") }
-                    Text(r.mes.atDay(1).formatoMes(), style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
-                    IconButton(onClick = onSiguiente, enabled = datos.puedeAvanzar) { Icono(R.drawable.ic_chevron_right, "Mes siguiente") }
-                }
-            }
-            item {
-                TarjetaSeccion {
-                    Row(horizontalArrangement = Arrangement.spacedBy(Espacio.space4)) {
+                TarjetaTeal {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(onClick = onAnterior) { Icono(R.drawable.ic_chevron_left, "Mes anterior") }
+                        Text(r.mes.atDay(1).formatoMes(), style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
+                        IconButton(
+                            onClick = onSiguiente,
+                            enabled = datos.puedeAvanzar,
+                            colors = IconButtonDefaults.iconButtonColors(contentColor = Color.White, disabledContentColor = Color.White.copy(alpha = 0.35f)),
+                        ) { Icono(R.drawable.ic_chevron_right, "Mes siguiente") }
+                    }
+                    Row(Modifier.padding(top = Espacio.space3), horizontalArrangement = Arrangement.spacedBy(Espacio.space4)) {
                         Column(Modifier.weight(1f)) {
                             Text("${r.promedio} %", style = MaterialTheme.typography.displaySmall)
-                            Text("asistencia promedio", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("asistencia promedio", style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.85f))
                         }
                         Column(Modifier.weight(1f)) {
                             Text("${r.diasHabiles}", style = MaterialTheme.typography.headlineSmall)
-                            Text("días hábiles", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("días hábiles", style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.85f))
+                        }
+                    }
+                    ProgresoDelgado(r.promedio / 100f, Modifier.padding(top = Espacio.space3))
+                }
+            }
+            if (datos.salaId == null && r.salas.isNotEmpty()) {
+                item { EtiquetaSeccion("Por sala") }
+                item {
+                    TarjetaSeccion {
+                        r.salas.forEachIndexed { i, s ->
+                            FilaPorcentaje(s.nombre, "${s.inscritos} niños", s.promedio, salas[s.salaId]?.estrella, primera = i == 0)
                         }
                     }
                 }
             }
-            if (datos.salaId == null && r.salas.isNotEmpty()) {
-                item { TituloSeccion("Por sala") }
-                items(r.salas, key = { "sala-${it.salaId}" }) { s ->
-                    FilaPorcentaje(s.nombre, "${s.inscritos} niños", s.promedio, salas[s.salaId]?.estrella)
-                }
-            }
             if (r.filas.isNotEmpty()) {
-                item { TituloSeccion("Por niño") }
-                items(r.filas, key = { it.ninoId }) { f ->
-                    FilaPorcentaje(f.nombre, "${f.asistidos} de ${f.habiles} días", f.porcentaje, null)
+                item { EtiquetaSeccion("Por niño") }
+                item {
+                    TarjetaSeccion {
+                        r.filas.forEachIndexed { i, f ->
+                            FilaPorcentaje(f.nombre, "${f.asistidos} de ${f.habiles} días", f.porcentaje, null, primera = i == 0)
+                        }
+                    }
                 }
             } else if (datos.esFundacion) {
                 item {
@@ -160,21 +179,26 @@ fun ReporteScreen(
     }
 }
 
+/** renglon con nombre, detalle, porcentaje y una barra delgada; la sala usa su color, el niño teal */
 @Composable
-private fun FilaPorcentaje(titulo: String, detalle: String, porcentaje: Int, estrella: ColorEstrella?) {
-    Column {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Espacio.space3), modifier = Modifier.padding(vertical = Espacio.space2)) {
+private fun FilaPorcentaje(titulo: String, detalle: String, porcentaje: Int, estrella: ColorEstrella?, primera: Boolean) {
+    val esquema = MaterialTheme.colorScheme
+    Column(verticalArrangement = Arrangement.spacedBy(Espacio.space1)) {
+        if (!primera) HorizontalDivider(Modifier.padding(bottom = Espacio.space2), color = esquema.outlineVariant)
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Espacio.space3)) {
             Column(Modifier.weight(1f)) {
                 if (estrella != null) EstrellaSala(titulo, estrella, tamano = 24.dp) else Text(titulo, style = MaterialTheme.typography.bodyLarge)
-                Text(detalle, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(detalle, style = MaterialTheme.typography.bodyMedium, color = esquema.onSurfaceVariant)
             }
             Text("$porcentaje %", style = MaterialTheme.typography.titleMedium)
         }
-        HorizontalDivider()
+        ProgresoDelgado(
+            porcentaje / 100f,
+            color = estrella?.let { SonrisasTheme.colors.estrella(it).glifo } ?: esquema.primary,
+            pista = esquema.surfaceContainer,
+        )
     }
 }
-
-private val oraciones = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences)
 
 @Composable
 fun HorariosScreen(
@@ -192,69 +216,90 @@ fun HorariosScreen(
     modifier: Modifier = Modifier,
 ) {
     var aBorrar by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
+    val esquema = MaterialTheme.colorScheme
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(Espacio.space4),
-        verticalArrangement = Arrangement.spacedBy(Espacio.space2),
+        contentPadding = PaddingValues(start = Espacio.space4, end = Espacio.space4, top = Espacio.space1, bottom = Espacio.space6),
+        verticalArrangement = Arrangement.spacedBy(Espacio.space3),
     ) {
         item { ChipsSala(datos.salas, datos.sala.id, { it?.let(onSala) }, conTodas = false) }
+        // sala elegida en tarjeta teal, como en el mockup de Horarios
         item {
-            Column(Modifier.padding(top = Espacio.space2)) {
-                EstrellaSala("Sala ${datos.sala.nombre}", datos.sala.estrella)
-                Text(
-                    "El horario se configura una vez y las familias lo ven en \"Ahora mismo\".",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
-        item { TituloSeccion("Actividades especiales") }
-        if (datos.especiales.isEmpty()) {
-            item { Text("No hay actividades especiales próximas.", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-        }
-        items(datos.especiales, key = { it.id }) { e ->
-            TarjetaSeccion {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
-                        Text(e.titulo, style = MaterialTheme.typography.titleMedium)
+            TarjetaTeal {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Espacio.space4)) {
+                    GlifoEstrella(datos.sala.estrella, tamano = 48.dp)
+                    Column {
+                        Text("Sala ${datos.sala.nombre}", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
                         Text(
-                            "${e.fecha.relativoA(datos.hoy)}, ${e.inicio.formatoHora()} a ${e.fin.formatoHora()}",
+                            "El horario se configura una vez y las familias lo ven en \"Ahora mismo\".",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = Color.White.copy(alpha = 0.85f),
                         )
                     }
-                    IconButton(onClick = { aBorrar = e.id to true }) { Icono(R.drawable.ic_delete, "Borrar ${e.titulo}") }
+                }
+            }
+        }
+        item { EtiquetaSeccion("Actividades especiales") }
+        item {
+            TarjetaSeccion {
+                if (datos.especiales.isEmpty()) {
+                    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(Espacio.space2)) {
+                        Box(Modifier.size(48.dp).clip(CircleShape).background(esquema.surfaceContainer), contentAlignment = Alignment.Center) {
+                            Icono(R.drawable.ic_event_busy, null, Modifier.size(24.dp), tint = esquema.onSurfaceVariant)
+                        }
+                        Text("No hay actividades especiales próximas.", style = MaterialTheme.typography.bodyLarge, color = esquema.onSurfaceVariant)
+                    }
+                }
+                datos.especiales.forEachIndexed { i, e ->
+                    if (i > 0) HorizontalDivider(color = esquema.outlineVariant)
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text(e.titulo, style = MaterialTheme.typography.titleMedium)
+                            Text(
+                                "${e.fecha.relativoA(datos.hoy)}, ${e.inicio.formatoHora()} a ${e.fin.formatoHora()}",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = esquema.onSurfaceVariant,
+                            )
+                        }
+                        IconButton(onClick = { aBorrar = e.id to true }) { Icono(R.drawable.ic_delete, "Borrar ${e.titulo}", tint = esquema.error) }
+                    }
+                }
+                FilledTonalButton(onClick = onNuevaEspecial, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                    Icono(R.drawable.ic_event, null)
+                    Text("Publicar actividad especial", modifier = Modifier.padding(start = Espacio.space2))
+                }
+            }
+        }
+        item { EtiquetaSeccion("Horario regular") }
+        if (datos.bloques.isEmpty()) {
+            item { EstadoVacio(R.drawable.ic_calendar_month, "Esta sala no tiene horario", mensaje = "Agrega el primer bloque de actividades.") }
+        } else {
+            // todos los bloques en una tarjeta, separados por lineas; lapiz gris y bote en rojo apagado
+            item {
+                TarjetaBase(Modifier.fillMaxWidth()) {
+                    Column {
+                        datos.bloques.forEachIndexed { i, b ->
+                            if (i > 0) HorizontalDivider(color = esquema.outlineVariant)
+                            Row(
+                                Modifier.fillMaxWidth().heightIn(min = 64.dp).padding(start = Espacio.space4, end = Espacio.space1, top = Espacio.space2, bottom = Espacio.space2),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(Espacio.space3),
+                            ) {
+                                Box(Modifier.size(10.dp).clip(CircleShape).background(SonrisasTheme.colors.estrella(datos.sala.estrella).glifo))
+                                Column(Modifier.weight(1f)) {
+                                    Text("${b.inicio.formatoHora()} a ${b.fin.formatoHora()}", style = MaterialTheme.typography.labelLarge, color = esquema.primary)
+                                    Text(b.actividad, style = MaterialTheme.typography.bodyLarge)
+                                }
+                                IconButton(onClick = { onEditarBloque(b) }) { Icono(R.drawable.ic_edit, "Editar ${b.actividad}", tint = esquema.onSurfaceVariant) }
+                                IconButton(onClick = { aBorrar = b.id to false }) { Icono(R.drawable.ic_delete, "Borrar ${b.actividad}", tint = esquema.error) }
+                            }
+                        }
+                    }
                 }
             }
         }
         item {
-            OutlinedButton(onClick = onNuevaEspecial, modifier = Modifier.heightIn(min = 48.dp)) {
-                Icono(R.drawable.ic_event, null)
-                Text("Publicar actividad especial", modifier = Modifier.padding(start = Espacio.space2))
-            }
-        }
-        item { TituloSeccion("Horario regular") }
-        if (datos.bloques.isEmpty()) {
-            item { EstadoVacio(R.drawable.ic_calendar_month, "Esta sala no tiene horario", mensaje = "Agrega el primer bloque de actividades.") }
-        }
-        items(datos.bloques, key = { it.id }) { b ->
-            Row(
-                Modifier.fillMaxWidth().heightIn(min = 56.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(Espacio.space3),
-            ) {
-                Text(
-                    "${b.inicio.formatoHora()} a ${b.fin.formatoHora()}",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Text(b.actividad, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
-                IconButton(onClick = { onEditarBloque(b) }) { Icono(R.drawable.ic_edit, "Editar ${b.actividad}") }
-                IconButton(onClick = { aBorrar = b.id to false }) { Icono(R.drawable.ic_delete, "Borrar ${b.actividad}") }
-            }
-        }
-        item {
-            OutlinedButton(onClick = onNuevoBloque, modifier = Modifier.heightIn(min = 48.dp)) {
+            FilledTonalButton(onClick = onNuevoBloque, modifier = Modifier.heightIn(min = 48.dp)) {
                 Icono(R.drawable.ic_add, null)
                 Text("Agregar bloque", modifier = Modifier.padding(start = Espacio.space2))
             }
@@ -268,28 +313,14 @@ fun HorariosScreen(
         ) {
             CampoHora("Inicio", hoja.inicio, { onCambiarHoja(hoja.copy(inicio = it)) })
             CampoHora("Fin", hoja.fin, { onCambiarHoja(hoja.copy(fin = it)) })
-            OutlinedTextField(
-                value = hoja.actividad,
-                onValueChange = { onCambiarHoja(hoja.copy(actividad = it)) },
-                label = { Text("Actividad") },
-                singleLine = true,
-                keyboardOptions = oraciones,
-                modifier = Modifier.fillMaxWidth(),
-            )
+            CampoTexto(hoja.actividad, { onCambiarHoja(hoja.copy(actividad = it)) }, "Actividad", null)
             hoja.error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium) }
         }
         is HojaHorario.Especial -> HojaModal(
             "Actividad especial", onCerrar, subtitulo = "Reemplaza al horario regular durante esas horas",
             boton = { BotonPrincipal("Publicar actividad", onGuardar, guardando = hoja.guardando) },
         ) {
-            OutlinedTextField(
-                value = hoja.titulo,
-                onValueChange = { onCambiarHoja(hoja.copy(titulo = it)) },
-                label = { Text("Nombre de la actividad") },
-                singleLine = true,
-                keyboardOptions = oraciones,
-                modifier = Modifier.fillMaxWidth(),
-            )
+            CampoTexto(hoja.titulo, { onCambiarHoja(hoja.copy(titulo = it)) }, "Nombre de la actividad", null)
             CampoFecha("Fecha", hoja.fecha, { it?.let { f -> onCambiarHoja(hoja.copy(fecha = f)) } })
             CampoHora("Inicio", hoja.inicio, { onCambiarHoja(hoja.copy(inicio = it)) })
             CampoHora("Fin", hoja.fin, { onCambiarHoja(hoja.copy(fin = it)) })
@@ -299,17 +330,15 @@ fun HorariosScreen(
     }
 
     aBorrar?.let { (id, especial) ->
-        AlertDialog(
-            onDismissRequest = { aBorrar = null },
-            title = { Text(if (especial) "¿Borrar la actividad especial?" else "¿Borrar este bloque?") },
-            text = { Text("Las familias dejarán de verlo en el horario.") },
-            confirmButton = {
-                TextButton(onClick = {
-                    if (especial) onBorrarEspecial(id) else onBorrarBloque(id)
-                    aBorrar = null
-                }) { Text("Borrar") }
+        DialogoConfirmar(
+            titulo = if (especial) "¿Borrar la actividad especial?" else "¿Borrar este bloque?",
+            mensaje = "Las familias dejarán de verlo en el horario.",
+            confirmar = "Borrar",
+            onConfirmar = {
+                if (especial) onBorrarEspecial(id) else onBorrarBloque(id)
+                aBorrar = null
             },
-            dismissButton = { TextButton(onClick = { aBorrar = null }) { Text("Cancelar") } },
+            onCancelar = { aBorrar = null },
         )
     }
 }
@@ -326,14 +355,14 @@ fun ActividadScreen(
     val porDia = filtrados.groupBy { it.cuando.toLocalDate() }
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(Espacio.space4),
+        contentPadding = PaddingValues(start = Espacio.space4, end = Espacio.space4, top = Espacio.space1, bottom = Espacio.space6),
         verticalArrangement = Arrangement.spacedBy(Espacio.space2),
     ) {
         item {
             // con tantas categorias, una sola fila deslizable ocupa menos que varias filas de chips
             LazyRow(horizontalArrangement = Arrangement.spacedBy(Espacio.space2)) {
                 items(FiltroActividad.entries) { f ->
-                    FilterChip(f == filtro, { onFiltro(f) }, { Text(f.etiqueta) }, Modifier.heightIn(min = 48.dp))
+                    ChipFiltro(f.etiqueta, f == filtro, { onFiltro(f) })
                 }
             }
         }
@@ -341,10 +370,16 @@ fun ActividadScreen(
             item { EstadoVacio(R.drawable.ic_history, "Sin registros con este filtro") }
         }
         porDia.forEach { (fecha, registros) ->
-            item(key = "dia-$fecha") {
-                Text(fecha.relativoA(datos.hoy), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = Espacio.space3))
+            item(key = "dia-$fecha") { EtiquetaSeccion(fecha.relativoA(datos.hoy), Modifier.padding(top = Espacio.space2)) }
+            // los registros de cada dia van juntos en una tarjeta
+            item(key = "registros-$fecha") {
+                TarjetaSeccion {
+                    registros.forEachIndexed { i, r ->
+                        if (i > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                        FilaRegistro(r, r.ninoId?.let { datos.ninos[it]?.nombreCompleto })
+                    }
+                }
             }
-            items(registros, key = { it.id }) { r -> FilaRegistro(r, r.ninoId?.let { datos.ninos[it]?.nombreCompleto }) }
         }
     }
 }
@@ -355,7 +390,9 @@ private fun FilaRegistro(r: RegistroActividad, nino: String?) {
         Modifier.fillMaxWidth().padding(vertical = Espacio.space1),
         horizontalArrangement = Arrangement.spacedBy(Espacio.space3),
     ) {
-        Icono(r.accion.icono, null, Modifier.size(24.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Box(Modifier.size(36.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceContainer), contentAlignment = Alignment.Center) {
+            Icono(r.accion.icono, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
         Column(Modifier.weight(1f)) {
             Text(r.detalle, style = MaterialTheme.typography.bodyLarge)
             Text(
