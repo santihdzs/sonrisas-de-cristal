@@ -48,7 +48,7 @@ class SeguridadTest {
         client.bloque(db)
     }
 
-    private suspend fun HttpClient.intentar(usuario: String, contrasena: String = "demo1234", ip: String? = null): HttpResponse =
+    private suspend fun HttpClient.intentar(usuario: String, contrasena: String = "demo", ip: String? = null): HttpResponse =
         post("/auth/login") {
             contentType(ContentType.Application.Json)
             if (ip != null) header("X-Forwarded-For", ip)
@@ -109,7 +109,7 @@ class SeguridadTest {
         assertTrue(t !in tokensGuardados)
         assertTrue(Sesiones.huella(t) in tokensGuardados)
         val claves = db.leer { Conexion(it).consultar("SELECT hash FROM claves") { r -> r.getString(1) } }
-        assertTrue(claves.all { it.startsWith("pbkdf2$") && !it.contains("demo1234") })
+        assertTrue(claves.all { it.startsWith("pbkdf2$") && !it.contains("demo") })
     }
 
     @Test
@@ -212,7 +212,7 @@ class SeguridadTest {
         assertTrue(fallidos.all { it == HttpStatusCode.Unauthorized })
         intentar("familia", "incorrecta", ip = "198.51.100.6")
         // aun con la contrasena correcta, la cuenta esta bloqueada un rato
-        assertEquals(HttpStatusCode.TooManyRequests, intentar("familia", "demo1234", ip = "198.51.100.7").status)
+        assertEquals(HttpStatusCode.TooManyRequests, intentar("familia", "demo", ip = "198.51.100.7").status)
     }
 
     @Test

@@ -3,4 +3,6 @@
     <files-path name="material" path="material/" />
     <cache-path name="bitacoras" path="bitacoras/" />
     <cache-path name="material-remoto" path="material/" />
+    <!-- la camara escribe aqui la foto de la actividad; nadie mas la lee -->
+    <cache-path name="camara" path="camara/" />
 </paths>

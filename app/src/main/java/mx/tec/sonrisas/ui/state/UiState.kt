@@ -26,13 +26,18 @@ const val MENSAJE_ERROR_CARGA = "No pudimos cargar la información. Revisa tu co
 
 /** convierte un flow en UiState; cambiar el valor de reintentos vuelve a suscribirse */
 @OptIn(ExperimentalCoroutinesApi::class)
-fun <T> ViewModel.comoUiState(reintentos: MutableStateFlow<Int>, fuente: () -> Flow<T>): StateFlow<UiState<T>> =
-    reintentos.flatMapLatest {
+fun <T> ViewModel.comoUiState(reintentos: MutableStateFlow<Int>, fuente: () -> Flow<T>): StateFlow<UiState<T>> {
+    lateinit var estado: StateFlow<UiState<T>>
+    estado = reintentos.flatMapLatest {
         fuente()
             .map<T, UiState<T>> { UiState.Exito(it) }
-            .onStart { emit(UiState.Cargando) }
+            // al volver de la camara o de un selector de archivos se conservan los datos: si la pantalla pasara
+            // por "cargando", se perderia la foto o el archivo que regreso
+            .onStart { if (estado.value !is UiState.Exito) emit(UiState.Cargando) }
             .catch { emit(UiState.Error(MENSAJE_ERROR_CARGA)) }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UiState.Cargando)
+    return estado
+}
 
 /** carga de una sola vez, como llenar un formulario para editar: si falla la red se reintenta sola en vez de dejarlo vacio */
 suspend fun <T> conReintentos(bloque: suspend () -> T): T {

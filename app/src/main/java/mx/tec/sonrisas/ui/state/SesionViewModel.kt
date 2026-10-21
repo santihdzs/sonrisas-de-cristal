@@ -6,10 +6,13 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -24,7 +27,8 @@ data class ContextoBloqueo(val titulo: String, val estrella: ColorEstrella?, val
 
 class SesionViewModel(
     private val sesionRepository: SesionRepository,
-    estanciasRepository: EstanciasRepository,
+    // se pide en cada sesion: segun la cuenta, los datos vienen del servidor o de la demo
+    estanciasRepository: () -> EstanciasRepository,
 ) : ViewModel() {
 
     val estado: StateFlow<SesionEstado> = sesionRepository.estado
@@ -36,15 +40,19 @@ class SesionViewModel(
         private set
 
     /** en la pantalla de bloqueo se muestra la sala (o la estancia) de quien tiene la sesion */
+    @OptIn(ExperimentalCoroutinesApi::class)
     val contextoBloqueo: StateFlow<ContextoBloqueo?> =
-        combine(estado, estanciasRepository.salas(), estanciasRepository.estancias()) { e, salas, estancias ->
-            val u = (e as? SesionEstado.Activa)?.sesion?.usuario ?: return@combine null
-            val sala = salas.firstOrNull { it.id == u.salaId }
-            ContextoBloqueo(
-                titulo = sala?.let { "Sala ${it.nombre}" } ?: estancias.firstOrNull { it.id == u.estanciaId }?.nombre ?: "Sonrisas de Cristal",
-                estrella = sala?.estrella,
-                nombre = u.nombre,
-            )
+        estado.flatMapLatest { e ->
+            val u = (e as? SesionEstado.Activa)?.sesion?.usuario ?: return@flatMapLatest flowOf(null)
+            val repo = estanciasRepository()
+            combine(repo.salas(), repo.estancias()) { salas, estancias ->
+                val sala = salas.firstOrNull { it.id == u.salaId }
+                ContextoBloqueo(
+                    titulo = sala?.let { "Sala ${it.nombre}" } ?: estancias.firstOrNull { it.id == u.estanciaId }?.nombre ?: "Sonrisas de Cristal",
+                    estrella = sala?.estrella,
+                    nombre = u.nombre,
+                )
+            }
         }.reintentando().stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
     // los viewmodels de cada sesion viven aqui y no en un remember, para que sobrevivan a la rotacion

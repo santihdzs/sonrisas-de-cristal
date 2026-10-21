@@ -74,7 +74,8 @@ fun Application.modulo(db: Db, proxyConfiable: Boolean = false, intentosLogin: I
     if (proxyConfiable) install(XForwardedHeaders) { useLastProxy() }
     // P1: cabeceras de seguridad en cada respuesta (Seguridad.kt)
     install(CabecerasSeguras)
-    install(CallLogging)
+    // sin colores: jansi no carga en el /tmp sin exec del contenedor de solo lectura
+    install(CallLogging) { disableDefaultColors() }
     install(ContentNegotiation) { json(JsonApi) }
     install(StatusPages) {
         exception<AccesoDenegado> { call, e -> call.respond(HttpStatusCode.Forbidden, Error(e.message ?: "No tienes permiso para hacer esto.")) }

@@ -2,6 +2,17 @@ package mx.tec.sonrisas.ui.screens.sala
 
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
+import java.io.File
+import mx.tec.sonrisas.ui.components.prepararFotoCamara
+import mx.tec.sonrisas.ui.components.destinoCamara
+import mx.tec.sonrisas.data.ArchivoEntrada
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.rememberCoroutineScope
+import android.content.ActivityNotFoundException
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -218,6 +229,17 @@ fun HojaObjetoForm(
             val selector = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
                 if (uri != null) onCambiar(hoja.copy(foto = context.archivoDesde(uri), vistaPrevia = uri.toString()))
             }
+            val alcance = rememberCoroutineScope()
+            var destino by rememberSaveable { mutableStateOf<String?>(null) }
+            val camara = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { tomada ->
+                val archivo = destino?.let(::File) ?: return@rememberLauncherForActivityResult
+                if (!tomada || archivo.length() == 0L) return@rememberLauncherForActivityResult
+                alcance.launch {
+                    if (prepararFotoCamara(archivo)) {
+                        onCambiar(hoja.copy(foto = ArchivoEntrada(archivo.name, "image/jpeg", archivo.length()) { archivo.inputStream() }, vistaPrevia = archivo.path))
+                    }
+                }
+            }
             val e = if (hoja.intento) hoja.errores(hoy) else emptyMap()
             HojaModal(
                 titulo = "Publicar objeto perdido",
@@ -235,11 +257,23 @@ fun HojaObjetoForm(
                     }
                 } else {
                     FilledTonalButton(
-                        onClick = { selector.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+                        onClick = {
+                            val (archivo, uri) = context.destinoCamara()
+                            destino = archivo.path
+                            // sin app de camara queda la galeria
+                            try { camara.launch(uri) } catch (_: ActivityNotFoundException) { }
+                        },
                         modifier = Modifier.heightIn(min = 48.dp),
                     ) {
                         Icono(R.drawable.ic_add_a_photo, null)
-                        Text("Agregar foto del objeto", modifier = Modifier.padding(start = Espacio.space2))
+                        Text("Tomar foto del objeto", modifier = Modifier.padding(start = Espacio.space2))
+                    }
+                    TextButton(
+                        onClick = { selector.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
+                        modifier = Modifier.heightIn(min = 48.dp),
+                    ) {
+                        Icono(R.drawable.ic_photo_library, null)
+                        Text("Elegir de la galería", modifier = Modifier.padding(start = Espacio.space2))
                     }
                 }
                 Text(

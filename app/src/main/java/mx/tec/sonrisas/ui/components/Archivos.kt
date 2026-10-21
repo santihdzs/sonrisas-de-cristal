@@ -6,6 +6,8 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Matrix
+import android.media.ExifInterface
 import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.core.content.FileProvider
@@ -31,6 +33,7 @@ import mx.tec.sonrisas.R
 import mx.tec.sonrisas.data.ArchivoEntrada
 import java.io.File
 import java.io.InputStream
+import java.util.UUID
 
 /** nombre, tipo y tamano que reporta el proveedor; el contenido se lee hasta guardarlo */
 fun Context.archivoDesde(uri: Uri): ArchivoEntrada {
@@ -90,6 +93,29 @@ private fun decodificar(abrir: () -> InputStream?): Bitmap? {
     var muestra = 1
     while (maxOf(limites.outWidth, limites.outHeight) / (muestra * 2) >= LADO_MAXIMO) muestra *= 2
     return abrir()?.use { BitmapFactory.decodeStream(it, null, BitmapFactory.Options().apply { inSampleSize = muestra }) }
+}
+
+/** donde la camara deja la foto: cache privada de la app, nunca la galeria. devuelve el archivo y la uri para la camara */
+fun Context.destinoCamara(): Pair<File, Uri> {
+    val archivo = File(cacheDir, "camara/${UUID.randomUUID()}.jpg").also { it.parentFile?.mkdirs() }
+    return archivo to uriCompartida(archivo.path)
+}
+
+/** reduce la foto de la camara y la endereza segun su exif, para que no salga de lado ni pese varios MB */
+suspend fun prepararFotoCamara(archivo: File): Boolean = withContext(Dispatchers.IO) {
+    runCatching {
+        val giro = when (ExifInterface(archivo.path).getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)) {
+            ExifInterface.ORIENTATION_ROTATE_90 -> 90f
+            ExifInterface.ORIENTATION_ROTATE_180 -> 180f
+            ExifInterface.ORIENTATION_ROTATE_270 -> 270f
+            else -> 0f
+        }
+        val original = decodificar { archivo.inputStream() } ?: return@runCatching false
+        val derecha = if (giro == 0f) original
+        else Bitmap.createBitmap(original, 0, 0, original.width, original.height, Matrix().apply { postRotate(giro) }, true)
+        archivo.outputStream().use { derecha.compress(Bitmap.CompressFormat.JPEG, 85, it) }
+        true
+    }.getOrDefault(false)
 }
 
 /** muestra una imagen guardada en la app (ruta) o recien elegida (content://) */

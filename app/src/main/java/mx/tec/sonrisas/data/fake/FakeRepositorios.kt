@@ -1,6 +1,7 @@
 package mx.tec.sonrisas.data.fake
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -11,8 +12,11 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import mx.tec.sonrisas.data.AccesoDenegado
 import mx.tec.sonrisas.data.ActividadRepository
+import mx.tec.sonrisas.data.AlmacenArchivos
+import mx.tec.sonrisas.data.ArchivoEntrada
 import mx.tec.sonrisas.data.AvisosRepository
 import mx.tec.sonrisas.data.EstanciasRepository
 import mx.tec.sonrisas.data.FotosRepository
@@ -493,6 +497,7 @@ class FakeIncidentesRepository(
 class FakeFotosRepository(
     private val almacen: AlmacenMemoria,
     private val sesion: FakeSesionRepository,
+    private val archivos: AlmacenArchivos,
     private val reloj: Reloj,
 ) : FotosRepository {
 
@@ -525,7 +530,7 @@ class FakeFotosRepository(
         almacen.registrar(u, reloj.ahora(), AccionRegistro.FOTO_CONSULTADA, "Consultó la foto \"${f.descripcion}\"", ninoPropio?.id)
     }
 
-    override suspend fun agregar(foto: Foto) {
+    override suspend fun agregar(foto: Foto, imagen: ArchivoEntrada) {
         latencia()
         val u = sesion.usuarioActual()
         if (u?.rol != Rol.EDUCADORA || foto.salaId != u.salaId) throw AccesoDenegado()
@@ -534,7 +539,8 @@ class FakeFotosRepository(
         // se valida aqui y no solo en la pantalla (RF-16)
         val sinPermiso = foto.ninoIds.filter { deSala[it]?.puedeAparecerEn(foto.uso) != true }
         if (sinPermiso.isNotEmpty()) throw AccesoDenegado("Hay niños sin autorización de imagen para este uso.")
-        almacen.fotos.update { listOf(foto) + it }
+        val ruta = withContext(Dispatchers.IO) { archivos.guardar("fotos", foto.id, imagen) }
+        almacen.fotos.update { listOf(foto.copy(archivo = ruta)) + it }
         almacen.registrar(u, reloj.ahora(), AccionRegistro.CAPTURA, "Agregó una foto: ${foto.descripcion}")
     }
 
@@ -552,6 +558,7 @@ class FakeFotosRepository(
         if (!puede) throw AccesoDenegado()
         // se borra para todos, no solo para quien lo pidio (RF-10)
         almacen.fotos.update { lista -> lista.filterNot { it.id == id } }
+        f.archivo?.let { archivos.borrar(it) }
         val ninoId = f.ninoIds.firstOrNull { it in visibles }
         almacen.registrar(u, reloj.ahora(), AccionRegistro.BORRADO, "Borró la foto \"${f.descripcion}\" para todas las familias", ninoId,
             estanciaId = almacen.salas.value.firstOrNull { it.id == f.salaId }?.estanciaId)

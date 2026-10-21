@@ -13,12 +13,12 @@ JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home" ./gradle
 
 Se necesita el JDK que trae Android Studio (Gradle 9.8 no corre con Java 11). Las pruebas unitarias cubren el diseño de la bitácora imprimible.
 
-La app se conecta al servidor de `backend/` (ver [backend/README.md](backend/README.md) para levantarlo con `docker compose up -d`). La dirección se elige en la opción "Servidor" del inicio de sesión. Si no hay servidor, la misma opción activa los datos de prueba en memoria, generados a partir de la fecha del teléfono. Todas las cuentas de prueba usan la contraseña `demo1234`.
+La app se conecta al servidor de `backend/` (ver [backend/README.md](backend/README.md) para levantarlo con `docker compose up -d`). La dirección se elige en la opción "Servidor" del inicio de sesión (en la versión release, manteniendo presionado el logo). Las cuentas de prueba entran siempre, haya o no servidor: si el servidor no contesta o no tiene esa cuenta, la app usa los datos de prueba en memoria, generados a partir de la fecha del teléfono. Todas las cuentas de prueba usan la contraseña `demo`.
 
 ## Arquitectura
 
 - `shared/`: módulo que comparten la app y el servidor. Modelos y reglas puras (`domain/`: resúmenes, validaciones, reporte de asistencia, quién ve a qué niño), los cuerpos del API y el generador de datos de prueba.
-- `data/`: interfaces de repositorios y `AppContainer`, que elige entre `data/remoto/` (el servidor) y `data/fake/` (en memoria, respaldo para la demo).
+- `data/`: interfaces de repositorios y `AppContainer`, que elige entre `data/remoto/` (el servidor) y `data/fake/` (los datos de prueba en memoria). `SesionConDemo` decide al iniciar sesión cuál se usa.
 - `backend/`: servidor Ktor y PostgreSQL.
 - `bitacora/`: la bitácora imprimible. `ContenidoBitacora` arma el texto de cada fila, `DisenoBitacora` calcula las páginas sin depender de Android y `PdfBitacora` las dibuja con `PdfDocument`.
 - `ui/`: pantallas por rol, `AppViewModelProvider` y navegación. Cada pantalla recibe un `UiState` (cargando, éxito o error).
@@ -29,7 +29,7 @@ Toda regla de privacidad (qué niño, sala o conversación puede ver cada quien)
 
 **Educadora** (pestañas Sala, Fotos, Mensajes, Avisos)
 - Lista de su sala, llegada y salida con personas autorizadas, bitácora del día y registro grupal.
-- Incidentes, fotos con autorización de imagen, avisos.
+- Incidentes, fotos tomadas con la cámara y con autorización de imagen, avisos.
 - Desde la sala: material de clase, objetos perdidos e impresión de la bitácora de toda la sala.
 - Chat de la sala y mensajes directos con las familias de su sala.
 
@@ -100,10 +100,11 @@ Puntos pendientes del catálogo que se resolvieron:
 - **Chats.** Solo participan personas con acceso a la app. La dirección está en el chat de cada sala de su estancia, pero no inicia mensajes directos (el requerimiento solo define familia y educadora). La pertenencia se recalcula siempre: si un niño cambia de sala o alguien pierde el acceso, la conversación deja de mostrarse. Los mensajes no se copian al registro de actividad para no exponer su contenido.
 - **Objetos perdidos.** La familia ve que un objeto está reclamado, pero solo ve el nombre de quien lo reclamó si fue ella. Los entregados quedan en el filtro "Entregados".
 - **Material de clase.** PDF, imágenes y documentos de Word, Excel y PowerPoint, de hasta 10 MB. La educadora edita o borra lo que ella subió; la dirección puede corregir cualquier material de su estancia.
-- **Archivos.** Con servidor, el material y las fotos de objetos se guardan en la base y la app los baja una vez a su caché privada; al cerrar sesión se borran del teléfono. Sin servidor se copian al almacenamiento privado de la app y, como los datos viven en memoria, al abrir la app se borran los de la ejecución anterior. Los PDF temporales de la bitácora se borran al abrir la app.
+- **Archivos.** Con servidor, el material, las fotos de actividades y las de objetos se guardan en la base y la app los baja una vez a su caché privada; al cerrar sesión se borran del teléfono. Sin servidor se copian al almacenamiento privado de la app y, como los datos viven en memoria, al abrir la app se borran los de la ejecución anterior. Los PDF temporales de la bitácora se borran al abrir la app.
 - **Sesión.** El teléfono guarda un token de 30 días, así que la sesión no se cierra al salir de la app. En lugar de JWT se usan tokens opacos guardados en la base: cerrar sesión o retirar el acceso los invalida de inmediato.
 - **Actualización.** Las pantallas se vuelven a pedir cada 15 segundos (el chat cada 3) y en cuanto el teléfono guarda algo. No hay notificaciones push.
-- **Datos de prueba sin servidor.** Se conservan como respaldo para la demo; se activan desde la opción "Servidor" del inicio de sesión y la app lo indica ahí mismo.
+- **Cuentas de prueba siempre disponibles.** Al iniciar sesión se intenta primero el servidor; si no contesta o no conoce la cuenta, y el usuario y la contraseña son de los datos de prueba, la sesión sigue con los datos en memoria. La app no muestra la diferencia. Una cuenta real con el servidor caído ve "No pudimos conectar con el servidor". El código de la demo está en `data/fake/`, `SesionConDemo` y la parte marcada `DEMO` de `AppContainer`.
+- **Fotos con la cámara.** La foto se toma con la app de cámara del teléfono y se guarda directo en el almacenamiento privado de la app, sin pasar por la galería. Se reduce y se endereza antes de guardarla. Con servidor, la imagen se guarda en la base y solo la descarga quien puede ver esa foto. Las fotos de los datos de prueba son ilustraciones por tema.
 - **Bitácora en papel.** La semana de un niño ocupa dos hojas, igual que el formato oficial; al imprimir una sala, cada niño empieza en su propia hoja. El texto nunca baja de 7 pt: una celda que no cabe en cuatro renglones deja "sigue en Observaciones, nota N" y el texto completo pasa a una hoja de observaciones al final.
 - **Accidentes y salud.** Golpes, caídas, mordidas, rasguños y "otro" van en "Accidentes"; reacción alérgica, fiebre y malestar van en "Salud".
 - **Salida.** La asistencia ahora guarda qué persona del personal entregó al niño, porque el formato oficial lo pide.

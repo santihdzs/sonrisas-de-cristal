@@ -10,14 +10,19 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
+import io.ktor.http.isSuccess
 import io.ktor.server.testing.testApplication
 import kotlinx.coroutines.runBlocking
+import mx.tec.sonrisas.data.Id
 import mx.tec.sonrisas.data.JsonApi
 import mx.tec.sonrisas.data.Login
 import mx.tec.sonrisas.data.RespuestaLogin
+import mx.tec.sonrisas.domain.Foto
 import mx.tec.sonrisas.domain.Nino
 import mx.tec.sonrisas.domain.ReporteAsistencia
+import mx.tec.sonrisas.domain.UsoFoto
 import mx.tec.sonrisas.domain.Usuario
+import java.time.LocalDateTime
 import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -33,7 +38,7 @@ class ServidorTest {
         client.bloque()
     }
 
-    private suspend fun HttpClient.intentar(usuario: String, contrasena: String = "demo1234"): HttpResponse = post("/auth/login") {
+    private suspend fun HttpClient.intentar(usuario: String, contrasena: String = "demo"): HttpResponse = post("/auth/login") {
         contentType(ContentType.Application.Json)
         setBody(JsonApi.encodeToString(Login.serializer(), Login(usuario, contrasena)))
     }
@@ -96,6 +101,20 @@ class ServidorTest {
         // "rutina" es material de Lactantes: Paola solo tiene a Diego en Maternales, Laura tiene a Mateo en Lactantes
         assertEquals(HttpStatusCode.NotFound, get("/archivos/demo-rutina") { bearerAuth(token("familia.paola")) }.status)
         assertEquals(HttpStatusCode.OK, get("/archivos/demo-rutina") { bearerAuth(token("familia")) }.status)
+    }
+
+    @Test
+    fun laImagenDeUnaFotoSoloLaDescargaQuienVeLaFoto() = prueba {
+        val educadora = token("educadora")
+        val sofia = leer<List<Nino>>("/ninos", educadora).first { it.nombre == "Sofía" }
+        val subida = post("/fotos/imagen?sala=${sofia.salaId}") { bearerAuth(educadora); contentType(ContentType.Image.JPEG); setBody(byteArrayOf(1, 2, 3)) }
+        val archivo = JsonApi.decodeFromString(Id.serializer(), subida.bodyAsText()).id
+        val foto = Foto("f-camara", sofia.salaId, LocalDateTime.of(2027, 3, 1, 11, 0), "Pintura", listOf(sofia.id), UsoFoto.INTERNA, null, archivo)
+        val guardada = post("/fotos") { bearerAuth(educadora); contentType(ContentType.Application.Json); setBody(JsonApi.encodeToString(Foto.serializer(), foto)) }
+        assertTrue(guardada.status.isSuccess())
+        // Laura es mamá de Sofía; Paola tiene a Diego en la misma sala, pero Diego no sale en la foto
+        assertEquals(HttpStatusCode.OK, get("/archivos/$archivo") { bearerAuth(token("familia")) }.status)
+        assertEquals(HttpStatusCode.NotFound, get("/archivos/$archivo") { bearerAuth(token("familia.paola")) }.status)
     }
 
     @Test

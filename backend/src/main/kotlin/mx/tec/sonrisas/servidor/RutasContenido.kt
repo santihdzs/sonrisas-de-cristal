@@ -24,6 +24,7 @@ import mx.tec.sonrisas.data.AccesoDenegado
 import mx.tec.sonrisas.data.ArchivoMuyGrande
 import mx.tec.sonrisas.data.EdicionMaterial
 import mx.tec.sonrisas.data.Error
+import mx.tec.sonrisas.data.Id
 import mx.tec.sonrisas.data.Ids
 import mx.tec.sonrisas.data.LIMITE_BYTES
 import mx.tec.sonrisas.data.NuevoAviso
@@ -111,11 +112,27 @@ fun Route.rutasContenido(db: Db) {
         }
     }
 
+    // la imagen de la camara se sube primero; la app manda despues la foto con el id que se devuelve aqui
+    post("/fotos/imagen") {
+        val salaId = parametro("sala")
+        val tipo = tipoArchivo()
+        val imagen = leerArchivo() ?: throw IllegalArgumentException("Falta la foto.")
+        escribe(db) {
+            if (u.rol != Rol.EDUCADORA || salaId != u.salaId) throw AccesoDenegado()
+            if (!tipo.startsWith("image/")) throw IllegalArgumentException("La foto debe ser una imagen.")
+            Id(nuevoId().also { guardarArchivo(it, salaId, tipo, imagen) })
+        }
+    }
+
     post("/fotos") {
         val foto = call.receive<Foto>()
         escribe(db) {
             if (u.rol != Rol.EDUCADORA || foto.salaId != u.salaId) throw AccesoDenegado()
             if (foto.ninoIds.isEmpty()) throw IllegalArgumentException("Etiqueta al menos a un niño.")
+            // la imagen debe ser una que se subio para esta sala
+            if (foto.archivo != null && consultar("SELECT sala_id FROM archivos WHERE id = ?", foto.archivo) { it.getString(1) }.firstOrNull() != u.salaId) {
+                throw AccesoDenegado()
+            }
             if (Tablas.fotos.porId(foto.id)?.let { it.salaId != u.salaId } == true) throw AccesoDenegado()
             val deSala = ninosVisibles().associateBy { it.id }
             // se valida aqui y no solo en la pantalla (RF-16)
@@ -139,8 +156,9 @@ fun Route.rutasContenido(db: Db) {
                 Rol.FUNDACION -> false
             }
             if (!puede) throw AccesoDenegado()
-            // se borra para todos, no solo para quien lo pidio (RF-10)
+            // se borra para todos, no solo para quien lo pidio (RF-10), y la imagen tambien sale de la base
             Tablas.fotos.borrar(f.id)
+            f.archivo?.let { ejecutar("DELETE FROM archivos WHERE id = ?", it) }
             registrar(
                 AccionRegistro.BORRADO, "Borró la foto \"${f.descripcion}\" para todas las familias",
                 f.ninoIds.firstOrNull { it in visibles }, estanciaId = sala?.estanciaId,
@@ -312,7 +330,8 @@ fun Route.rutasContenido(db: Db) {
         }
     }
 
-    // archivos de material y fotos de objetos; solo para quien puede ver esa sala
+    // archivos de material, fotos de objetos y fotos de actividades; solo para quien puede ver esa sala.
+    // la imagen de una foto de actividad, ademas, solo para quien puede ver esa foto (RF-09)
 
     get("/archivos/{id}") {
         val u = call.principal<Usuario>()!!
@@ -320,7 +339,11 @@ fun Route.rutasContenido(db: Db) {
         val archivo = db.leer { con ->
             val ctx = Ctx(con, u)
             ctx.consultar("SELECT sala_id, tipo, bytes FROM archivos WHERE id = ?", id) { Triple(it.getString(1), it.getString(2), it.getBytes(3)) }
-                .firstOrNull()?.takeIf { it.first in ctx.salasVisibles() }
+                .firstOrNull()?.takeIf { (sala, _, _) ->
+                    sala in ctx.salasVisibles() && with(ctx) {
+                        Tablas.fotos.donde("sala_id = ?", sala).none { it.archivo == id } || fotosVisibles().any { it.archivo == id }
+                    }
+                }
         }
         if (archivo == null) {
             call.respond(HttpStatusCode.NotFound, Error("No encontrado."))

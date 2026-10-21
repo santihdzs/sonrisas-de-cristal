@@ -94,7 +94,7 @@ interface FotosRepository {
     fun fotosDe(ninoId: String): Flow<List<Foto>>
     fun foto(id: String): Flow<Foto?>
     suspend fun registrarConsulta(id: String)
-    suspend fun agregar(foto: Foto)
+    suspend fun agregar(foto: Foto, imagen: ArchivoEntrada)
     suspend fun borrar(id: String)
 }
 

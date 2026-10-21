@@ -44,7 +44,10 @@ import mx.tec.sonrisas.ui.state.SesionViewModel
 
 object AppViewModelProvider {
     val Factory: ViewModelProvider.Factory = viewModelFactory {
-        initializer { SesionViewModel(contenedor().sesionRepository, contenedor().estanciasRepository) }
+        initializer {
+            val c = contenedor()
+            SesionViewModel(c.sesionRepository) { c.estanciasRepository }
+        }
         initializer { LoginViewModel(contenedor().sesionRepository) }
         initializer {
             val c = contenedor()

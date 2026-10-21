@@ -1,6 +1,17 @@
 package mx.tec.sonrisas.ui.screens.fotos
 
 import androidx.compose.foundation.BorderStroke
+import java.io.File
+import mx.tec.sonrisas.ui.components.prepararFotoCamara
+import mx.tec.sonrisas.ui.components.destinoCamara
+import mx.tec.sonrisas.ui.components.ImagenArchivo
+import kotlinx.coroutines.launch
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.compose.rememberLauncherForActivityResult
+import android.content.ActivityNotFoundException
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -142,12 +153,7 @@ fun GaleriaFotos(
                     // cada foto es una tarjeta blanca: imagen arriba y descripcion abajo
                     TarjetaBase(onClick = { onFoto(foto) }, forma = RoundedCornerShape(Radio.r20)) {
                         Column {
-                            FotoActividad(
-                                foto.tema,
-                                datos.salas[foto.salaId]?.estrella ?: ColorEstrella.AZUL,
-                                Modifier.fillMaxWidth().aspectRatio(1f),
-                                descripcion = foto.descripcion,
-                            )
+                            ImagenFoto(foto, datos.salas[foto.salaId]?.estrella ?: ColorEstrella.AZUL, Modifier.fillMaxWidth().aspectRatio(1f))
                             Text(
                                 foto.descripcion,
                                 style = MaterialTheme.typography.labelMedium,
@@ -183,38 +189,50 @@ fun AgregarFotoScreen(
             .padding(Espacio.space4),
         verticalArrangement = Arrangement.spacedBy(Espacio.space3),
     ) {
-        EtiquetaSeccion("Elige la foto")
-        // texto pendiente del equipo (ver CLAUDE.md): no se cambia sin preguntar
+        EtiquetaSeccion("Toma la foto")
+        val context = LocalContext.current
+        val alcance = rememberCoroutineScope()
+        // ruta donde la camara deja la foto; sobrevive a girar la pantalla mientras la camara esta abierta
+        var destino by rememberSaveable { mutableStateOf<String?>(null) }
+        var avisoCamara by remember { mutableStateOf<String?>(null) }
+        val camara = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { tomada ->
+            val ruta = destino ?: return@rememberLauncherForActivityResult
+            val archivo = File(ruta)
+            if (!tomada || !archivo.exists() || archivo.length() == 0L) {
+                archivo.delete()
+                return@rememberLauncherForActivityResult
+            }
+            alcance.launch {
+                if (prepararFotoCamara(archivo)) {
+                    form.imagen?.let { anterior -> if (anterior != ruta) File(anterior).delete() }
+                    onCambiar(form.copy(imagen = ruta))
+                } else {
+                    avisoCamara = "No pudimos leer la foto. Tómala de nuevo."
+                }
+            }
+        }
+        val tomarFoto = {
+            avisoCamara = null
+            val (archivo, uri) = context.destinoCamara()
+            destino = archivo.path
+            try {
+                camara.launch(uri)
+            } catch (e: ActivityNotFoundException) {
+                avisoCamara = "Este dispositivo no tiene una app de cámara."
+            }
+        }
         Text(
-            "En la versión final la cámara vive dentro de la app y la foto no pasa por la galería del teléfono. En esta demostración elige una imagen de ejemplo.",
+            "La foto se guarda solo en la app; no pasa por la galería del teléfono.",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         TarjetaSeccion {
-        FlowRow(
-            Modifier.selectableGroup(),
-            horizontalArrangement = Arrangement.spacedBy(Espacio.space2),
-            verticalArrangement = Arrangement.spacedBy(Espacio.space2),
-            maxItemsInEachRow = 3,
-        ) {
-            TemaFoto.entries.forEach { tema ->
-                val activo = form.tema == tema
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .clip(MaterialTheme.shapes.medium)
-                        .selectable(activo, role = Role.RadioButton) { onCambiar(form.copy(tema = tema)) }
-                        .then(
-                            if (activo) Modifier.border(BorderStroke(3.dp, MaterialTheme.colorScheme.primary), MaterialTheme.shapes.medium)
-                            else Modifier,
-                        ),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    FotoActividad(tema, datos.sala.estrella, Modifier.fillMaxWidth().aspectRatio(1f))
-                    Text(tema.etiqueta, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(vertical = Espacio.space1))
-                }
-            }
+        form.imagen?.let { ImagenArchivo(it, "Foto tomada", Modifier.fillMaxWidth().aspectRatio(4f / 3f)) }
+        FilledTonalButton(onClick = tomarFoto, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+            Icono(R.drawable.ic_add_a_photo, null)
+            Text(if (form.imagen == null) "Tomar foto" else "Tomar otra", modifier = Modifier.padding(start = Espacio.space2))
         }
+        avisoCamara?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error) }
         CampoTexto(
             valor = form.descripcion,
             onCambio = { onCambiar(form.copy(descripcion = it)) },
@@ -277,6 +295,14 @@ fun AgregarFotoScreen(
     }
 }
 
+/** la foto tomada con la camara; las de los datos de prueba son ilustraciones por tema */
+@Composable
+private fun ImagenFoto(foto: Foto, estrella: ColorEstrella, modifier: Modifier, tamanoIcono: Dp = 40.dp) {
+    val archivo = foto.archivo
+    if (archivo != null) ImagenArchivo(archivo, foto.descripcion, modifier)
+    else FotoActividad(foto.tema ?: TemaFoto.PINTURA, estrella, modifier, tamanoIcono, foto.descripcion)
+}
+
 @Composable
 private fun NinoEtiquetable(n: Nino, estrella: ColorEstrella, marcado: Boolean, permitido: Boolean, onClick: () -> Unit) {
     val esquema = MaterialTheme.colorScheme
@@ -337,10 +363,10 @@ fun FotoDetalleScreen(
             .padding(Espacio.space4),
         verticalArrangement = Arrangement.spacedBy(Espacio.space3),
     ) {
-        FotoActividad(
-            foto.tema, datos.sala?.estrella ?: ColorEstrella.AZUL,
+        ImagenFoto(
+            foto, datos.sala?.estrella ?: ColorEstrella.AZUL,
             Modifier.fillMaxWidth().aspectRatio(4f / 3f).clip(RoundedCornerShape(Radio.tarjeta)),
-            tamanoIcono = 96.dp, descripcion = foto.descripcion,
+            tamanoIcono = 96.dp,
         )
         TarjetaSeccion {
             Text(foto.descripcion, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
@@ -424,7 +450,7 @@ private fun AgregarFotoPreview() {
     SonrisasTheme {
         AgregarFotoScreen(
             AgregarFotoDatos(salaEjemplo, listOf(sofia, diego)),
-            AgregarFotoForm(tema = TemaFoto.MUSICA, etiquetados = setOf("1")),
+            AgregarFotoForm(descripcion = "Clase de música", etiquetados = setOf("1")),
             {}, {}, {}, {},
         )
     }

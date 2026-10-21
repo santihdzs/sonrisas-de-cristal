@@ -29,7 +29,7 @@ Sin Docker (usa H2, una base en el archivo `backend/datos/`):
 JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home" ./gradlew -p backend run
 ```
 
-En los dos casos queda en `http://localhost:8080`. La primera vez carga los datos de prueba de la demo (las mismas cuentas de `DEMO.md`, contraseña `demo1234`). Los cambios se guardan en la base: sobreviven a reiniciar el servidor y la app.
+En los dos casos queda en `http://localhost:8080`. La primera vez carga los datos de prueba de la demo (las mismas cuentas de `DEMO.md`, contraseña `demo`). Los cambios se guardan en la base: sobreviven a reiniciar el servidor y la app.
 
 ### Volver a cargar los datos de prueba
 
@@ -51,7 +51,7 @@ En la pantalla de inicio de sesión toca "Servidor":
 - Teléfono o tablet: la dirección `https://….trycloudflare.com` del túnel. La versión release solo acepta `https://`.
 - Red local por `http://` (solo versión debug): pon `HOST_IP=0.0.0.0` en `.env` y usa la IP de la laptop, por ejemplo `http://192.168.1.20:8080`. Abre el puerto sin cifrar a toda la red, así que úsalo solo para pruebas.
 
-Si el servidor falla, activa "Datos de prueba sin servidor" en la misma opción y la app usa los datos en memoria.
+Si el servidor falla, las cuentas de prueba siguen entrando: la app usa sus datos de prueba en memoria sin avisar. Si la base se creó antes del cambio de contraseña a `demo`, corre `reiniciar-demo` una vez.
 
 ## Publicarlo gratis
 
@@ -131,6 +131,7 @@ Corren el servidor real contra H2 en memoria con los datos de prueba y revisan:
 - que la fundación no reciba nombres de niños;
 - que retirar el acceso cierre la sesión abierta;
 - el límite de archivos y la descarga de material de otra sala;
+- que la imagen de una foto solo la descargue quien puede ver esa foto;
 - el límite de intentos de inicio de sesión.
 
 `SeguridadTest.kt` agrega 27 ataques con ids S01–S27: tokens falsos, alterados o vencidos, inyección SQL, IDOR, privilegios, límites de peticiones y bloqueo por cuenta, validación de entrada, cabeceras y contraseñas temporales.
@@ -154,7 +155,7 @@ Todas las rutas, salvo `GET /` y `POST /auth/login`, piden `Authorization: Beare
 | Niños | `GET /ninos`, `/ninos/{id}`, `/ninos/{id}/tutores`, `/tutores`; `PUT /ninos`; `POST /ninos/{id}/baja`, `/ninos/{id}/reactivar`; `DELETE /ninos/{id}` |
 | Jornada | `GET /asistencias`, `/eventos` (`?fecha=` o `?nino=&desde=&hasta=`), `/reporte?mes=&estancia=&sala=`; `POST /asistencias/llegada`, `/asistencias/salida`, `/eventos`, `/eventos/{id}/fin`, `/exportaciones`; `DELETE /eventos/{id}` |
 | Incidentes | `GET /incidentes` (igual que eventos), `/incidentes/{id}`; `POST /incidentes` |
-| Fotos | `GET /fotos?sala=` o `?nino=`, `/fotos/{id}`; `POST /fotos`, `/fotos/{id}/consulta`; `DELETE /fotos/{id}` |
+| Fotos | `GET /fotos?sala=` o `?nino=`, `/fotos/{id}`; `POST /fotos/imagen?sala=` (la imagen va como cuerpo, devuelve su id), `/fotos`, `/fotos/{id}/consulta`; `DELETE /fotos/{id}` |
 | Avisos | `GET /avisos`, `/avisos/leidos`; `POST /avisos`, `/avisos/leidos` |
 | Objetos perdidos | `GET /objetos?sala=`, `/objetos/vistos`; `POST /objetos?sala=&descripcion=&donde=&fecha=` (la foto va como cuerpo), `/objetos/vistos`, `/objetos/{id}/reclamo`, `/entrega`, `/rechazo` |
 | Material | `GET /material?sala=`; `POST /material?sala=&titulo=&descripcion=&nombre=` (el archivo va como cuerpo); `PUT`, `DELETE /material/{id}` |

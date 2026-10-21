@@ -22,7 +22,7 @@
             </intent-filter>
         </activity>
 
-        <!-- solo comparte el material de clase y las bitacoras en pdf, nunca fotos -->
+        <!-- comparte el material de clase y las bitacoras en pdf; la camara solo recibe permiso de escribir la foto que se toma -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.archivos"

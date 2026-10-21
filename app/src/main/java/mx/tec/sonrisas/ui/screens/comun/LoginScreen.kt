@@ -144,7 +144,7 @@ fun LoginScreen(
                 }
                 if (BuildConfig.DEBUG) {
                     TextButton(onClick = { configurar = true }, modifier = Modifier.align(Alignment.CenterHorizontally).heightIn(min = 48.dp)) {
-                        Text(if (servidor.isBlank()) "Modo: datos de prueba sin servidor" else "Servidor: $servidor")
+                        Text(if (servidor.isBlank()) "Servidor" else "Servidor: $servidor")
                     }
                 }
             }
@@ -173,7 +173,7 @@ fun LoginScreen(
     }
 }
 
-/** la direccion del servidor cambia segun la red (la laptop de la demo) o se apaga para usar los datos de prueba */
+/** la direccion del servidor cambia segun la red (la laptop de la demo) o se apaga para usar solo los datos de prueba */
 @Composable
 private fun DialogoServidor(actual: String, onCerrar: () -> Unit, onGuardar: (String) -> Unit) {
     var url by remember { mutableStateOf(actual) }
@@ -183,8 +183,8 @@ private fun DialogoServidor(actual: String, onCerrar: () -> Unit, onGuardar: (St
         title = { Text("Servidor") },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(Espacio.space3)) {
-                Text("Al guardar, la app se reinicia y hay que volver a entrar.")
-                FilaSwitch("Datos de prueba sin servidor", sinServidor, { sinServidor = it })
+                Text("Al guardar, la app se reinicia y hay que volver a entrar. Las cuentas de prueba entran siempre, con o sin servidor.")
+                FilaSwitch("Sin servidor", sinServidor, { sinServidor = it })
                 TextField(
                     value = url,
                     onValueChange = { url = it },

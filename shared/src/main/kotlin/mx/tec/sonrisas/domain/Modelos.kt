@@ -205,7 +205,10 @@ data class Foto(
     val descripcion: String,
     val ninoIds: List<String>,
     val uso: UsoFoto,
-    val tema: TemaFoto,
+    // ilustracion de los datos de prueba; las fotos tomadas con la camara no tienen tema
+    val tema: TemaFoto?,
+    // foto tomada con la camara: ruta en el almacenamiento privado (sin servidor) o id del archivo en el servidor
+    val archivo: String? = null,
 )
 
 enum class TipoAviso { JUNTA, SUSPENSION, CAMPANA, GENERAL }

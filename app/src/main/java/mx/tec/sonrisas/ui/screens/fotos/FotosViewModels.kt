@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import mx.tec.sonrisas.data.ArchivoEntrada
 import mx.tec.sonrisas.data.EstanciasRepository
 import mx.tec.sonrisas.data.FotosRepository
 import mx.tec.sonrisas.data.JornadaRepository
@@ -22,12 +23,12 @@ import mx.tec.sonrisas.domain.Nino
 import mx.tec.sonrisas.domain.Reloj
 import mx.tec.sonrisas.domain.Rol
 import mx.tec.sonrisas.domain.Sala
-import mx.tec.sonrisas.domain.TemaFoto
 import mx.tec.sonrisas.domain.UsoFoto
 import mx.tec.sonrisas.domain.puedeAparecerEn
 import mx.tec.sonrisas.ui.navigation.Route
 import mx.tec.sonrisas.ui.state.UiState
 import mx.tec.sonrisas.ui.state.comoUiState
+import java.io.File
 import java.time.LocalDate
 import java.util.UUID
 
@@ -63,17 +64,18 @@ class FotosSalaViewModel(
 data class AgregarFotoDatos(val sala: Sala, val ninos: List<Nino>)
 
 data class AgregarFotoForm(
-    val tema: TemaFoto? = null,
+    // foto recien tomada con la camara, en la cache privada de la app
+    val imagen: String? = null,
     val descripcion: String = "",
     val uso: UsoFoto = UsoFoto.INTERNA,
     val etiquetados: Set<String> = emptySet(),
     val guardando: Boolean = false,
     val error: String? = null,
 ) {
-    val puedeGuardar: Boolean get() = tema != null && descripcion.isNotBlank() && etiquetados.isNotEmpty() && !guardando
+    val puedeGuardar: Boolean get() = imagen != null && descripcion.isNotBlank() && etiquetados.isNotEmpty() && !guardando
     val faltante: String?
         get() = when {
-            tema == null -> "Elige la foto para continuar."
+            imagen == null -> "Toma la foto para continuar."
             descripcion.isBlank() -> "Escribe una descripción."
             etiquetados.isEmpty() -> "Etiqueta al menos a un niño."
             else -> null
@@ -129,9 +131,12 @@ class AgregarFotoViewModel(
         form = f.copy(guardando = true)
         viewModelScope.launch {
             try {
+                val imagen = File(f.imagen!!)
                 fotosRepository.agregar(
-                    Foto(UUID.randomUUID().toString(), salaId, reloj.ahora(), f.descripcion.trim(), f.etiquetados.toList(), f.uso, f.tema!!),
+                    Foto(UUID.randomUUID().toString(), salaId, reloj.ahora(), f.descripcion.trim(), f.etiquetados.toList(), f.uso, tema = null),
+                    ArchivoEntrada(imagen.name, "image/jpeg", imagen.length()) { imagen.inputStream() },
                 )
+                imagen.delete()
                 val n = f.etiquetados.size
                 onListo("Guardamos la foto. La verán solo las familias de ${if (n == 1) "1 niño" else "$n niños"}.")
             } catch (e: Exception) {

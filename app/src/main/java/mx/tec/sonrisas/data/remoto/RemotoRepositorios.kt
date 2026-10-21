@@ -179,12 +179,20 @@ class RemotoIncidentesRepository(private val r: Remoto) : IncidentesRepository {
     ): Incidente = r.cambio { enviar("POST", "/incidentes", NuevoIncidente(ninoId, cuando, tipo, parteDelCuerpo, descripcion, accionTomada)).como() }
 }
 
-class RemotoFotosRepository(private val r: Remoto) : FotosRepository {
-    override fun fotosDeSala(salaId: String): Flow<List<Foto>> = r.consulta("/fotos?sala=${codificar(salaId)}")
-    override fun fotosDe(ninoId: String): Flow<List<Foto>> = r.consulta("/fotos?nino=${codificar(ninoId)}")
-    override fun foto(id: String): Flow<Foto?> = r.consultaONulo("/fotos/${codificar(id)}")
+class RemotoFotosRepository(private val r: Remoto, private val carpeta: File) : FotosRepository {
+    private suspend fun conImagenLocal(f: Foto) = f.copy(archivo = f.archivo?.let { r.local(carpeta, it, "jpg") })
+    private fun lista(ruta: String): Flow<List<Foto>> = r.cambios.consulta { r.api.get<List<Foto>>(ruta).map { conImagenLocal(it) } }
+
+    override fun fotosDeSala(salaId: String): Flow<List<Foto>> = lista("/fotos?sala=${codificar(salaId)}")
+    override fun fotosDe(ninoId: String): Flow<List<Foto>> = lista("/fotos?nino=${codificar(ninoId)}")
+    override fun foto(id: String): Flow<Foto?> = r.cambios.consulta { r.api.getONulo<Foto>("/fotos/${codificar(id)}")?.let { conImagenLocal(it) } }
     override suspend fun registrarConsulta(id: String) = r.silencioso { post("/fotos/${codificar(id)}/consulta") }
-    override suspend fun agregar(foto: Foto) { r.cambio { enviar("POST", "/fotos", foto) } }
+
+    // primero se sube la imagen y luego la foto con el id que dio el servidor
+    override suspend fun agregar(foto: Foto, imagen: ArchivoEntrada) {
+        val archivo = r.subir("/fotos/imagen?sala=${codificar(foto.salaId)}", imagen).como<Id>().id
+        r.cambio { enviar("POST", "/fotos", foto.copy(archivo = archivo)) }
+    }
     override suspend fun borrar(id: String) { r.cambio { delete("/fotos/${codificar(id)}") } }
 }
 

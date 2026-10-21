@@ -15,7 +15,7 @@ object ArchivosDePrueba {
 
     // los datos de prueba viven en memoria: lo que se subio en una ejecucion anterior ya no tiene dueno y se borra
     fun crear(archivos: AlmacenArchivos): List<ArchivoDemo> {
-        listOf("material", "objetos").forEach { archivos.vaciar(it) }
+        listOf("material", "objetos", "fotos").forEach { archivos.vaciar(it) }
         return generar(archivos)
     }
 

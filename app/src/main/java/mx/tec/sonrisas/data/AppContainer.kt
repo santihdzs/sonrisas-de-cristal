@@ -47,7 +47,7 @@ class AppContainer(context: Context) {
 
     private val preferencias = context.getSharedPreferences("servidor", Context.MODE_PRIVATE)
 
-    /** direccion del servidor; vacia = datos de prueba sin servidor (respaldo para la demo) */
+    /** direccion del servidor; vacia = solo los datos de prueba */
     val servidor: String = preferencias.getString("url", null) ?: BuildConfig.SERVIDOR
 
     private val sinServidor = servidor.isBlank()
@@ -63,56 +63,85 @@ class AppContainer(context: Context) {
 
     // los pdf de la bitacora son temporales: se regeneran en cada impresion
     val carpetaBitacoras = File(context.cacheDir, "bitacoras")
+    private val camara = File(context.cacheDir, "camara")
 
     // copias locales de lo que se baja del servidor
     private val materialRemoto = File(context.cacheDir, "material")
     private val objetosRemotos = File(context.cacheDir, "objetos")
+    private val fotosRemotas = File(context.cacheDir, "fotos")
 
+    private val sesionRemota by lazy {
+        RemotoSesionRepository(context, servidor, scope, listOf(materialRemoto, objetosRemotos, fotosRemotas))
+    }
+
+    private val conServidor by lazy {
+        val remoto = Remoto(sesionRemota.api, Cambios())
+        Repositorios(
+            RemotoEstanciasRepository(remoto), RemotoNinosRepository(remoto), RemotoJornadaRepository(remoto),
+            RemotoIncidentesRepository(remoto), RemotoFotosRepository(remoto, fotosRemotas), RemotoAvisosRepository(remoto),
+            RemotoHorariosRepository(remoto), RemotoActividadRepository(remoto), RemotoCuentasRepository(remoto),
+            RemotoObjetosRepository(remoto, objetosRemotos), RemotoMensajesRepository(remoto), RemotoMaterialRepository(remoto, materialRemoto),
+        )
+    }
+
+    // DEMO: datos de prueba en memoria (data/fake), generados con la fecha del telefono. sirven con o sin servidor
     private val almacen by lazy { AlmacenMemoria(DatosDePrueba.generar(reloj, ArchivosDePrueba.crear(archivos))) }
+    private val sesionDemo by lazy { FakeSesionRepository(almacen, reloj, scope) }
+    private val demo by lazy {
+        Repositorios(
+            FakeEstanciasRepository(almacen, sesionDemo, reloj), FakeNinosRepository(almacen, sesionDemo, reloj),
+            FakeJornadaRepository(almacen, sesionDemo, reloj), FakeIncidentesRepository(almacen, sesionDemo, reloj),
+            FakeFotosRepository(almacen, sesionDemo, archivos, reloj), FakeAvisosRepository(almacen, sesionDemo, reloj),
+            FakeHorariosRepository(almacen, sesionDemo, reloj), FakeActividadRepository(almacen, sesionDemo),
+            FakeCuentasRepository(almacen, sesionDemo, reloj), FakeObjetosRepository(almacen, sesionDemo, archivos, reloj),
+            FakeMensajesRepository(almacen, sesionDemo, reloj), FakeMaterialRepository(almacen, sesionDemo, archivos, reloj),
+        )
+    }
 
-    private val sesionFake by lazy { FakeSesionRepository(almacen, reloj, scope) }
+    // DEMO: al iniciar sesion decide si se usan los datos del servidor o los de prueba
+    private val sesion by lazy { SesionConDemo(if (sinServidor) null else sesionRemota, sesionDemo, scope) }
 
-    private val sesionRemota by lazy { RemotoSesionRepository(context, servidor, scope, listOf(materialRemoto, objetosRemotos)) }
+    // los viewmodels de cada sesion se crean despues de entrar, asi que reciben los repositorios correctos
+    private val repos: Repositorios get() = if (sesion.enDemo) demo else conServidor
 
-    private val remoto by lazy { Remoto(sesionRemota.api, Cambios()) }
-
-    val sesionRepository: SesionRepository by lazy { if (sinServidor) sesionFake else sesionRemota }
-    val estanciasRepository: EstanciasRepository by lazy {
-        if (sinServidor) FakeEstanciasRepository(almacen, sesionFake, reloj) else RemotoEstanciasRepository(remoto)
-    }
-    val ninosRepository: NinosRepository by lazy { if (sinServidor) FakeNinosRepository(almacen, sesionFake, reloj) else RemotoNinosRepository(remoto) }
-    val jornadaRepository: JornadaRepository by lazy {
-        if (sinServidor) FakeJornadaRepository(almacen, sesionFake, reloj) else RemotoJornadaRepository(remoto)
-    }
-    val incidentesRepository: IncidentesRepository by lazy {
-        if (sinServidor) FakeIncidentesRepository(almacen, sesionFake, reloj) else RemotoIncidentesRepository(remoto)
-    }
-    val fotosRepository: FotosRepository by lazy { if (sinServidor) FakeFotosRepository(almacen, sesionFake, reloj) else RemotoFotosRepository(remoto) }
-    val avisosRepository: AvisosRepository by lazy { if (sinServidor) FakeAvisosRepository(almacen, sesionFake, reloj) else RemotoAvisosRepository(remoto) }
-    val horariosRepository: HorariosRepository by lazy {
-        if (sinServidor) FakeHorariosRepository(almacen, sesionFake, reloj) else RemotoHorariosRepository(remoto)
-    }
-    val actividadRepository: ActividadRepository by lazy { if (sinServidor) FakeActividadRepository(almacen, sesionFake) else RemotoActividadRepository(remoto) }
-    val cuentasRepository: CuentasRepository by lazy {
-        if (sinServidor) FakeCuentasRepository(almacen, sesionFake, reloj) else RemotoCuentasRepository(remoto)
-    }
-    val objetosRepository: ObjetosPerdidosRepository by lazy {
-        if (sinServidor) FakeObjetosRepository(almacen, sesionFake, archivos, reloj) else RemotoObjetosRepository(remoto, objetosRemotos)
-    }
-    val mensajesRepository: MensajesRepository by lazy {
-        if (sinServidor) FakeMensajesRepository(almacen, sesionFake, reloj) else RemotoMensajesRepository(remoto)
-    }
-    val materialRepository: MaterialRepository by lazy {
-        if (sinServidor) FakeMaterialRepository(almacen, sesionFake, archivos, reloj) else RemotoMaterialRepository(remoto, materialRemoto)
-    }
+    val sesionRepository: SesionRepository get() = sesion
+    val estanciasRepository: EstanciasRepository get() = repos.estancias
+    val ninosRepository: NinosRepository get() = repos.ninos
+    val jornadaRepository: JornadaRepository get() = repos.jornada
+    val incidentesRepository: IncidentesRepository get() = repos.incidentes
+    val fotosRepository: FotosRepository get() = repos.fotos
+    val avisosRepository: AvisosRepository get() = repos.avisos
+    val horariosRepository: HorariosRepository get() = repos.horarios
+    val actividadRepository: ActividadRepository get() = repos.actividad
+    val cuentasRepository: CuentasRepository get() = repos.cuentas
+    val objetosRepository: ObjetosPerdidosRepository get() = repos.objetos
+    val mensajesRepository: MensajesRepository get() = repos.mensajes
+    val materialRepository: MaterialRepository get() = repos.material
 
     fun iniciar() {
         scope.launch {
             sesionRepository
-            // sin servidor, al abrir la app se borran los expedientes cuya baja ya vencio (RF-18); con servidor lo hace el servidor
-            ninosRepository.purgarVencidos()
+            // en los datos de prueba, al abrir la app se borran los expedientes cuya baja ya vencio (RF-18); con servidor lo hace el servidor
+            demo.ninos.purgarVencidos()
             // los pdf de bitacoras de la sesion anterior ya se imprimieron o compartieron
             carpetaBitacoras.deleteRecursively()
+            // fotos de la camara que no se guardaron; las recientes se dejan por si la camara sigue abierta
+            camara.listFiles()?.filter { it.lastModified() < System.currentTimeMillis() - 86_400_000 }?.forEach { it.delete() }
         }
     }
 }
+
+private class Repositorios(
+    val estancias: EstanciasRepository,
+    val ninos: NinosRepository,
+    val jornada: JornadaRepository,
+    val incidentes: IncidentesRepository,
+    val fotos: FotosRepository,
+    val avisos: AvisosRepository,
+    val horarios: HorariosRepository,
+    val actividad: ActividadRepository,
+    val cuentas: CuentasRepository,
+    val objetos: ObjetosPerdidosRepository,
+    val mensajes: MensajesRepository,
+    val material: MaterialRepository,
+)

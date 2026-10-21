@@ -55,7 +55,7 @@ import java.util.Locale
 import java.util.UUID
 import kotlin.random.Random
 
-const val CONTRASENA_DEMO = "demo1234"
+const val CONTRASENA_DEMO = "demo"
 
 /** archivo real de los datos de prueba; ruta es donde quedo guardado (archivo local en la app, id en el servidor) */
 data class ArchivoDemo(val clave: String, val nombre: String, val tipo: String, val ruta: String, val tamano: Long)
