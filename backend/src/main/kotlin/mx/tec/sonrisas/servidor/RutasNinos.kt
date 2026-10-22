@@ -36,17 +36,47 @@ import java.time.YearMonth
 
 private fun RoutingContext.fecha(nombre: String): LocalDate? = call.request.queryParameters[nombre]?.let(LocalDate::parse)
 
-/** borra el expediente, su bitacora y toda foto donde aparezca (RF-10, RF-18) */
+/**
+ * borra el expediente, su bitacora, sus registros de actividad y sus fotos con la imagen (RF-10, RF-18).
+ * de una foto grupal solo se quita su etiqueta; la foto se borra cuando ya no queda nadie etiquetado.
+ * el tutor que se queda sin ninos se borra junto con su cuenta de familia.
+ */
 fun Conexion.borrarTodo(n: Nino) {
     Tablas.ninos.borrar(n.id)
     val salas = Tablas.salas.donde("estancia_id = ?", n.estanciaId).map { it.id }
-    Tablas.fotos.en("sala_id", salas).filter { n.id in it.ninoIds }.forEach { Tablas.fotos.borrar(it.id) }
+    Tablas.fotos.en("sala_id", salas).filter { n.id in it.ninoIds }.forEach { f ->
+        val quedan = f.ninoIds - n.id
+        if (quedan.isNotEmpty()) {
+            Tablas.fotos.guardar(f.copy(ninoIds = quedan))
+        } else {
+            Tablas.fotos.borrar(f.id)
+            f.archivo?.let { ejecutar("DELETE FROM archivos WHERE id = ?", it) }
+        }
+    }
     Tablas.asistencias.borrarDonde("nino_id = ?", n.id)
     Tablas.eventos.borrarDonde("nino_id = ?", n.id)
     Tablas.incidentes.borrarDonde("nino_id = ?", n.id)
-    Tablas.registros.guardar(Tablas.registros.donde("nino_id = ?", n.id).map { it.copy(ninoId = null) })
+    Tablas.registros.borrarDonde("nino_id = ?", n.id)
     val enUso = Tablas.ninos.donde("estancia_id = ?", n.estanciaId).flatMap { it.tutorIds }.toSet()
-    n.tutorIds.filter { it !in enUso }.forEach { Tablas.tutores.borrar(it) }
+    n.tutorIds.filter { it !in enUso }.forEach { tutorId ->
+        Tablas.tutores.borrar(tutorId)
+        Tablas.usuarios.donde("estancia_id = ?", n.estanciaId).filter { it.tutorId == tutorId }.forEach { borrarCuentaFamilia(it.id) }
+    }
+}
+
+/** la cuenta, su acceso, lo que marco como leido y sus conversaciones; del chat de sala solo salen sus mensajes */
+private fun Conexion.borrarCuentaFamilia(usuarioId: String) {
+    Tablas.usuarios.borrar(usuarioId)
+    listOf("claves", "sesiones", "huellas", "avisos_leidos", "objetos_vistos", "lecturas").forEach {
+        ejecutar("DELETE FROM $it WHERE usuario_id = ?", usuarioId)
+    }
+    // en una directa participan la familia y una persona del personal: se borra completa
+    Tablas.conversaciones.todos().filter { usuarioId in it.participantes }.forEach { c ->
+        Tablas.mensajes.borrarDonde("conversacion_id = ?", c.id)
+        ejecutar("DELETE FROM lecturas WHERE conversacion_id = ?", c.id)
+        Tablas.conversaciones.borrar(c.id)
+    }
+    Tablas.mensajes.borrarDonde("autor_id = ?", usuarioId)
 }
 
 /** expedientes cuya baja ya vencio; corre en el servidor al arrancar y cada pocas horas */
@@ -57,9 +87,16 @@ fun Conexion.purgarVencidos(): Int {
         borrarTodo(n)
         registrar(
             null, LocalDateTime.now(), AccionRegistro.BORRADO,
-            "Se eliminó el expediente de ${n.nombre} y sus fotos al terminar el periodo de baja", estanciaId = n.estanciaId,
+            "Se eliminó un expediente y sus fotos al terminar el periodo de baja", estanciaId = n.estanciaId,
         )
     }
+    val ahora = System.currentTimeMillis()
+    ejecutar("DELETE FROM sesiones WHERE expira <= ?", ahora)
+    // archivos que ninguna foto, material u objeto usa: subidas que no se terminaron de guardar
+    val usados = (Tablas.fotos.todos().mapNotNull { it.archivo } + Tablas.material.todos().map { it.ruta } + Tablas.objetos.todos().mapNotNull { it.foto }).toSet()
+    consultar("SELECT id FROM archivos WHERE COALESCE(creado, 0) < ?", ahora - 24 * 3_600_000L) { it.getString(1) }
+        .filter { it !in usados }
+        .forEach { ejecutar("DELETE FROM archivos WHERE id = ?", it) }
     return vencidos.size
 }
 
@@ -68,12 +105,13 @@ private fun Ctx.deMiEstancia(id: String): Nino {
     return Tablas.ninos.porId(id)?.takeIf { it.estanciaId == u.estanciaId } ?: throw AccesoDenegado()
 }
 
-private fun EventoBitacora.conAutor(usuarioId: String): EventoBitacora = when (this) {
-    is EventoBitacora.Alimento -> copy(registradoPorId = usuarioId)
-    is EventoBitacora.Siesta -> copy(registradoPorId = usuarioId)
-    is EventoBitacora.Evacuacion -> copy(registradoPorId = usuarioId)
-    is EventoBitacora.Animo -> copy(registradoPorId = usuarioId)
-    is EventoBitacora.Nota -> copy(registradoPorId = usuarioId)
+// el autor sale de la sesion y el dia del reloj del servidor, no de lo que mande la app
+private fun Ctx.firmado(e: EventoBitacora): EventoBitacora = when (e) {
+    is EventoBitacora.Alimento -> e.copy(registradoPorId = u.id, cuando = momentoDeHoy(e.cuando))
+    is EventoBitacora.Siesta -> e.copy(registradoPorId = u.id, cuando = momentoDeHoy(e.cuando), inicio = horaDeHoy(e.inicio), fin = e.fin?.let(::horaDeHoy))
+    is EventoBitacora.Evacuacion -> e.copy(registradoPorId = u.id, cuando = momentoDeHoy(e.cuando))
+    is EventoBitacora.Animo -> e.copy(registradoPorId = u.id, cuando = momentoDeHoy(e.cuando))
+    is EventoBitacora.Nota -> e.copy(registradoPorId = u.id, cuando = momentoDeHoy(e.cuando))
 }
 
 private fun Ctx.salasDeHorario(): Set<String> = when (u.rol) {
@@ -116,7 +154,8 @@ fun Route.rutasNinos(db: Db) {
             val deMiEstancia = ninosEstancia().flatMap { it.tutorIds }.toSet()
             val existentes = Tablas.tutores.en("id", p.tutores.map { it.id }).map { it.id }
             if (existentes.any { it !in deMiEstancia }) throw AccesoDenegado()
-            val guardado = p.nino.copy(estanciaId = sala.estanciaId, tutorIds = p.tutores.map { it.id })
+            // la baja y sus fechas solo cambian por /baja y /reactivar, con el reloj del servidor
+            val guardado = p.nino.copy(estanciaId = sala.estanciaId, tutorIds = p.tutores.map { it.id }, estado = existente?.estado ?: EstadoExpediente.Activo)
             Tablas.tutores.guardar(p.tutores)
             Tablas.ninos.guardar(guardado)
             val accion = if (existente == null) "Inscribió a" else "Editó el expediente de"
@@ -147,7 +186,7 @@ fun Route.rutasNinos(db: Db) {
             // P2: la app solo ofrece borrar expedientes en baja; el servidor no confia en eso y lo vuelve a revisar (409)
             if (n.estado !is EstadoExpediente.BajaTemporal) throw IllegalStateException("Primero da de baja el expediente.")
             borrarTodo(n)
-            registrar(AccionRegistro.BORRADO, "Eliminó definitivamente el expediente de ${n.nombreCompleto} y sus fotos")
+            registrar(AccionRegistro.BORRADO, "Eliminó un expediente dado de baja y sus fotos")
         }
     }
 
@@ -212,7 +251,8 @@ fun Route.rutasNinos(db: Db) {
             if (n.persona(a.entregadoPorId) == null) throw IllegalArgumentException("Elige a una persona autorizada.")
             val otra = Tablas.asistencias.porId(a.id)
             if (otra != null && otra.ninoId != n.id) throw AccesoDenegado()
-            val guardada = a.copy(recibidoPorId = u.id)
+            // el dia y la hora tope son del servidor (un telefono con otra fecha no cambia el registro)
+            val guardada = a.copy(recibidoPorId = u.id, fecha = hoy, horaEntrada = horaDeHoy(a.horaEntrada), horaSalida = a.horaSalida?.let(::horaDeHoy))
             Tablas.asistencias.borrarDonde("nino_id = ? AND fecha = ?", n.id, guardada.fecha)
             Tablas.asistencias.guardar(guardada)
             registrar(AccionRegistro.CAPTURA, describirLlegada(n, guardada), n.id)
@@ -226,7 +266,10 @@ fun Route.rutasNinos(db: Db) {
             if (n.persona(a.recogidoPorId) == null) throw IllegalArgumentException("Elige a una persona autorizada.")
             val existente = Tablas.asistencias.porId(a.id)?.takeIf { it.ninoId == n.id } ?: throw AccesoDenegado()
             // la llegada no cambia al registrar la salida
-            val guardada = a.copy(recibidoPorId = existente.recibidoPorId, entregoSalidaId = u.id)
+            val guardada = a.copy(
+                recibidoPorId = existente.recibidoPorId, entregoSalidaId = u.id,
+                fecha = existente.fecha, horaEntrada = existente.horaEntrada, horaSalida = a.horaSalida?.let(::horaDeHoy),
+            )
             Tablas.asistencias.guardar(guardada)
             registrar(AccionRegistro.CAPTURA, describirSalida(n, guardada), n.id)
         }
@@ -240,7 +283,7 @@ fun Route.rutasNinos(db: Db) {
                 val n = capturaDe(e.ninoId)
                 val otro = Tablas.eventos.porId(e.id)
                 if (otro != null && otro.ninoId != n.id) throw AccesoDenegado()
-                e.conAutor(u.id) to n
+                firmado(e) to n
             }
             Tablas.eventos.guardar(firmados.map { it.first })
             firmados.forEach { (e, n) -> registrar(AccionRegistro.CAPTURA, describirEvento(n, e), n.id) }
@@ -248,8 +291,9 @@ fun Route.rutasNinos(db: Db) {
     }
 
     post("/eventos/{id}/fin") {
-        val fin = call.receive<Hora>().hora
+        val pedida = call.receive<Hora>().hora
         escribe(db) {
+            val fin = horaDeHoy(pedida)
             val siesta = Tablas.eventos.porId(call.parameters["id"]!!) as? EventoBitacora.Siesta ?: return@escribe Unit
             val n = capturaDe(siesta.ninoId)
             val terminada = siesta.copy(fin = fin, cuando = LocalDateTime.of(siesta.cuando.toLocalDate(), fin))
@@ -304,7 +348,7 @@ fun Route.rutasNinos(db: Db) {
             val numero = consultar("SELECT valor FROM contadores WHERE nombre = 'folio'") { it.getInt(1) }.firstOrNull()
                 ?: 1.also { ejecutar("INSERT INTO contadores (nombre, valor) VALUES ('folio', 1)") }
             val incidente = Incidente(
-                nuevoId(), folioIncidente(numero), n.id, p.cuando, p.tipo,
+                nuevoId(), folioIncidente(numero), n.id, momentoDeHoy(p.cuando), p.tipo,
                 p.parteDelCuerpo?.takeIf { it.isNotBlank() }, p.descripcion.trim(), p.accionTomada.trim(), u.id,
             )
             Tablas.incidentes.guardar(incidente)

@@ -87,9 +87,13 @@ object Tablas {
         "CREATE TABLE IF NOT EXISTS objetos_vistos (usuario_id VARCHAR NOT NULL, objeto_id VARCHAR NOT NULL, PRIMARY KEY (usuario_id, objeto_id))",
         "CREATE TABLE IF NOT EXISTS lecturas (usuario_id VARCHAR NOT NULL, conversacion_id VARCHAR NOT NULL, hasta VARCHAR NOT NULL, PRIMARY KEY (usuario_id, conversacion_id))",
         "CREATE TABLE IF NOT EXISTS archivos (id VARCHAR PRIMARY KEY, sala_id VARCHAR NOT NULL, tipo VARCHAR NOT NULL, bytes BYTEA NOT NULL)",
+        // milisegundos de la subida; la purga borra los archivos que nada usa despues de 24 h (null = anterior a esta columna)
+        "ALTER TABLE archivos ADD COLUMN IF NOT EXISTS creado BIGINT",
         "CREATE TABLE IF NOT EXISTS contadores (nombre VARCHAR PRIMARY KEY, valor INT NOT NULL)",
+        // P4: bloqueo largo por intentos desde varias ips; hasta en milisegundos de la hora del servidor
+        "CREATE TABLE IF NOT EXISTS bloqueos (usuario VARCHAR PRIMARY KEY, hasta BIGINT NOT NULL, motivo VARCHAR NOT NULL)",
     )
-    val tablasExtra = listOf("claves", "huellas", "sesiones", "avisos_leidos", "objetos_vistos", "lecturas", "archivos", "contadores")
+    val tablasExtra = listOf("claves", "huellas", "sesiones", "avisos_leidos", "objetos_vistos", "lecturas", "archivos", "contadores", "bloqueos")
 }
 
 open class Conexion(val con: Connection) {

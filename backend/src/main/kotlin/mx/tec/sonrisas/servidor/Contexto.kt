@@ -9,6 +9,8 @@ import mx.tec.sonrisas.data.Error
 import mx.tec.sonrisas.domain.AccionRegistro
 import mx.tec.sonrisas.domain.Nino
 import mx.tec.sonrisas.domain.RegistroActividad
+import mx.tec.sonrisas.domain.Reloj
+import mx.tec.sonrisas.domain.RelojSistema
 import mx.tec.sonrisas.domain.Rol
 import mx.tec.sonrisas.domain.Sala
 import mx.tec.sonrisas.domain.Usuario
@@ -16,6 +18,7 @@ import mx.tec.sonrisas.domain.Visibilidad
 import java.sql.Connection
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 import java.util.UUID
 
 fun nuevoId(): String = UUID.randomUUID().toString()
@@ -31,10 +34,19 @@ fun Conexion.registrar(
     RegistroActividad(nuevoId(), cuando, autor?.id ?: "sistema", autor?.nombre ?: "Sistema", accion, detalle, ninoId, estanciaId),
 )
 
+// shortcut: reloj global para que las pruebas fijen "ahora"; pasarlo por modulo() si las pruebas corren en paralelo
+var relojServidor: Reloj = RelojSistema
+
 /** una peticion autenticada: la conexion, quien la hace y la hora del servidor */
 class Ctx(con: Connection, val u: Usuario) : Conexion(con) {
-    val ahora: LocalDateTime = LocalDateTime.now()
+    val ahora: LocalDateTime = relojServidor.ahora()
     val hoy: LocalDate = ahora.toLocalDate()
+
+    // la app deja elegir la hora (se captura despues de que paso), pero el dia es el del servidor y la hora no puede ser futura;
+    // asi un reloj alterado en el telefono no fecha registros en otro dia
+    fun horaDeHoy(h: LocalTime): LocalTime = minOf(h, ahora.toLocalTime())
+
+    fun momentoDeHoy(c: LocalDateTime): LocalDateTime = LocalDateTime.of(hoy, horaDeHoy(c.toLocalTime()))
 
     fun registrar(accion: AccionRegistro, detalle: String, ninoId: String? = null, estanciaId: String? = u.estanciaId) =
         registrar(u, ahora, accion, detalle, ninoId, estanciaId)
