@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Matriz de trazabilidad</title>
+<style>
+  html, body { background: transparent; }
+  body { margin: 0; padding: 16px; }
+  table {
+    width: 1600px;
+    border-collapse: collapse;
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 17px;
+    line-height: 1.4;
+    color: #1f2328;
+  }
+  th, td { border: 1px solid #d9dce1; padding: 14px 16px; text-align: left; vertical-align: top; }
+  th { background: rgba(31, 35, 40, 0.06); font-weight: 700; }
+  td:first-child { font-weight: 700; white-space: nowrap; }
+  td:last-child { font-weight: 600; }
+  col.id { width: 6%; } col.desc { width: 21%; } col.crit { width: 23%; }
+  col.prueba { width: 20%; } col.res { width: 19%; } col.estado { width: 11%; }
+</style>
+</head>
+<body>
+<table id="matriz">
+  <colgroup><col class="id"><col class="desc"><col class="crit"><col class="prueba"><col class="res"><col class="estado"></colgroup>
+  <thead>
+    <tr><th>Identificador</th><th>Descripción</th><th>Criterio de aceptación</th><th>Prueba o evidencia</th><th>Resultado</th><th>Estado final</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>RF-03</td>
+      <td>Registro de hora de entrada, salida y quién recoge a cada niño.</td>
+      <td>Al cierre del día la sala tiene asistencia completa con horas y quién recogió.</td>
+      <td>RF03AsistenciaTest (integración, API)</td>
+      <td>4/4 pruebas aprobadas; día completo sin faltantes ni duplicados</td>
+      <td>Cumplido</td>
+    </tr>
+    <tr>
+      <td>RF-04</td>
+      <td>La educadora registra la bitácora del día de cada niño.</td>
+      <td>Comida, siesta y notas quedan guardadas y firmadas por quien las capturó.</td>
+      <td>RF04BitacoraTest (integración, API)</td>
+      <td>4/4 pruebas aprobadas; solo en niños de su sala</td>
+      <td>Cumplido</td>
+    </tr>
+    <tr>
+      <td>RF-06</td>
+      <td>La familia ve cómo estuvo su hijo durante el día.</td>
+      <td>Ve la bitácora y la asistencia que registró la educadora.</td>
+      <td>RF06FamiliaVeElDiaTest (integración, API)</td>
+      <td>4/4 pruebas aprobadas; ambos tutores ven el mismo día</td>
+      <td>Cumplido</td>
+    </tr>
+    <tr>
+      <td>RF-07</td>
+      <td>Cada familia ve solo a sus hijos.</td>
+      <td>Verificado que un familiar no accede a otro niño, ni manipulando la app.</td>
+      <td>RF07FamiliaSoloSusHijosTest (integración, API y unitaria)</td>
+      <td>4/4 pruebas aprobadas; bloqueado en servidor y en cliente</td>
+      <td>Cumplido</td>
+    </tr>
+    <tr>
+      <td>RF-09</td>
+      <td>Las fotos solo las ven las familias de quienes aparecen.</td>
+      <td>Una foto con tres niños solo la ven las familias de esos tres.</td>
+      <td>RF09FotosVisiblesTest (integración, API)</td>
+      <td>4/4 pruebas aprobadas; otras familias no la ven ni por id</td>
+      <td>Cumplido</td>
+    </tr>
+    <tr>
+      <td>RF-10</td>
+      <td>La familia puede pedir que se elimine una foto de su hijo.</td>
+      <td>La foto se borra para todos y solo si aparece su hijo.</td>
+      <td>RF10EliminarFotoTest (integración, API)</td>
+      <td>4/4 pruebas aprobadas; el borrado queda registrado</td>
+      <td>Cumplido</td>
+    </tr>
+    <tr>
+      <td>RF-14</td>
+      <td>La dirección sabe quién registró y consultó cada dato.</td>
+      <td>Capturas, consultas de fotos e impresiones quedan con persona y niño.</td>
+      <td>RF14RegistroActividadTest (integración, API)</td>
+      <td>4/4 pruebas aprobadas; solo la dirección ve el registro</td>
+      <td>Cumplido</td>
+    </tr>
+  </tbody>
+</table>
+</body>
+</html>
