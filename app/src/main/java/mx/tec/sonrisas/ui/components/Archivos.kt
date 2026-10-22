@@ -118,6 +118,20 @@ suspend fun prepararFotoCamara(archivo: File): Boolean = withContext(Dispatchers
     }.getOrDefault(false)
 }
 
+/**
+ * foto de la galeria por el mismo camino que la de la camara: copia privada, se decodifica y se vuelve a guardar como jpeg.
+ * asi webp o heic llegan como jpeg y el exif original (gps incluido) no sale del telefono. null si no se pudo leer
+ */
+suspend fun Context.fotoDeGaleria(uri: Uri): File? {
+    val archivo = destinoCamara().first
+    val copiada = withContext(Dispatchers.IO) {
+        runCatching { contentResolver.openInputStream(uri)?.use { entrada -> archivo.outputStream().use { entrada.copyTo(it) } } != null }.getOrDefault(false)
+    }
+    if (copiada && prepararFotoCamara(archivo)) return archivo
+    archivo.delete()
+    return null
+}
+
 /** muestra una imagen guardada en la app (ruta) o recien elegida (content://) */
 @Composable
 fun ImagenArchivo(

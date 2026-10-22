@@ -23,7 +23,6 @@ import mx.tec.sonrisas.domain.ReporteAsistencia
 import mx.tec.sonrisas.domain.UsoFoto
 import mx.tec.sonrisas.domain.Usuario
 import java.time.LocalDateTime
-import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -31,11 +30,12 @@ import kotlin.test.assertTrue
 // reglas de privacidad y seguridad contra el servidor real, con h2 en memoria y los datos de prueba
 class ServidorTest {
 
-    private fun prueba(intentosLogin: Int = 100, bloque: suspend HttpClient.() -> Unit) = testApplication {
-        val db = Db("jdbc:h2:mem:${UUID.randomUUID()};MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1")
-        runBlocking { Semilla.preparar(db, demo = true, reiniciar = false, claveFundacion = null) }
-        application { modulo(db, intentosLogin = intentosLogin) }
-        client.bloque()
+    private fun prueba(intentosLogin: Int = 100, bloque: suspend HttpClient.() -> Unit) = conBaseDePrueba { db ->
+        testApplication {
+            runBlocking { Semilla.preparar(db, demo = true, reiniciar = false, claveFundacion = null) }
+            application { modulo(db, intentosLogin = intentosLogin) }
+            client.bloque()
+        }
     }
 
     private suspend fun HttpClient.intentar(usuario: String, contrasena: String = "demo"): HttpResponse = post("/auth/login") {
@@ -107,7 +107,7 @@ class ServidorTest {
     fun laImagenDeUnaFotoSoloLaDescargaQuienVeLaFoto() = prueba {
         val educadora = token("educadora")
         val sofia = leer<List<Nino>>("/ninos", educadora).first { it.nombre == "Sofía" }
-        val subida = post("/fotos/imagen?sala=${sofia.salaId}") { bearerAuth(educadora); contentType(ContentType.Image.JPEG); setBody(byteArrayOf(1, 2, 3)) }
+        val subida = post("/fotos/imagen?sala=${sofia.salaId}") { bearerAuth(educadora); contentType(ContentType.Image.JPEG); setBody(imagenDePrueba()) }
         val archivo = JsonApi.decodeFromString(Id.serializer(), subida.bodyAsText()).id
         val foto = Foto("f-camara", sofia.salaId, LocalDateTime.of(2027, 3, 1, 11, 0), "Pintura", listOf(sofia.id), UsoFoto.INTERNA, null, archivo)
         val guardada = post("/fotos") { bearerAuth(educadora); contentType(ContentType.Application.Json); setBody(JsonApi.encodeToString(Foto.serializer(), foto)) }

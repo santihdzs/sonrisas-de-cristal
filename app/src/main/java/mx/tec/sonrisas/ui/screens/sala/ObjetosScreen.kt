@@ -63,7 +63,7 @@ import mx.tec.sonrisas.ui.components.Icono
 import mx.tec.sonrisas.ui.components.ImagenArchivo
 import mx.tec.sonrisas.ui.components.TarjetaSeccion
 import mx.tec.sonrisas.ui.components.TipoEstado
-import mx.tec.sonrisas.ui.components.archivoDesde
+import mx.tec.sonrisas.ui.components.fotoDeGaleria
 import mx.tec.sonrisas.ui.components.formatoDiaMes
 import mx.tec.sonrisas.ui.components.relativoA
 import mx.tec.sonrisas.ui.theme.Espacio
@@ -226,10 +226,13 @@ fun HojaObjetoForm(
     when (hoja) {
         is HojaObjeto.Publicar -> {
             val context = LocalContext.current
-            val selector = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
-                if (uri != null) onCambiar(hoja.copy(foto = context.archivoDesde(uri), vistaPrevia = uri.toString()))
-            }
             val alcance = rememberCoroutineScope()
+            val selector = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+                if (uri != null) alcance.launch {
+                    val archivo = context.fotoDeGaleria(uri) ?: return@launch
+                    onCambiar(hoja.copy(foto = ArchivoEntrada(archivo.name, "image/jpeg", archivo.length()) { archivo.inputStream() }, vistaPrevia = archivo.path))
+                }
+            }
             var destino by rememberSaveable { mutableStateOf<String?>(null) }
             val camara = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { tomada ->
                 val archivo = destino?.let(::File) ?: return@rememberLauncherForActivityResult
