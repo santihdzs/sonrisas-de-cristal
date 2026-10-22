@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -19,7 +21,7 @@ android {
 
     // la llave de firma vive fuera del repo; keystore.properties (en .gitignore) dice donde esta
     val firma = rootProject.file("keystore.properties").takeIf { it.exists() }?.let { f ->
-        java.util.Properties().apply { f.inputStream().use(::load) }
+        Properties().apply { f.inputStream().use { load(it) } }
     }
     signingConfigs {
         if (firma != null) create("release") {

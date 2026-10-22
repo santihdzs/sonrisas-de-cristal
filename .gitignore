@@ -36,3 +36,8 @@ keystore.properties
 *.snm
 *.toc
 *.synctex.gz
+
+# el apk firmado de la entrega si se versiona
+!/entrega/*.apk
+/paper/main.pdf
+/slides/main.pdf
