@@ -166,6 +166,10 @@ interface CuentasRepository {
 
     /** cuenta de familia para un tutor de la estancia que todavia no tiene acceso */
     suspend fun crearCuentaFamilia(tutorId: String): Credenciales
+
+    /** solo la fundacion: cuentas bloqueadas por intentos fallidos desde varios lugares */
+    fun bloqueadas(): Flow<List<Usuario>>
+    suspend fun desbloquear(usuarioId: String)
 }
 
 interface ActividadRepository {

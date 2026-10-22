@@ -77,19 +77,26 @@ object Sesiones {
  * P4: bloqueo temporal por cuenta. Tras [maxFallos] contrasenas incorrectas dentro de [duracion], esa cuenta queda
  * bloqueada [duracion], venga de la ip que venga. Cuenta tambien nombres que no existen: si solo se bloquearan
  * cuentas reales, el 429 delataria cuales existen. Vive en memoria: al reiniciar el servidor se limpia.
+ * P4: ademas recuerda desde que ips fallo cada cuenta en [ventanaIps]; con [maxIps] ips distintas toca el bloqueo largo.
  */
 class BloqueoCuentas(
     private val maxFallos: Int = 5,
     private val duracion: Duration = 15.minutes,
+    private val maxIps: Int = 3,
+    private val ventanaIps: Duration = 1.days,
     private val reloj: () -> Long = System::currentTimeMillis,
 ) {
     private class Estado(val fallos: Int, val desde: Long, val bloqueadaHasta: Long)
 
     private val estados = ConcurrentHashMap<String, Estado>()
 
+    // cuenta -> (ip -> ultimo fallo)
+    private val ips = ConcurrentHashMap<String, Map<String, Long>>()
+
     fun bloqueada(usuario: String): Boolean = (estados[usuario]?.bloqueadaHasta ?: 0L) > reloj()
 
-    fun fallo(usuario: String) {
+    /** true si con este fallo ya van [maxIps] ips distintas: ataque distribuido, toca el bloqueo largo */
+    fun fallo(usuario: String, ip: String): Boolean {
         val ahora = reloj()
         val ventana = duracion.inWholeMilliseconds
         // memoria acotada: si alguien prueba miles de nombres distintos, se olvidan los que ya vencieron
@@ -99,11 +106,42 @@ class BloqueoCuentas(
             val fallos = (vigente?.fallos ?: 0) + 1
             Estado(fallos, vigente?.desde ?: ahora, if (fallos >= maxFallos) ahora + ventana else 0L)
         }
+        val ventanaIps = ventanaIps.inWholeMilliseconds
+        if (ips.size > 10_000) ips.entries.removeIf { e -> e.value.values.all { ahora - it > ventanaIps } }
+        val distintas = ips.compute(usuario) { _, previas -> previas.orEmpty().filterValues { ahora - it < ventanaIps } + (ip to ahora) }!!
+        if (distintas.size < maxIps) return false
+        // el bloqueo largo ya queda en la base; se empieza a contar de cero
+        ips.remove(usuario)
+        return true
     }
 
     fun exito(usuario: String) {
         estados.remove(usuario)
+        ips.remove(usuario)
     }
+}
+
+/**
+ * P4: bloqueo largo guardado en la tabla bloqueos, asi sobrevive reinicios. Dura [DURACION] o hasta que la fundacion
+ * lo quite. Se guarda por nombre de usuario, exista o no, para que el 429 no delate que cuentas existen.
+ * Solo usa la hora del servidor.
+ */
+object BloqueosLargos {
+    val DURACION = 3.days
+
+    fun vigente(c: Conexion, usuario: String, ahora: Long): Boolean =
+        c.consultar("SELECT 1 FROM bloqueos WHERE usuario = ? AND hasta > ?", usuario, ahora) { true }.isNotEmpty()
+
+    fun bloquear(c: Conexion, usuario: String, ahora: Long, motivo: String) {
+        c.ejecutar("DELETE FROM bloqueos WHERE usuario = ?", usuario)
+        c.ejecutar("INSERT INTO bloqueos (usuario, hasta, motivo) VALUES (?, ?, ?)", usuario, ahora + DURACION.inWholeMilliseconds, motivo)
+    }
+
+    /** usuarios (login) con bloqueo vigente */
+    fun vigentes(c: Conexion, ahora: Long): List<String> =
+        c.consultar("SELECT usuario FROM bloqueos WHERE hasta > ?", ahora) { it.getString(1) }
+
+    fun quitar(c: Conexion, usuario: String) = c.ejecutar("DELETE FROM bloqueos WHERE usuario = ?", usuario)
 }
 
 /**
@@ -114,6 +152,7 @@ class BloqueoCuentas(
  * - CSP: una API de json no necesita cargar scripts ni recursos de ningun lado
  * - Referrer-Policy: las urls con ids no se filtran en la cabecera Referer
  * - no-store: ni proxies ni el telefono guardan en cache datos de ninos
+ * - CORP: otra pagina no puede incrustar respuestas de la API (fotos, archivos) desde otro origen (hallazgo de ZAP)
  */
 val CabecerasSeguras = createApplicationPlugin("CabecerasSeguras") {
     onCall { call ->
@@ -124,6 +163,7 @@ val CabecerasSeguras = createApplicationPlugin("CabecerasSeguras") {
             append("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'")
             append("Referrer-Policy", "no-referrer")
             append("Cache-Control", "no-store")
+            append("Cross-Origin-Resource-Policy", "same-origin")
         }
     }
 }

@@ -68,7 +68,7 @@ fun main(args: Array<String>) {
 private fun Conexion.huella(usuarioId: String): Boolean =
     consultar("SELECT 1 FROM huellas WHERE usuario_id = ?", usuarioId) { true }.isNotEmpty()
 
-fun Application.modulo(db: Db, proxyConfiable: Boolean = false, intentosLogin: Int = 10) {
+fun Application.modulo(db: Db, proxyConfiable: Boolean = false, intentosLogin: Int = 10, reloj: () -> Long = System::currentTimeMillis) {
     // detras de render u otro proxy la ip real viene en X-Forwarded-For; sin proxy ese encabezado lo podria inventar cualquiera
     // P4: la ULTIMA ip de la lista la agrega nuestro proxy (tunel o render); las anteriores las puede inventar el cliente
     if (proxyConfiable) install(XForwardedHeaders) { useLastProxy() }
@@ -101,6 +101,15 @@ fun Application.modulo(db: Db, proxyConfiable: Boolean = false, intentosLogin: I
             rateLimiter(limit = intentosLogin, refillPeriod = 1.minutes)
             requestKey { it.request.origin.remoteHost }
         }
+        // P4: crear cuentas (registro) y subir archivos tienen su propio limite por ip
+        register(RateLimitName("registro")) {
+            rateLimiter(limit = 20, refillPeriod = 1.minutes)
+            requestKey { it.request.origin.remoteHost }
+        }
+        register(RateLimitName("subidas")) {
+            rateLimiter(limit = 30, refillPeriod = 1.minutes)
+            requestKey { it.request.origin.remoteHost }
+        }
     }
     install(Authentication) {
         bearer("sesion") {
@@ -116,7 +125,7 @@ fun Application.modulo(db: Db, proxyConfiable: Boolean = false, intentosLogin: I
         }
     }
 
-    val bloqueos = BloqueoCuentas()
+    val bloqueos = BloqueoCuentas(reloj = reloj)
 
     routing {
         get("/") { call.respondText("Sonrisas de Cristal: servidor activo") }
@@ -127,9 +136,10 @@ fun Application.modulo(db: Db, proxyConfiable: Boolean = false, intentosLogin: I
                 // P3: textos de tamano razonable antes de tocar la base o calcular PBKDF2
                 if (p.usuario.length > 100 || p.contrasena.length > 200) throw IllegalArgumentException("Revisa los datos enviados.")
                 val clave = p.usuario.trim().lowercase()
-                // P4: tras 5 fallos la cuenta se bloquea 15 min, venga de la ip que venga
-                if (bloqueos.bloqueada(clave)) {
-                    call.respond(HttpStatusCode.TooManyRequests, Error("Demasiados intentos. Espera 15 minutos."))
+                // P4: tras 5 fallos la cuenta se bloquea 15 min, venga de la ip que venga; con fallos desde 3 ips, 3 dias.
+                // misma respuesta en los dos casos para no delatar nada
+                if (bloqueos.bloqueada(clave) || db.leer { BloqueosLargos.vigente(Conexion(it), clave, reloj()) }) {
+                    call.respond(HttpStatusCode.TooManyRequests, Error("Demasiados intentos. Inténtalo más tarde."))
                     return@post
                 }
                 val encontrado = db.leer { c ->
@@ -141,7 +151,16 @@ fun Application.modulo(db: Db, proxyConfiable: Boolean = false, intentosLogin: I
                 // se verifica aunque la cuenta no exista, para que el tiempo de respuesta no delate que usuarios hay
                 val correcta = Claves.verificar(p.contrasena, hash ?: Claves.falso) && hash != null
                 if (encontrado == null || !correcta) {
-                    bloqueos.fallo(clave)
+                    if (bloqueos.fallo(clave, call.request.origin.remoteHost)) {
+                        db.escribir { c ->
+                            val con = Conexion(c)
+                            BloqueosLargos.bloquear(con, clave, reloj(), "intentos fallidos desde varias ips")
+                            encontrado?.first?.let {
+                                con.registrar(null, LocalDateTime.now(), AccionRegistro.CUENTA, "Se bloqueó 3 días la cuenta de ${it.nombre} por intentos fallidos desde varias IPs", estanciaId = it.estanciaId)
+                            }
+                        }
+                        call.application.environment.log.warn("P4: cuenta '$clave' bloqueada 3 dias por intentos fallidos desde varias ips")
+                    }
                     call.respond(HttpStatusCode.Unauthorized, Error("Usuario o contraseña incorrectos."))
                     return@post
                 }
@@ -189,7 +208,7 @@ fun Application.modulo(db: Db, proxyConfiable: Boolean = false, intentosLogin: I
                 call.respond(HttpStatusCode.NoContent)
             }
 
-            rutasEstructura(db)
+            rutasEstructura(db, bloqueos)
             rutasNinos(db)
             rutasContenido(db)
             rutasMensajes(db)

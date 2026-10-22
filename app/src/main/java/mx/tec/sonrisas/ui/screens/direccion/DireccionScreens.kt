@@ -76,6 +76,7 @@ import mx.tec.sonrisas.domain.TipoAviso
 import mx.tec.sonrisas.domain.TipoIncidente
 import mx.tec.sonrisas.domain.TipoSala
 import mx.tec.sonrisas.domain.Tutor
+import mx.tec.sonrisas.domain.Usuario
 import mx.tec.sonrisas.ui.components.AvatarNino
 import mx.tec.sonrisas.ui.components.BannerAlergias
 import mx.tec.sonrisas.ui.components.BotonPrincipal
@@ -564,6 +565,7 @@ fun FundacionScreen(
     onReporte: () -> Unit,
     onRegistrar: () -> Unit,
     onEstancia: (Estancia) -> Unit,
+    onDesbloquear: (Usuario) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Scaffold(
@@ -609,6 +611,21 @@ fun FundacionScreen(
                         Cifra("${r.inscritos}", "inscritos", Modifier.weight(1f))
                         Cifra("${r.presentesHoy}", "presentes hoy", Modifier.weight(1f))
                         Cifra("${r.promedioMes} %", "asistencia del mes", Modifier.weight(1f))
+                    }
+                }
+            }
+            // P4: cuentas con bloqueo largo por intentos fallidos desde varios lugares; solo aparece si hay alguna
+            if (datos.bloqueadas.isNotEmpty()) item { EtiquetaSeccion("Cuentas bloqueadas") }
+            items(datos.bloqueadas, key = { "bloqueo-${it.id}" }) { u ->
+                TarjetaSeccion {
+                    Text(u.nombre, style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
+                    Text(
+                        "Usuario: ${u.usuario}. Hubo intentos fallidos de entrar desde varios lugares; se desbloquea sola en 3 días.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    FilledTonalButton(onClick = { onDesbloquear(u) }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                        Text("Desbloquear")
                     }
                 }
             }
@@ -677,5 +694,5 @@ private fun MasPreview() {
 @Composable
 private fun FundacionPreview() {
     val e = Estancia("e", "Estancia San Bernabé", "San Bernabé, Monterrey")
-    SonrisasTheme { FundacionScreen(FundacionDatos(listOf(ResumenEstancia(e, 34, 28, 91))), {}, {}, {}) }
+    SonrisasTheme { FundacionScreen(FundacionDatos(listOf(ResumenEstancia(e, 34, 28, 91))), {}, {}, {}, {}) }
 }

@@ -677,16 +677,28 @@ class ActividadViewModel(
     }
 }
 
-data class FundacionDatos(val estancias: List<ResumenEstancia>) {
+data class FundacionDatos(val estancias: List<ResumenEstancia>, val bloqueadas: List<Usuario> = emptyList()) {
     val total: Int get() = estancias.sumOf { it.inscritos }
     val presentes: Int get() = estancias.sumOf { it.presentesHoy }
 }
 
-class FundacionViewModel(estanciasRepository: EstanciasRepository) : ViewModel() {
+class FundacionViewModel(estanciasRepository: EstanciasRepository, private val cuentasRepository: CuentasRepository) : ViewModel() {
     private val reintentos = MutableStateFlow(0)
 
     val uiState: StateFlow<UiState<FundacionDatos>> = comoUiState(reintentos) {
-        estanciasRepository.resumenFundacion().map { FundacionDatos(it) }
+        combine(estanciasRepository.resumenFundacion(), cuentasRepository.bloqueadas()) { e, b -> FundacionDatos(e, b) }
+    }
+
+    fun desbloquear(u: Usuario, onListo: (String) -> Unit) {
+        viewModelScope.launch {
+            val mensaje = try {
+                cuentasRepository.desbloquear(u.id)
+                "Desbloqueamos la cuenta de ${u.nombre}."
+            } catch (e: Exception) {
+                "No pudimos desbloquear la cuenta. Revisa tu conexión e inténtalo de nuevo."
+            }
+            onListo(mensaje)
+        }
     }
 
     fun reintentar() {

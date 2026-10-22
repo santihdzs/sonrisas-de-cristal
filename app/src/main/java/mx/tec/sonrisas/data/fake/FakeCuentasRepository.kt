@@ -2,6 +2,7 @@ package mx.tec.sonrisas.data.fake
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.update
 import mx.tec.sonrisas.data.AccesoDenegado
 import mx.tec.sonrisas.data.CuentasRepository
@@ -66,6 +67,11 @@ class FakeCuentasRepository(
         almacen.usuarios.update { lista -> lista.map { if (it.id == e.id) it.copy(salaId = sala.id) else it } }
         almacen.registrar(u, reloj.ahora(), AccionRegistro.CUENTA, "Asignó a ${e.nombre} a la sala ${sala.nombre}")
     }
+
+    // el bloqueo por intentos fallidos solo existe en el servidor
+    override fun bloqueadas(): Flow<List<Usuario>> = flowOf(emptyList())
+
+    override suspend fun desbloquear(usuarioId: String) = latencia()
 
     override suspend fun retirarAcceso(usuarioId: String) {
         latencia()

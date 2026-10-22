@@ -51,6 +51,7 @@ fun FundacionApp(onCerrarSesion: () -> Unit) {
                         onReporte = { navController.navigate(Route.ASISTENCIA) },
                         onRegistrar = { navController.navigate(Route.estancia()) },
                         onEstancia = { navController.navigate(Route.estancia(it.id)) },
+                        onDesbloquear = { u -> vm.desbloquear(u) { mensajero.mostrar(it) } },
                     )
                 }
             }

@@ -1,5 +1,7 @@
 package mx.tec.sonrisas.servidor
 
+import io.ktor.server.plugins.ratelimit.RateLimitName
+import io.ktor.server.plugins.ratelimit.rateLimit
 import io.ktor.server.request.receive
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.get
@@ -53,7 +55,7 @@ private fun Ctx.crearCuenta(nombre: String, rol: Rol, estanciaId: String, detall
 private fun Ctx.educadoraPropia(usuarioId: String): Usuario =
     Tablas.usuarios.porId(usuarioId)?.takeIf { it.rol == Rol.EDUCADORA && it.estanciaId == u.estanciaId } ?: throw AccesoDenegado()
 
-fun Route.rutasEstructura(db: Db) {
+fun Route.rutasEstructura(db: Db, bloqueos: BloqueoCuentas) {
     get("/estancias") { lee(db) { estanciasVisibles() } }
 
     get("/salas") {
@@ -128,38 +130,63 @@ fun Route.rutasEstructura(db: Db) {
         }
     }
 
-    post("/cuentas/direccion") {
-        val p = call.receive<NuevaCuenta>()
+    // P4: los registros de cuentas pasan por su limite de peticiones
+    rateLimit(RateLimitName("registro")) {
+        post("/cuentas/direccion") {
+            val p = call.receive<NuevaCuenta>()
+            escribe(db) {
+                if (u.rol != Rol.FUNDACION) throw AccesoDenegado()
+                val estancia = p.estanciaId?.let { Tablas.estancias.porId(it) } ?: throw AccesoDenegado()
+                crearCuenta(p.nombre, Rol.DIRECCION, estancia.id, "Creó la cuenta de dirección de ${p.nombre.trim()} en ${estancia.nombre}")
+            }
+        }
+
+        post("/cuentas/educadora") {
+            val p = call.receive<NuevaCuenta>()
+            escribe(db) {
+                val estanciaId = direccion()
+                val sala = salaDeMiEstancia(p.salaId ?: throw AccesoDenegado())
+                crearCuenta(p.nombre, Rol.EDUCADORA, estanciaId, "Registró a la educadora ${p.nombre.trim()} en la sala ${sala.nombre}", salaId = sala.id)
+            }
+        }
+
+        post("/cuentas/familia") {
+            val tutorId = call.receive<Id>().id
+            escribe(db) {
+                val estanciaId = direccion()
+                val hijos = Tablas.ninos.donde("estancia_id = ?", estanciaId).filter { tutorId in it.tutorIds }
+                val tutor = Tablas.tutores.porId(tutorId)
+                if (tutor == null || hijos.isEmpty()) throw AccesoDenegado()
+                if (usuariosDelAmbito().any { it.tutorId == tutorId && it.activo }) throw IllegalStateException("Este tutor ya tiene acceso a la app.")
+                val nombres = hijos.joinToString(", ") { it.nombre }
+                crearCuenta(
+                    tutor.nombre, Rol.FAMILIAR, estanciaId,
+                    "Dio acceso a la app a ${tutor.nombre} (${tutor.parentesco.lowercase()} de $nombres)", tutorId = tutor.id,
+                )
+            }
+        }
+    }
+
+    /** P4: solo la fundacion ve las cuentas con bloqueo largo y las desbloquea */
+    get("/bloqueos") {
+        lee(db) {
+            if (u.rol != Rol.FUNDACION) throw AccesoDenegado()
+            val logins = BloqueosLargos.vigentes(this, System.currentTimeMillis())
+            // los bloqueos de nombres que no existen no se muestran
+            Tablas.usuarios.en("usuario", logins).sortedBy { it.nombre }
+        }
+    }
+
+    post("/cuentas/{id}/desbloqueo") {
+        val usuarioId = call.parameters["id"]!!
         escribe(db) {
             if (u.rol != Rol.FUNDACION) throw AccesoDenegado()
-            val estancia = p.estanciaId?.let { Tablas.estancias.porId(it) } ?: throw AccesoDenegado()
-            crearCuenta(p.nombre, Rol.DIRECCION, estancia.id, "Creó la cuenta de dirección de ${p.nombre.trim()} en ${estancia.nombre}")
+            val cuenta = Tablas.usuarios.porId(usuarioId) ?: throw AccesoDenegado()
+            BloqueosLargos.quitar(this, cuenta.usuario.lowercase())
+            bloqueos.exito(cuenta.usuario.lowercase())
+            registrar(AccionRegistro.CUENTA, "Desbloqueó la cuenta de ${cuenta.nombre}", estanciaId = cuenta.estanciaId)
         }
-    }
-
-    post("/cuentas/educadora") {
-        val p = call.receive<NuevaCuenta>()
-        escribe(db) {
-            val estanciaId = direccion()
-            val sala = salaDeMiEstancia(p.salaId ?: throw AccesoDenegado())
-            crearCuenta(p.nombre, Rol.EDUCADORA, estanciaId, "Registró a la educadora ${p.nombre.trim()} en la sala ${sala.nombre}", salaId = sala.id)
-        }
-    }
-
-    post("/cuentas/familia") {
-        val tutorId = call.receive<Id>().id
-        escribe(db) {
-            val estanciaId = direccion()
-            val hijos = Tablas.ninos.donde("estancia_id = ?", estanciaId).filter { tutorId in it.tutorIds }
-            val tutor = Tablas.tutores.porId(tutorId)
-            if (tutor == null || hijos.isEmpty()) throw AccesoDenegado()
-            if (usuariosDelAmbito().any { it.tutorId == tutorId && it.activo }) throw IllegalStateException("Este tutor ya tiene acceso a la app.")
-            val nombres = hijos.joinToString(", ") { it.nombre }
-            crearCuenta(
-                tutor.nombre, Rol.FAMILIAR, estanciaId,
-                "Dio acceso a la app a ${tutor.nombre} (${tutor.parentesco.lowercase()} de $nombres)", tutorId = tutor.id,
-            )
-        }
+        call.application.environment.log.info("P4: la fundacion desbloqueo la cuenta $usuarioId")
     }
 
     post("/cuentas/{id}/sala") {

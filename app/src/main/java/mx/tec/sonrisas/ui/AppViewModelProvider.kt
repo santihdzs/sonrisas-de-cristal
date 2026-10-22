@@ -129,7 +129,7 @@ object AppViewModelProvider {
             val c = contenedor()
             ActividadViewModel(c.actividadRepository, c.ninosRepository, c.reloj)
         }
-        initializer { FundacionViewModel(contenedor().estanciasRepository) }
+        initializer { FundacionViewModel(contenedor().estanciasRepository, contenedor().cuentasRepository) }
         initializer { CredencialesViewModel() }
         initializer { ConversacionesViewModel(contenedor().mensajesRepository, contenedor().reloj) }
         initializer { NuevoMensajeViewModel(contenedor().mensajesRepository) }

@@ -208,7 +208,8 @@ class SeguridadTest {
 
     @Test
     fun `S17 una cuenta se bloquea tras varios intentos fallidos aunque vengan de IPs distintas`() = prueba(proxyConfiable = true) {
-        val fallidos = (1..5).map { i -> intentar("familia", "incorrecta", ip = "198.51.100.$i").status }
+        // con fallos desde 3 ips distintas ya toca el bloqueo largo (SEGBloqueoCuentaTest)
+        val fallidos = (1..3).map { i -> intentar("familia", "incorrecta", ip = "198.51.100.$i").status }
         assertTrue(fallidos.all { it == HttpStatusCode.Unauthorized })
         intentar("familia", "incorrecta", ip = "198.51.100.6")
         // aun con la contrasena correcta, la cuenta esta bloqueada un rato

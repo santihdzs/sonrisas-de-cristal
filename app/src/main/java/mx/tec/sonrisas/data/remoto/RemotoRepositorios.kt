@@ -275,6 +275,8 @@ class RemotoCuentasRepository(private val r: Remoto) : CuentasRepository {
     override suspend fun asignarSala(usuarioId: String, salaId: String) { r.cambio { enviar("POST", "/cuentas/${codificar(usuarioId)}/sala", Id(salaId)) } }
     override suspend fun retirarAcceso(usuarioId: String) { r.cambio { post("/cuentas/${codificar(usuarioId)}/retiro") } }
     override suspend fun crearCuentaFamilia(tutorId: String): Credenciales = r.cambio { enviar("POST", "/cuentas/familia", Id(tutorId)).como() }
+    override fun bloqueadas(): Flow<List<Usuario>> = r.consulta("/bloqueos")
+    override suspend fun desbloquear(usuarioId: String) { r.cambio { post("/cuentas/${codificar(usuarioId)}/desbloqueo") } }
 }
 
 class RemotoActividadRepository(private val r: Remoto) : ActividadRepository {
