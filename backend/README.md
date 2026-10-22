@@ -51,7 +51,7 @@ En la pantalla de inicio de sesión toca "Servidor":
 - Teléfono o tablet: la dirección `https://….trycloudflare.com` del túnel. La versión release solo acepta `https://`.
 - Red local por `http://` (solo versión debug): pon `HOST_IP=0.0.0.0` en `.env` y usa la IP de la laptop, por ejemplo `http://192.168.1.20:8080`. Abre el puerto sin cifrar a toda la red, así que úsalo solo para pruebas.
 
-Si el servidor falla, las cuentas de prueba siguen entrando: la app usa sus datos de prueba en memoria sin avisar. Si la base se creó antes del cambio de contraseña a `demo`, corre `reiniciar-demo` una vez.
+Solo en la versión debug, si el servidor falla las cuentas de prueba siguen entrando con datos de prueba en memoria. La versión release no tiene ese respaldo: sin servidor no se puede iniciar sesión. Si la base se creó antes del cambio de contraseña a `demo`, corre `reiniciar-demo` una vez.
 
 ## Publicarlo gratis
 
@@ -99,10 +99,11 @@ También funciona en cualquier máquina con Docker (una computadora de la fundac
 - Contraseñas con PBKDF2-HMAC-SHA256 (210 000 iteraciones, sal por cuenta).
 - Sesiones con tokens aleatorios de 32 bytes. La base solo guarda su SHA-256, así que una copia de la base no sirve para entrar. Duran 30 días; cerrar sesión borra el token.
 - Cada petición vuelve a leer la cuenta: si la dirección retira el acceso, la siguiente petición de ese teléfono recibe 401 y la app regresa al inicio de sesión.
-- Máximo 10 intentos de inicio de sesión por minuto por IP, y 5 fallos seguidos bloquean esa cuenta 15 minutos desde cualquier IP (también nombres que no existen, para no delatar cuáles existen). Un usuario que no existe tarda lo mismo en rechazarse que una contraseña incorrecta.
+- Máximo 10 intentos de inicio de sesión por minuto por IP, y 5 fallos seguidos bloquean esa cuenta 15 minutos desde cualquier IP (también nombres que no existen, para no delatar cuáles existen). Fallos desde 3 IPs distintas la bloquean 3 días; la fundación la puede desbloquear. Un usuario que no existe tarda lo mismo en rechazarse que una contraseña incorrecta.
 - Toda la API tiene un límite de 1000 peticiones por minuto por IP. Detrás de un proxy se usa la última IP de `X-Forwarded-For`, la que agrega el proxy, porque las anteriores las puede inventar el cliente.
 - El autor de cada registro sale de la sesión, nunca de lo que manda la app.
-- Archivos de hasta 10 MB; el límite se cuenta al recibir aunque el tamaño declarado mienta. Solo los descarga quien puede ver esa sala.
+- Archivos de hasta 10 MB; el límite se cuenta al recibir aunque el tamaño declarado mienta. La imagen de una foto solo la descarga quien ve esa foto; material y objetos, quien ve la sala; una subida que aún no es foto, solo el personal de la sala.
+- Borrar un expediente elimina también sus fotos con la imagen, su registro de actividad y la cuenta de la familia que se queda sin hijos. La purga (al arrancar y cada 6 h) borra además sesiones vencidas y archivos sin uso de más de 24 h.
 - Los errores internos responden un mensaje genérico, sin detalles. Una fecha mal escrita responde 400, no 500.
 - Cabeceras de seguridad en todas las respuestas: `Strict-Transport-Security`, `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Content-Security-Policy`, `Referrer-Policy` y `Cache-Control: no-store`.
 - Un expediente solo se borra definitivamente si ya está en baja, aunque la petición no venga de la app.
@@ -123,7 +124,7 @@ $env:JAVA_HOME = "C:\Program Files\Android\Android Studio\jbr"
 .\gradlew.bat -p backend test
 ```
 
-El reporte queda en `backend/build/reports/tests/test/index.html`.
+El reporte queda en `backend/build/reports/tests/test/index.html`. Para correrlas contra PostgreSQL real, define `PRUEBAS_DATABASE_URL=postgres://usuario:clave@host:puerto/base`; cada prueba usa su propio esquema y lo borra al final.
 
 Corren el servidor real contra H2 en memoria con los datos de prueba y revisan:
 - que la familia solo vea a sus hijos;
@@ -162,5 +163,5 @@ Todas las rutas, salvo `GET /` y `POST /auth/login`, piden `Authorization: Beare
 | Archivos | `GET /archivos/{id}` |
 | Mensajes | `GET /conversaciones`, `/conversaciones/{id}`, `/conversaciones/{id}/mensajes`, `/mensajes/no-leidos`, `/contactos`; `POST /conversaciones/{id}/mensajes`, `/conversaciones/{id}/leida`, `/directas` |
 | Horarios | `GET /salas/{id}/bloques`, `/salas/{id}/especiales`; `PUT /bloques`, `/especiales`; `DELETE /bloques/{id}`, `/especiales/{id}` |
-| Cuentas | `GET /cuentas`; `POST /cuentas/direccion`, `/cuentas/educadora`, `/cuentas/familia`, `/cuentas/{id}/sala`, `/cuentas/{id}/retiro` |
+| Cuentas | `GET /cuentas`, `/bloqueos` (solo fundación); `POST /cuentas/direccion`, `/cuentas/educadora`, `/cuentas/familia`, `/cuentas/{id}/sala`, `/cuentas/{id}/retiro`, `/cuentas/{id}/desbloqueo` (solo fundación) |
 | Actividad | `GET /registros` (los 2000 más recientes) |

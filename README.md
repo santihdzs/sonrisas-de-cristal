@@ -1,116 +1,208 @@
 # Sonrisas de Cristal
 
-App Android para la Fundación Estancias Infantiles Sonrisas de Cristal (Monterrey). Sustituye la bitácora en papel y los grupos de WhatsApp de cada estancia con una sola app para cuatro perfiles: educadora, familia, dirección y fundación.
+App Android para la Fundación Estancias Infantiles Sonrisas de Cristal (Monterrey). Sustituye la bitácora en papel y los grupos de WhatsApp de cada estancia con una sola app para cuatro roles: educadora, familia, dirección y fundación. Proyecto del curso TC2007B.
 
-Proyecto del curso TC2007B. Kotlin, Jetpack Compose y Material 3.
+## Stack y arquitectura
 
-## Cómo correrla
+- **App:** Kotlin, Jetpack Compose, Material 3. `minSdk` 26, `targetSdk` 37.
+- **Servidor:** Ktor con PostgreSQL. Si no hay `DATABASE_URL`, usa H2.
+- `shared/`: modelos, reglas puras (validaciones, reporte de asistencia, `Visibilidad`: quién ve a qué niño), cuerpos del API y generador de datos de prueba. Lo compilan la app y el servidor.
+- `app/.../data/`: interfaces de repositorios. `AppContainer` elige entre `data/remoto/` (servidor) y `data/fake/` (datos en memoria, solo en debug).
+- `app/.../bitacora/`: bitácora imprimible en PDF (`DisenoBitacora` sin Android, `PdfBitacora` con `PdfDocument`).
+- `app/.../ui/`: pantallas por rol, cada una con un `UiState` (cargando, éxito o error).
+- `backend/`: servidor. Detalle del API, variables y despliegue en Render + Neon en [backend/README.md](backend/README.md).
+
+Toda regla de privacidad vive en la capa de datos, nunca en las pantallas. Con servidor, quien la aplica es el servidor.
+
+## Backend
+
+Requiere Docker. Desde la raíz del repo:
 
 ```sh
-JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home" ./gradlew :app:assembleDebug
-JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home" ./gradlew :app:testDebugUnitTest
+cp .env.example .env          # PowerShell: Copy-Item .env.example .env
+# edita .env: POSTGRES_PASSWORD larga (letras, números y guiones)
+docker compose up -d --build
 ```
 
-Se necesita el JDK que trae Android Studio (Gradle 9.8 no corre con Java 11). Las pruebas unitarias cubren el diseño de la bitácora imprimible.
+Variables de `.env.example`:
 
-La app se conecta al servidor de `backend/` (ver [backend/README.md](backend/README.md) para levantarlo con `docker compose up -d`). La dirección se elige en la opción "Servidor" del inicio de sesión (en la versión release, manteniendo presionado el logo). Las cuentas de prueba entran siempre, haya o no servidor: si el servidor no contesta o no tiene esa cuenta, la app usa los datos de prueba en memoria, generados a partir de la fecha del teléfono. Todas las cuentas de prueba usan la contraseña `demo`.
+| Variable | Uso |
+| --- | --- |
+| `POSTGRES_PASSWORD` | Obligatoria. Contraseña de PostgreSQL. `.env` está en `.gitignore`. |
+| `DATOS_DEMO` | `true` carga las cuentas de la demo; en producción, `false`. |
+| `CLAVE_FUNDACION` | Solo con `DATOS_DEMO=false`: contraseña inicial de `fundacion` (12 caracteres o más). |
+| `PROXY_CONFIABLE` | `true` detrás del túnel o de Render: la IP real llega en `X-Forwarded-For`. |
+| `HOST_IP` | `127.0.0.1` (solo esta computadora y su emulador). `0.0.0.0` abre HTTP sin cifrar a la red, solo para pruebas. |
 
-## Arquitectura
+**Seed idempotente.**
+- Al arrancar con la base vacía, carga los datos de prueba (`DATOS_DEMO=true`) o crea solo la cuenta `fundacion`. Si la base ya tiene datos, no toca nada.
+- Para regenerar la demo con la fecha de hoy:
 
-- `shared/`: módulo que comparten la app y el servidor. Modelos y reglas puras (`domain/`: resúmenes, validaciones, reporte de asistencia, quién ve a qué niño), los cuerpos del API y el generador de datos de prueba.
-- `data/`: interfaces de repositorios y `AppContainer`, que elige entre `data/remoto/` (el servidor) y `data/fake/` (los datos de prueba en memoria). `SesionConDemo` decide al iniciar sesión cuál se usa.
-- `backend/`: servidor Ktor y PostgreSQL.
-- `bitacora/`: la bitácora imprimible. `ContenidoBitacora` arma el texto de cada fila, `DisenoBitacora` calcula las páginas sin depender de Android y `PdfBitacora` las dibuja con `PdfDocument`.
-- `ui/`: pantallas por rol, `AppViewModelProvider` y navegación. Cada pantalla recibe un `UiState` (cargando, éxito o error).
+  ```sh
+  docker compose run --rm --no-deps backend /app/bin/backend reiniciar-demo
+  ```
 
-Toda regla de privacidad (qué niño, sala o conversación puede ver cada quien) vive en la capa de datos, no en las pantallas. Con servidor, quien la aplica es el servidor.
+  Con `DATOS_DEMO=false` el comando se niega a correr.
+
+**Sin Docker (H2 en `backend/datos/`):**
+
+```sh
+JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home" ./gradlew -p backend run
+./gradlew -p backend run --args=reiniciar-demo
+```
+
+En ambos casos el servidor queda en `http://localhost:8080`. El emulador entra por `http://10.0.2.2:8080`.
+
+## Exponerlo
+
+El perfil `tunel` de `docker-compose.yml` levanta Cloudflare Tunnel con la imagen fijada `cloudflare/cloudflared:2026.9.3`. Va por `--protocol http2` (TCP 443), porque muchas redes bloquean QUIC. Da HTTPS público sin abrir puertos:
+
+```sh
+docker compose --profile tunel up -d
+docker compose logs tunel     # dirección https://….trycloudflare.com (cambia en cada reinicio)
+```
+
+## Compilar e instalar el APK
+
+Se necesita el JDK de Android Studio: Gradle 9.8 no corre con Java 11.
+
+```sh
+export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+./gradlew :app:assembleRelease                                        # release firmado
+./gradlew :app:assembleRelease -Pservidor=https://<tu-servidor>       # con servidor por defecto
+./gradlew :app:assembleDebug                                          # debug
+```
+
+**Firma del release.** `keystore.properties` va en la raíz del repo y está en `.gitignore`. Contiene:
+
+```properties
+storeFile=/ruta/fuera/del/repo/sonrisas.keystore
+storePassword=...
+keyAlias=...
+keyPassword=...
+```
+
+El `.keystore` vive fuera del repo. Sin `keystore.properties`, el release sale sin firmar.
+
+El APK de la entrega está en `entrega/sonrisas-de-cristal-v3.0.0.apk`. Para instalarlo: `adb install entrega/sonrisas-de-cristal-v3.0.0.apk`, o copiarlo al teléfono y abrirlo.
+
+**Elegir el servidor.**
+- En debug: opción "Servidor" del inicio de sesión.
+- En release: mantener presionado el logo.
+- Release solo acepta `https://`.
+
+**Datos de prueba sin servidor.**
+- **Release no tiene datos de prueba de respaldo.** Sin servidor no se puede iniciar sesión.
+- **Solo debug** conserva el respaldo: si el servidor no contesta o no conoce la cuenta, las cuentas de prueba entran con datos en memoria generados con la fecha del teléfono.
+
+## Cuentas de prueba
+
+Todas usan la contraseña `demo`. Detalle de cada cuenta y guion de la demo en [DEMO.md](DEMO.md).
+
+| Rol | Usuarios |
+| --- | --- |
+| Fundación | `fundacion` |
+| Dirección | `direccion` (San Bernabé), `direccion.vv` (Valle Verde) |
+| Educadora | `educadora`, `educadora.lactantes`, `educadora.preescolar`, `educadora.vv.lactantes`, `educadora.vv.maternales`, `educadora.vv.preescolar` |
+| Familia | `familia`, `familia.papa`, `familia.paola` |
+
+## Pruebas
+
+```sh
+./gradlew -p backend test                 # servidor real contra H2 en memoria
+PRUEBAS_DATABASE_URL=postgres://usuario:clave@host:5432/base ./gradlew -p backend test   # contra PostgreSQL real
+./gradlew :app:testDebugUnitTest          # pruebas unitarias de la app
+```
+
+- **Backend:** cubre los RF por requisito (`RF01…RF15`), 27 ataques en `SeguridadTest` (S01–S27), archivos, bloqueo de cuentas, reloj del servidor y eliminación ARCO de punta a punta.
+- **Reportes:**
+  - [docs/pruebas/](docs/pruebas/): `resultados.txt` y el reporte HTML del backend.
+  - [docs/seguridad/zap/](docs/seguridad/zap/): escaneo OWASP ZAP antes y después, con `hallazgos.md`.
+
+## Seguridad
+
+- **Contraseñas:** PBKDF2-HMAC-SHA256 con 210 000 iteraciones y sal por cuenta.
+- **Sesiones:**
+  - Tokens opacos de 32 bytes; la base guarda solo su SHA-256.
+  - Duran 30 días. Retirar el acceso o cerrar sesión los invalida de inmediato.
+  - En el teléfono, el token se cifra con AES-256-GCM y la llave vive en el Android Keystore.
+- **Fuerza bruta:**
+  - 10 intentos de login por minuto por IP.
+  - 5 fallos bloquean la cuenta 15 minutos; fallos desde 3 IPs, 3 días.
+  - Mismo tiempo de respuesta exista o no la cuenta.
+  - Límite global de 1000 peticiones por minuto por IP.
+- **Autorización en el servidor:**
+  - Cada familia ve solo a sus hijos; la educadora, solo su sala; la fundación, solo datos consolidados.
+  - El autor de cada registro sale de la sesión, nunca de la app.
+- **Archivos:**
+  - Hasta 10 MB.
+  - Las fotos se validan por sus bytes y se recodifican sin EXIF ni GPS.
+  - Cada archivo solo lo descarga quien puede ver la foto o la sala. Una subida sin foto, solo el personal.
+- **Transporte:** HTTPS por túnel o Render, HSTS y cabeceras de seguridad en toda respuesta. Release no permite HTTP sin cifrar.
+- **Datos personales:** aviso de privacidad dentro de la app. Borrar un expediente elimina fotos, imágenes, bitácora, incidentes, registros de actividad y la cuenta de la familia que se queda sin hijos inscritos.
+- **Docker:** contenedor de solo lectura, sin capabilities, `no-new-privileges` y puerto solo en `127.0.0.1`.
 
 ## Funciones por rol
 
-**Educadora** (pestañas Sala, Fotos, Mensajes, Avisos)
-- Lista de su sala, llegada y salida con personas autorizadas, bitácora del día y registro grupal.
-- Incidentes, fotos tomadas con la cámara y con autorización de imagen, avisos.
-- Desde la sala: material de clase, objetos perdidos e impresión de la bitácora de toda la sala.
-- Chat de la sala y mensajes directos con las familias de su sala.
-
-**Familia** (pestañas Hoy, Semana, Fotos, Mensajes, Avisos)
-- El día y la semana de cada hijo, fotos donde aparece, incidentes, horario de la sala.
-- En "Hoy", una tarjeta de la sala del hijo elegido con material de clase y objetos perdidos (con indicador de nuevos).
-- Imprimir o compartir la bitácora de sus hijos.
-- Chat de la sala y mensajes directos con las educadoras.
-
-**Dirección** (pestañas Inicio, Niños, Mensajes, Avisos, Más)
-- Inscripción y expediente, bajas, horarios, reporte de asistencia, registro de actividad.
-- Registro de salas y de personal, asignación de sala y retiro de acceso.
-- Al inscribir: elegir un tutor ya registrado para hermanos y dar acceso a la app a cada tutor.
-- Desde cada sala en Inicio: material, objetos perdidos e impresión de la bitácora.
-
-**Fundación**
-- Resumen consolidado de todas las estancias y reporte de asistencia sin nombres de niños.
-- Registro y edición de estancias y creación de la cuenta de dirección de cada una.
+- **Educadora** (Sala, Fotos, Mensajes, Avisos):
+  - Lista de su sala; llegada y salida con personas autorizadas.
+  - Bitácora del día y registro grupal; incidentes.
+  - Fotos con cámara y autorización de imagen.
+  - Material, objetos perdidos, impresión de la bitácora y chat.
+- **Familia** (Hoy, Semana, Fotos, Mensajes, Avisos):
+  - El día y la semana de cada hijo; fotos donde aparece; incidentes.
+  - Horario, material y objetos perdidos.
+  - Bitácora para imprimir o compartir; chat con las educadoras.
+- **Dirección** (Inicio, Niños, Mensajes, Avisos, Más):
+  - Inscripción, expediente, bajas y eliminación.
+  - Horarios, reporte de asistencia y registro de actividad.
+  - Salas, personal y cuentas de familia.
+- **Fundación:**
+  - Resumen consolidado y reporte de asistencia sin nombres de niños.
+  - Estancias, cuentas de dirección y desbloqueo de cuentas.
 
 ## Requerimientos
 
 | Clave | Requerimiento | Dónde se cubre |
 | --- | --- | --- |
 | RF-01 | Dos tipos de perfil | Login con navegación distinta por rol (educadora, familia, dirección, fundación) |
-| RF-02 | Lista de niños de la sala | "Mi sala"; la capa de datos solo devuelve niños de la sala de la educadora |
-| RF-03 | Entrada y salida | Hojas de llegada y salida con hora, quién entrega, quién recoge y personal que entrega |
+| RF-02 | Lista de niños de la sala | "Mi sala"; solo se devuelven niños de la sala de la educadora |
+| RF-03 | Entrada y salida | Hora, quién entrega, quién recoge y personal que entrega |
 | RF-04 | Bitácora del día | Ficha del día con acciones rápidas |
 | RF-05 | Registro para varios niños | Registro grupal |
 | RF-06 | Vista del familiar | Pestaña "Hoy" |
-| RF-07 | Cada familia ve solo a sus hijos | `Visibilidad` en la capa de datos; aplica a fotos, chats, material, objetos perdidos e impresiones |
+| RF-07 | Cada familia ve solo a sus hijos | `Visibilidad`; aplica a fotos, chats, material, objetos perdidos e impresiones |
 | RF-08 | Avisos del centro | Avisos con indicador de no leídos |
-| RF-09 | Fotografía de la actividad | Fotos etiquetadas visibles solo para las familias de esos niños |
-| RF-10 | Borrar una foto | La familia borra la foto para todos |
-| RF-11 | Funciona sin internet | Pendiente: hace falta guardar en el teléfono y sincronizar con el servidor |
+| RF-09 | Fotografía de la actividad | Fotos etiquetadas, visibles solo para las familias de esos niños |
+| RF-10 | Borrar una foto | La familia borra la foto y su imagen para todos |
+| RF-11 | Funciona sin internet | Pendiente, fuera de alcance: requiere guardar en el teléfono y sincronizar |
 | RF-12 | Resumen semanal | Pestaña "Semana", compartir resumen e imprimir bitácora |
 | RF-13 | Desbloqueo con huella | Bloqueo al ir a segundo plano o tras 5 minutos |
-| RF-14 | Quién hizo qué | Registro de actividad: capturas, cuentas, salas, objetos perdidos, material y bitácoras exportadas |
-| RF-15 | Inscripción y expediente | Inscripción con tutores, personas autorizadas, tutores compartidos entre hermanos y cuentas de familia |
-| RF-16 | Autorización de imagen | Dos permisos por niño, validados también en la capa de datos |
+| RF-14 | Quién hizo qué | Registro de actividad: capturas, cuentas, salas, objetos, material y bitácoras exportadas |
+| RF-15 | Inscripción y expediente | Tutores, personas autorizadas, tutores compartidos entre hermanos y cuentas de familia |
+| RF-16 | Autorización de imagen | Dos permisos por niño, validados también en el servidor |
 | RF-17 | Varias estancias | Todo se filtra por estancia; la fundación solo ve datos consolidados |
-| RF-18 | Baja y eliminación | Baja temporal con periodo de gracia y purga al abrir la app |
+| RF-18 | Baja y eliminación | Baja temporal de 30 días y después eliminación completa en el servidor (al arrancar y cada 6 h). Se borran expediente, asistencia, bitácora, incidentes, fotos con su imagen (de una foto grupal solo se quita la etiqueta), registros de actividad del niño y la cuenta, chats y sesiones de la familia que se queda sin hijos inscritos. También se purgan sesiones vencidas y archivos huérfanos |
 | RF-19 | Incidentes | Registro con folio; aparecen en "Hoy" y en la bitácora impresa |
 | RF-20 | Reporte de asistencia | Por sala y por mes, para dirección y fundación |
 | RF-21 | Horario de actividades | Horario por sala y actividades especiales |
 
-Puntos pendientes del catálogo que se resolvieron:
-- Varios tutores por niño y hermanos con una sola cuenta de familia.
-- Alta, baja y asignación del personal (pantalla "Personal").
-- Mensajes de la familia hacia la sala (chat de sala y mensajes directos).
+## Decisiones clave
 
-## Bitácora imprimible
+- **Sin registro público.** La fundación crea las cuentas de dirección; la dirección crea las de educadoras y familias. La contraseña temporal se muestra una sola vez.
+- **Retirar acceso no borra la cuenta del personal.** Queda inactiva y conserva su nombre en la bitácora; su sesión se cierra en el momento.
+- **Hermanos.** Un tutor es un solo registro para todos sus hijos y una sola cuenta de familia.
+- **Chats.** Participa solo quien tiene acceso a la app. La pertenencia se recalcula siempre y los mensajes no se copian al registro de actividad.
+- **Archivos en la base.** Material, fotos e imágenes de objetos se guardan en PostgreSQL. La app los baja a su caché privada y los borra al cerrar sesión.
+- **Sesión con tokens opacos y no JWT,** para poder invalidarlos en el momento.
+- **Actualización por polling:** cada 15 s, y el chat cada 3 s. No hay notificaciones push.
+- **Bitácora fiel al formato oficial:** carta, texto mínimo de 7 pt y una hoja de observaciones cuando el texto no cabe.
 
-- Semanal por niño en carta horizontal, diaria en carta vertical y semanal de toda la sala.
-- Sigue el orden del formato oficial de filtro diario: datos generales, registro de ingreso, registro de estadía (alimentación, descanso, funciones excretoras, estado de ánimo, accidentes, salud) y registro de egreso, con columnas de lunes a viernes.
-- Encabezado con fundación, estancia, sala, niño, periodo y fecha de generación; pie con número de página.
-- Los días sin asistencia dicen "No asistió", los días por venir "Pendiente" y los campos vacíos "Sin registro".
-- Se dibuja sobre una cuadrícula fija en puntos con la tipografía sans serif del sistema, así que los mismos datos siempre dan el mismo PDF.
-- "Imprimir" usa `PrintManager`; "Compartir PDF" usa un `FileProvider`. Cada exportación queda en el registro de actividad.
+## Enlaces
 
-## Decisiones
-
-- **Sin registro público.** Las cuentas solo las crean la fundación (dirección de cada estancia) y la dirección (educadoras y familias). Así nadie entra a una estancia sin que alguien de la estancia lo autorice.
-- **Contraseña temporal.** Al crear una cuenta se muestran usuario y contraseña una sola vez, con "Copiar". El cambio obligatorio de contraseña en el primer acceso queda pendiente.
-- **Retirar acceso no borra la cuenta.** La cuenta queda inactiva: no puede iniciar sesión, sale de los chats y su nombre se conserva en la bitácora y en el registro de actividad. Si tenía la sesión abierta, se cierra.
-- **Una sala por educadora.** Una sala puede tener varias educadoras, pero cada educadora pertenece a una sala.
-- **Máximo cinco salas por estancia.** El color de estrella identifica a la sala y no se repite dentro de la estancia; hay cinco colores.
-- **Hermanos.** Al inscribir se puede elegir un tutor ya registrado en la estancia; el tutor es el mismo registro para ambos niños y su cuenta de familia ve a los dos. Si se editan sus datos, cambian para todos sus hijos.
-- **Chats.** Solo participan personas con acceso a la app. La dirección está en el chat de cada sala de su estancia, pero no inicia mensajes directos (el requerimiento solo define familia y educadora). La pertenencia se recalcula siempre: si un niño cambia de sala o alguien pierde el acceso, la conversación deja de mostrarse. Los mensajes no se copian al registro de actividad para no exponer su contenido.
-- **Objetos perdidos.** La familia ve que un objeto está reclamado, pero solo ve el nombre de quien lo reclamó si fue ella. Los entregados quedan en el filtro "Entregados".
-- **Material de clase.** PDF, imágenes y documentos de Word, Excel y PowerPoint, de hasta 10 MB. La educadora edita o borra lo que ella subió; la dirección puede corregir cualquier material de su estancia.
-- **Archivos.** Con servidor, el material, las fotos de actividades y las de objetos se guardan en la base y la app los baja una vez a su caché privada; al cerrar sesión se borran del teléfono. Sin servidor se copian al almacenamiento privado de la app y, como los datos viven en memoria, al abrir la app se borran los de la ejecución anterior. Los PDF temporales de la bitácora se borran al abrir la app.
-- **Sesión.** El teléfono guarda un token de 30 días, así que la sesión no se cierra al salir de la app. En lugar de JWT se usan tokens opacos guardados en la base: cerrar sesión o retirar el acceso los invalida de inmediato.
-- **Actualización.** Las pantallas se vuelven a pedir cada 15 segundos (el chat cada 3) y en cuanto el teléfono guarda algo. No hay notificaciones push.
-- **Cuentas de prueba siempre disponibles.** Al iniciar sesión se intenta primero el servidor; si no contesta o no conoce la cuenta, y el usuario y la contraseña son de los datos de prueba, la sesión sigue con los datos en memoria. La app no muestra la diferencia. Una cuenta real con el servidor caído ve "No pudimos conectar con el servidor". El código de la demo está en `data/fake/`, `SesionConDemo` y la parte marcada `DEMO` de `AppContainer`.
-- **Fotos con la cámara.** La foto se toma con la app de cámara del teléfono y se guarda directo en el almacenamiento privado de la app, sin pasar por la galería. Se reduce y se endereza antes de guardarla. Con servidor, la imagen se guarda en la base y solo la descarga quien puede ver esa foto. Las fotos de los datos de prueba son ilustraciones por tema.
-- **Bitácora en papel.** La semana de un niño ocupa dos hojas, igual que el formato oficial; al imprimir una sala, cada niño empieza en su propia hoja. El texto nunca baja de 7 pt: una celda que no cabe en cuatro renglones deja "sigue en Observaciones, nota N" y el texto completo pasa a una hoja de observaciones al final.
-- **Accidentes y salud.** Golpes, caídas, mordidas, rasguños y "otro" van en "Accidentes"; reacción alérgica, fiebre y malestar van en "Salud".
-- **Salida.** La asistencia ahora guarda qué persona del personal entregó al niño, porque el formato oficial lo pide.
-- **Letra al 200 %.** Las etiquetas de la barra inferior se limitan a 130 % para que quepan las cinco pestañas; el resto de la pantalla sí escala.
-- **Tableta.** El contenido tiene un ancho máximo de 840 dp para que no se estire de lado a lado en horizontal.
-
-## Backend
-
-`backend/` es el servidor: Ktor, PostgreSQL y las mismas reglas de privacidad que la app, compartidas en `shared/`. Se levanta en local con `docker compose up -d` y se publica gratis en Render con Neon. Los pasos, las variables de entorno, la seguridad y el API están en [backend/README.md](backend/README.md).
+- Aviso de privacidad: [app/src/main/assets/aviso-privacidad.md](app/src/main/assets/aviso-privacidad.md)
+- Reporte: [docs/reporte-final.pdf](docs/reporte-final.pdf)
+- Presentación 1: [docs/presentaciones/presentacion-1.pdf](docs/presentaciones/presentacion-1.pdf)
+- Presentación 2: [docs/presentaciones/presentacion-2.pdf](docs/presentaciones/presentacion-2.pdf)
+- Video de demostración: (enlace de Drive pendiente)
+- Versión entregada: tag `v3.0-entrega-final` del repositorio
