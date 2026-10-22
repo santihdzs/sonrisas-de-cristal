@@ -18,9 +18,11 @@ class SesionConDemo(
     private val servidor: SesionRepository?,
     private val demo: SesionRepository,
     scope: CoroutineScope,
+    // en release no hay datos de prueba: todo lo que se ve y se guarda pasa por el servidor
+    private val permitirDemo: Boolean = true,
 ) : SesionRepository {
 
-    private val _enDemo = MutableStateFlow(servidor == null)
+    private val _enDemo = MutableStateFlow(servidor == null && permitirDemo)
 
     /** AppContainer lo lee para dar los repositorios de la demo o los del servidor */
     val enDemo: Boolean get() = _enDemo.value
@@ -40,6 +42,7 @@ class SesionConDemo(
         }
         // si el servidor si contesto con algo distinto (acceso retirado, demasiados intentos), manda el servidor
         if (remoto != null && remoto != ResultadoInicio.SIN_CONEXION && remoto != ResultadoInicio.INCORRECTO) return remoto
+        if (!permitirDemo) return remoto ?: ResultadoInicio.SIN_CONEXION
         val local = demo.iniciar(usuario, contrasena)
         if (local == ResultadoInicio.EXITO) _enDemo.value = true
         // una cuenta real con el servidor caido debe ver "sin conexion", no "contraseña incorrecta"

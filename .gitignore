@@ -17,3 +17,22 @@ build/
 /backend/datos/
 # secretos locales de docker compose (la plantilla es .env.example)
 /.env
+# material de referencia local, video de demo y secretos
+/context/
+/notebooks/
+/video/
+*.mp4
+*.mov
+.env.*
+!.env.example
+keystore.properties
+# artefactos de latex
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.nav
+*.out
+*.snm
+*.toc
+*.synctex.gz

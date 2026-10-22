@@ -46,7 +46,7 @@ services:
 
   # P8: tunel de cloudflare: https publico hacia el backend sin abrir puertos ni comprar un certificado
   tunel:
-    image: cloudflare/cloudflared:latest
+    image: cloudflare/cloudflared:2026.9.3
     # http2 va por TCP 443 como cualquier pagina web; quic (el de por defecto) usa UDP 7844 y muchas redes, como la del Tec, lo bloquean
     command: tunnel --protocol http2 --url http://backend:8080
     depends_on:

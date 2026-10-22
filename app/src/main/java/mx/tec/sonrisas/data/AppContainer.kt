@@ -99,7 +99,7 @@ class AppContainer(context: Context) {
     }
 
     // DEMO: al iniciar sesion decide si se usan los datos del servidor o los de prueba
-    private val sesion by lazy { SesionConDemo(if (sinServidor) null else sesionRemota, sesionDemo, scope) }
+    private val sesion by lazy { SesionConDemo(if (sinServidor && BuildConfig.DEBUG) null else sesionRemota, sesionDemo, scope, permitirDemo = BuildConfig.DEBUG) }
 
     // los viewmodels de cada sesion se crean despues de entrar, asi que reciben los repositorios correctos
     private val repos: Repositorios get() = if (sesion.enDemo) demo else conServidor

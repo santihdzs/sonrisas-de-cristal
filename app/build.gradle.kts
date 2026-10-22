@@ -11,14 +11,28 @@ android {
         applicationId = "mx.tec.sonrisas"
         minSdk = 26
         targetSdk = 37
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 3
+        versionName = "3.0.0"
         // servidor por defecto (gradle -Pservidor=https://...); vacio = datos de prueba sin servidor. se puede cambiar en el login
         buildConfigField("String", "SERVIDOR", "\"${providers.gradleProperty("servidor").getOrElse("")}\"")
     }
 
+    // la llave de firma vive fuera del repo; keystore.properties (en .gitignore) dice donde esta
+    val firma = rootProject.file("keystore.properties").takeIf { it.exists() }?.let { f ->
+        java.util.Properties().apply { f.inputStream().use(::load) }
+    }
+    signingConfigs {
+        if (firma != null) create("release") {
+            storeFile = file(firma.getProperty("storeFile"))
+            storePassword = firma.getProperty("storePassword")
+            keyAlias = firma.getProperty("keyAlias")
+            keyPassword = firma.getProperty("keyPassword")
+        }
+    }
+
     buildTypes {
         release {
+            if (firma != null) signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }

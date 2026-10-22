@@ -2,7 +2,7 @@ package mx.tec.sonrisas.ui.navigation
 
 fun tituloComun(ruta: String?): String? = when (ruta) {
     Route.PERFIL -> "Mi perfil"
-    Route.ACERCA -> "Acerca de"
+    Route.ACERCA -> "Acerca de y privacidad"
     Route.AVISOS -> "Avisos"
     Route.FOTO -> "Foto"
     Route.INCIDENTE_DETALLE -> "Incidente"

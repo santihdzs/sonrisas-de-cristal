@@ -118,7 +118,7 @@ fun PerfilScreen(
         TarjetaSeccion(onClick = onAcercaDe) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Espacio.space3)) {
                 Icono(R.drawable.ic_info, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text("Acerca de", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                Text("Acerca de y aviso de privacidad", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
                 Icono(R.drawable.ic_chevron_right, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }

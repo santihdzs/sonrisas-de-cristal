@@ -10,6 +10,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -52,6 +54,27 @@ fun AcercaDeScreen(version: String, modifier: Modifier = Modifier) {
                     Text("Proyecto universitario TC2007B, Tecnológico de Monterrey.", style = MaterialTheme.typography.bodyMedium)
                     Text("Versión $version", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
+            }
+        }
+        AvisoPrivacidad()
+    }
+}
+
+/** el aviso vive en assets/aviso-privacidad.md: el mismo archivo que enlaza el README */
+@Composable
+private fun AvisoPrivacidad() {
+    val contexto = LocalContext.current
+    val lineas = remember {
+        runCatching { contexto.assets.open("aviso-privacidad.md").bufferedReader().readLines() }.getOrDefault(emptyList())
+    }
+    TarjetaSeccion {
+        lineas.filter { it.isNotBlank() }.forEach { linea ->
+            val texto = linea.replace("**", "")
+            when {
+                texto.startsWith("# ") -> Text(texto.drop(2), style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
+                texto.startsWith("## ") -> Text(texto.drop(3), style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold))
+                texto.startsWith("- ") -> Text("• " + texto.drop(2), style = MaterialTheme.typography.bodyMedium)
+                else -> Text(texto, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }
