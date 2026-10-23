@@ -14,14 +14,23 @@ App Android para la Fundación Estancias Infantiles Sonrisas de Cristal (Monterr
 
 Toda regla de privacidad vive en la capa de datos, nunca en las pantallas. Con servidor, quien la aplica es el servidor.
 
+## Enlaces
+
+- [Aviso de privacidad](app/src/main/assets/aviso-privacidad.md)
+- [Reporte final (PDF)](docs/reporte-final.pdf)
+- [Presentación 1](docs/presentaciones/presentacion-1.pdf) · [Presentación 2](docs/presentaciones/presentacion-2.pdf)
+- [APK de release firmado](entrega/sonrisas-de-cristal-v3.0.0.apk)
+- [Reporte OWASP ZAP](docs/seguridad/zap/hallazgos.md) · [Verificación del despliegue](docs/seguridad/verificacion-despliegue.txt) · [Resultados de pruebas](docs/pruebas/resultados.txt)
+- [Video de demostración](ENLACE_DRIVE_PENDIENTE)
+
 ## Backend
 
-Requiere Docker. Desde la raíz del repo:
+Requiere Docker. Desde la raíz del repo, tres comandos levantan PostgreSQL, el backend con los datos de demostración y el túnel HTTPS (el `.env.example` ya trae valores que funcionan; en producción cambia `POSTGRES_PASSWORD`):
 
 ```sh
 cp .env.example .env          # PowerShell: Copy-Item .env.example .env
-# edita .env: POSTGRES_PASSWORD larga (letras, números y guiones)
-docker compose up -d --build
+docker compose --profile tunel up -d --build
+docker compose logs tunel | grep trycloudflare   # dirección https para la app
 ```
 
 Variables de `.env.example`:
@@ -197,12 +206,3 @@ PRUEBAS_DATABASE_URL=postgres://usuario:clave@host:5432/base ./gradlew -p backen
 - **Sesión con tokens opacos y no JWT,** para poder invalidarlos en el momento.
 - **Actualización por polling:** cada 15 s, y el chat cada 3 s. No hay notificaciones push.
 - **Bitácora fiel al formato oficial:** carta, texto mínimo de 7 pt y una hoja de observaciones cuando el texto no cabe.
-
-## Enlaces
-
-- Aviso de privacidad: [app/src/main/assets/aviso-privacidad.md](app/src/main/assets/aviso-privacidad.md)
-- Reporte: [docs/reporte-final.pdf](docs/reporte-final.pdf)
-- Presentación 1: [docs/presentaciones/presentacion-1.pdf](docs/presentaciones/presentacion-1.pdf)
-- Presentación 2: [docs/presentaciones/presentacion-2.pdf](docs/presentaciones/presentacion-2.pdf)
-- Video de demostración: (enlace de Drive pendiente)
-- Versión entregada: tag `v3.0-entrega-final` del repositorio
