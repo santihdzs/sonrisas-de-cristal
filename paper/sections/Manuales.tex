@@ -53,12 +53,12 @@ Cuentas de demostración (contraseña \texttt{demo}): \texttt{educadora}, \textt
 \end{itemize}
 
 \subsection{Levantar el backend}
-\begin{lstlisting}[basicstyle=\ttfamily\small,breaklines=true]
-git clone https://github.com/santihdzs/sonrisas-de-cristal.git
-cd sonrisas-de-cristal && git checkout v3.0-entrega-final
-cp .env.example .env    # define POSTGRES_PASSWORD (larga, aleatoria)
-docker compose --profile tunel up -d --build
-docker compose logs tunel   # direccion https://...trycloudflare.com
+\begin{lstlisting}[style=terminal]
+$ git clone https://github.com/santihdzs/sonrisas-de-cristal.git
+$ cd sonrisas-de-cristal && git checkout v3.0-entrega-final
+$ cp .env.example .env      # ya trae valores para la demo
+$ docker compose --profile tunel up -d --build
+$ docker compose logs tunel | grep trycloudflare   # direccion https
 \end{lstlisting}
 
 Variables de entorno (\texttt{.\allowbreak{}env}):
@@ -70,7 +70,10 @@ Variables de entorno (\texttt{.\allowbreak{}env}):
 	\item \texttt{HOST\_IP}: por defecto \texttt{127.\allowbreak{}0.\allowbreak{}0.\allowbreak{}1}.
 \end{itemize}
 
-La semilla es idempotente: solo carga datos cuando la base está vacía. Para recargar la demostración con la fecha del día se usa \texttt{docker compose run --rm --no-deps backend /\allowbreak{}app/\allowbreak{}bin/\allowbreak{}backend reiniciar-demo}, que se niega a correr con \texttt{DATOS\_DEMO=false}.
+La semilla es idempotente: solo carga datos cuando la base está vacía. Para recargar la demostración con la fecha del día (se niega a correr con \texttt{DATOS\_DEMO=false}):
+\begin{lstlisting}[style=terminal]
+$ docker compose run --rm --no-deps backend /app/bin/backend reiniciar-demo
+\end{lstlisting}
 
 \subsection{Instalar la app}
 \begin{enumerate}
@@ -80,13 +83,15 @@ La semilla es idempotente: solo carga datos cuando la base está vacía. Para re
 \end{enumerate}
 
 Para compilar el APK de release firmado:
-\begin{lstlisting}[basicstyle=\ttfamily\small,breaklines=true]
-export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
-./gradlew :app:assembleRelease   # firma con el keystore definido en keystore.properties (fuera del repo)
+\begin{lstlisting}[style=terminal]
+$ export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+$ ./gradlew :app:assembleRelease   # firma con keystore.properties (fuera de git)
 \end{lstlisting}
 
 \subsection{Correr las pruebas}
-\begin{lstlisting}[basicstyle=\ttfamily\small,breaklines=true]
-./gradlew -p backend test          # integracion, API y seguridad
-./gradlew :app:testDebugUnitTest   # unitarias de la app
+\begin{lstlisting}[style=terminal]
+$ ./gradlew -p backend test          # integracion, API y seguridad (H2)
+$ PRUEBAS_DATABASE_URL=postgres://usuario:clave@127.0.0.1:5432/sonrisas \
+    ./gradlew -p backend test        # la misma suite contra PostgreSQL
+$ ./gradlew :app:testDebugUnitTest   # unitarias de la app
 \end{lstlisting}

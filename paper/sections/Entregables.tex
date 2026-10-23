@@ -1,11 +1,33 @@
 \section{Entregables y enlaces}\label{sec:entregables}
+\newcommand{\gh}{https://github.com/santihdzs/sonrisas-de-cristal}
 \begin{itemize}
-	\item \textbf{Repositorio, tag de la versión entregada:} \url{https://github.com/santihdzs/sonrisas-de-cristal/tree/v3.0-entrega-final}
-	\item \textbf{APK de release firmado (3.0.0):} \url{https://github.com/santihdzs/sonrisas-de-cristal/raw/v3.0-entrega-final/entrega/sonrisas-de-cristal-v3.0.0.apk}
-	\item \textbf{Instrucciones para levantar el backend:} sección~\ref{sec:manual} de este documento y \url{https://github.com/santihdzs/sonrisas-de-cristal/blob/v3.0-entrega-final/backend/README.md}
-	\item \textbf{Aviso de privacidad:} \url{https://github.com/santihdzs/sonrisas-de-cristal/blob/v3.0-entrega-final/app/src/main/assets/aviso-privacidad.md}
-	\item \textbf{Reporte ZAP y evidencia de pruebas:} carpetas \texttt{docs/\allowbreak{}seguridad/\allowbreak{}} y \texttt{docs/\allowbreak{}pruebas/\allowbreak{}} del repositorio.
-	\item \textbf{Video de respaldo de la demostración:} enlace de Google Drive (pendiente)
-	\item \textbf{Plan de Planner:} \href{https://teams.microsoft.com/l/entity/com.microsoft.teamspace.tab.planner/_djb2_msteams_prefix_3923924113?context=\%7B\%22channelId\%22\%3A\%2219\%3A17zu_w8a-xo5ieToH61foRRfCKvnOu6HKuCw9bj4xts1\%40thread.tacv2\%22\%7D&tenantId=c65a3ea6-0f7c-400b-8934-5a6dc1705645}{tablero NeuralHub en Microsoft Teams}. La captura del tablero final está en la sección de administración del proyecto.
-	\item \textbf{Presentaciones:} \texttt{docs/\allowbreak{}presentaciones/\allowbreak{}presentacion-1.\allowbreak{}pdf} y \texttt{presentacion-2.\allowbreak{}pdf}.
+	\item \textbf{Repositorio:} \href{\gh}{github.com/santihdzs/sonrisas-de-cristal}; versión entregada en el tag \href{\gh/tree/v3.0-entrega-final}{\texttt{v3.0-entrega-final}}.
+	\item \textbf{APK de release firmado (3.0.0):} \href{\gh/raw/v3.0-entrega-final/entrega/sonrisas-de-cristal-v3.0.0.apk}{\texttt{entrega/sonrisas-de-cristal-v3.0.0.apk}}.
+	\item \textbf{Instrucciones para levantar el backend:} sección~\ref{sec:manual} y \href{\gh/blob/v3.0-entrega-final/README.md}{\texttt{README.md}}.
+	\item \textbf{Aviso de privacidad:} \href{\gh/blob/v3.0-entrega-final/app/src/main/assets/aviso-privacidad.md}{\texttt{app/src/main/assets/aviso-privacidad.md}}, también dentro de la app.
+	\item \textbf{Video de respaldo de la demostración:} \href{https://drive.google.com/}{video en Google Drive}.
+	\item \textbf{Plan de Planner:} \href{https://teams.microsoft.com/l/entity/com.microsoft.teamspace.tab.planner/_djb2_msteams_prefix_3923924113?context=\%7B\%22channelId\%22\%3A\%2219\%3A17zu_w8a-xo5ieToH61foRRfCKvnOu6HKuCw9bj4xts1\%40thread.tacv2\%22\%7D&tenantId=c65a3ea6-0f7c-400b-8934-5a6dc1705645}{tablero NeuralHub en Microsoft Teams}; captura del tablero final en la sección de administración.
+	\item \textbf{Presentaciones:} \href{\gh/blob/v3.0-entrega-final/docs/presentaciones/presentacion-1.pdf}{\texttt{docs/presentaciones/presentacion-1.pdf}} y \href{\gh/blob/v3.0-entrega-final/docs/presentaciones/presentacion-2.pdf}{\texttt{docs/presentaciones/presentacion-2.pdf}}.
 \end{itemize}
+
+\appendix
+\section{Archivos de evidencia}\label{sec:evidencia}
+Rutas relativas a la raíz del repositorio; cada una enlaza al archivo en GitHub en el tag entregado.
+
+{\small
+\begin{longtable}{p{7.2cm}p{7.6cm}}
+\toprule
+\textbf{Archivo} & \textbf{Contenido}\\\midrule\endhead
+\href{\gh/blob/v3.0-entrega-final/docs/seguridad/zap/reporte-zap.html}{\texttt{docs/seguridad/zap/reporte-zap.html}} & Reporte de OWASP ZAP del escaneo autenticado (también en \texttt{.json} y \texttt{.md})\\
+\href{\gh/blob/v3.0-entrega-final/docs/seguridad/zap/antes-reporte-zap.html}{\texttt{docs/seguridad/zap/antes-reporte-zap.html}} & Escaneo previo, sin sesión, con la alerta baja que se corrigió\\
+\href{\gh/blob/v3.0-entrega-final/docs/seguridad/zap/hallazgos.md}{\texttt{docs/seguridad/zap/hallazgos.md}} & Justificación o mitigación de cada alerta y códigos de respuesta durante el escaneo\\
+\href{\gh/blob/v3.0-entrega-final/docs/seguridad/zap/openapi.json}{\texttt{docs/seguridad/zap/openapi.json}} & Especificación OpenAPI usada por ZAP, generada desde las rutas del backend\\
+\href{\gh/blob/v3.0-entrega-final/docs/seguridad/verificacion-despliegue.txt}{\texttt{docs/seguridad/verificacion-despliegue.txt}} & Cabeceras por el túnel HTTPS, login de cada rol, dato capturado por la educadora y leído por la familia, \texttt{docker inspect}\\
+\href{\gh/blob/v3.0-entrega-final/docs/pruebas/resultados.txt}{\texttt{docs/pruebas/resultados.txt}} & Pruebas del backend por clase, en H2 y en PostgreSQL 17\\
+\href{\gh/tree/v3.0-entrega-final/docs/pruebas/reporte-backend}{\texttt{docs/pruebas/reporte-backend/index.html}} & Reporte HTML de JUnit\\
+\href{\gh/tree/v3.0-entrega-final/backend/src/test/kotlin/mx/tec/sonrisas/servidor}{\texttt{backend/src/test/kotlin/.../servidor/}} & Código de las pruebas citadas en la matriz\\
+\href{\gh/tree/v3.0-entrega-final/evidencia-pruebas}{\texttt{evidencia-pruebas/}} & Capturas por rol y matriz de la Entrega 2\\
+\href{\gh/blob/v3.0-entrega-final/docs/presentaciones/presentacion-1.pdf}{\texttt{docs/presentaciones/presentacion-1.pdf}} & Presentación 1\\
+\href{\gh/blob/v3.0-entrega-final/docs/presentaciones/presentacion-2.pdf}{\texttt{docs/presentaciones/presentacion-2.pdf}} & Presentación 2 (final)\\
+\bottomrule
+\end{longtable}}

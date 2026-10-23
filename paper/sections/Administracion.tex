@@ -59,10 +59,10 @@ Datos inconsistentes entre teléfonos con relojes distintos & Hora del servidor 
 \subsection{Distribución del trabajo}
 La evidencia está en el historial de \texttt{git} (autores de los commits y pull requests) y en las asignaciones de Planner.
 \begin{itemize}
-	\item \textbf{Santiago Hernández Senosiain:} arquitectura, app Android, backend Ktor, integración, controles de seguridad finales, pruebas y documentación de la entrega final.
-	\item \textbf{Gilberto Olavarrieta Sánchez:} rediseño de la interfaz de todas las pantallas por rol (PR \#3, \texttt{rediseno-ui}).
-	\item \textbf{Franco Salazar Guerrero:} borradores del reporte de entregas y documentación de avance.
-	\item \textbf{Gerardo Islas Gómez:} endurecimiento de seguridad P1--P8: cabeceras, contraseñas temporales, token cifrado en el teléfono, Docker endurecido, secretos en \texttt{.\allowbreak{}env} y túnel HTTPS (PR \#2, \texttt{seguridad}).
+	\item \textbf{Santiago Hernández Senosiain:} arquitectura, app Android, backend Ktor, integración de la app con el API, controles de seguridad finales (bloqueo multi-IP, archivos, hora del servidor, borrado ARCO), despliegue, escaneo ZAP y documentación técnica.
+	\item \textbf{Gerardo Islas Gómez:} endurecimiento de seguridad P1--P8 (cabeceras, contraseñas temporales, token cifrado en el teléfono, Docker endurecido, secretos en \texttt{.env}, túnel HTTPS) y pruebas de seguridad del API (\texttt{SeguridadTest}, PR \#2, rama \texttt{seguridad}).
+	\item \textbf{Gilberto Olavarrieta Sánchez:} diseño de la aplicación: sistema visual, componentes compartidos y las vistas de todas las pantallas por rol (frontend en Compose, PR \#3, rama \texttt{rediseno-ui}).
+	\item \textbf{Franco Salazar Guerrero:} redacción del aviso de privacidad y de las consideraciones éticas y legales (criterios verificables, clasificación de datos y dilemas éticos), y revisión de que el aviso corresponda con lo que hace la app.
 \end{itemize}
 
 \subsection{Retrospectiva}

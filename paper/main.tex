@@ -21,7 +21,6 @@
 \newtheorem{remark}{Observación}
 
 \usepackage{setspace} %Spacing on the front page for crest and titles
-\usepackage[]{fncychap} % Styles can be Sonny, Lenny, Glenn, Conny, Rejne, Bjarne and Bjornstrup
 \usepackage[hyphens]{url} % Deals with hyphens in urls to make them clickable
 \usepackage{xcolor} % Great if you want coloured text
 
@@ -45,7 +44,7 @@
 \renewcommand{\arraystretch}{1.5}
 
 % Appendix
-\usepackage{appendix} 
+% appendix: se usa \appendix nativo de article
 
 \usepackage{natbib}
 \usepackage{comment}
@@ -53,7 +52,7 @@
 % Tikz figures
 \usepackage{tikz}
 \newcommand{\ImageWidth}{14cm} 
-\usetikzlibrary{decorations.pathreplacing,positioning,arrows.meta,fit} 
+\usetikzlibrary{decorations.pathreplacing,positioning,arrows.meta,fit,backgrounds} 
 
 % Fancy headers and footnotes
 \usepackage{fancyhdr}
@@ -71,6 +70,20 @@
 
 % Inline code
 \usepackage{listings}
+\usepackage[varqu,scaled=0.95]{zi4}
+\definecolor{termfondo}{HTML}{1E2430}
+\definecolor{termtexto}{HTML}{E8ECF1}
+\definecolor{termprompt}{HTML}{7FD6A3}
+\definecolor{termcoment}{HTML}{8A96A8}
+\lstdefinestyle{terminal}{
+  backgroundcolor=\color{termfondo}, basicstyle=\ttfamily\small\color{termtexto},
+  commentstyle=\color{termcoment}\itshape, morecomment=[l]{\#},
+  moredelim=[s][\color{termprompt}]{\$}{\ },
+  frame=single, rulecolor=\color{termfondo}, framesep=6pt, xleftmargin=6pt, xrightmargin=6pt,
+  breaklines=true, breakatwhitespace=false, columns=fullflexible, keepspaces=true,
+  aboveskip=10pt, belowskip=10pt, showstringspaces=false,
+  literate={á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1 {ñ}{{\~n}}1
+}
 
 \setlength{\footnotesep}{0.5cm}
 %%%%%%%%%%%%%%%%%%%%%%%%%% DOCUMENT STARTS %%%%%%%%%%%%%%%%%%%%%%%%%%%%% 

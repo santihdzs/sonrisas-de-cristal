@@ -7,20 +7,23 @@
 	\item[Procedimiento de despliegue.]
 	\begin{enumerate}
 		\item Clonar el tag \texttt{v3.\allowbreak{}0-entrega-final} y crear el \texttt{.\allowbreak{}env}.
-		\item Correr \texttt{docker compose --profile tunel up -d --build}.
+		\item Levantar los servicios: \texttt{docker compose --profile tunel up -d --build}.
 		\item Confirmar que \texttt{GET /\allowbreak{}} responde por \texttt{https} con las cabeceras de seguridad.
 		\item Entrar como \texttt{fundacion}, registrar las estancias y crear la cuenta de Dirección de cada una.
 		\item Cada Dirección registra salas y educadoras e inscribe a los niños.
 		\item Instalar el APK y configurar el servidor en cada dispositivo.
 	\end{enumerate}
 	\item[Carga y migración de datos.] El socio formador \textbf{no tiene datos previos que migrar}: hoy la información vive en bitácoras en papel y en chats de WhatsApp, y no conviene trasladar fotos de menores desde teléfonos personales. La carga inicial se hace desde la app. La semilla de producción crea solo la cuenta \texttt{fundacion}, y cada estancia captura a su personal y sus inscripciones conforme los niños se reinscriben, con el consentimiento por escrito del aviso de privacidad. Los datos de demostración (\texttt{DATOS\_DEMO=true}) solo se usan para capacitación y para la presentación.
-	\item[Respaldo.] \texttt{docker compose exec db pg\_dump -U sonrisas sonrisas > respaldo.\allowbreak{}sql} diario. Como fotos y material se guardan en la base, el respaldo incluye los archivos.
-	\item[Rollback.] Si la nueva versión falla:
-	\begin{enumerate}
-		\item Detener el backend con \texttt{docker compose stop backend}.
-		\item Restaurar el respaldo previo con \texttt{psql < respaldo.\allowbreak{}sql}.
-		\item Hacer \texttt{git checkout} del tag anterior y \texttt{docker compose up -d --build}.
-		\item Reinstalar el APK anterior; hay que desinstalar antes porque Android no permite instalar un \texttt{version\allowbreak{}Code} menor.
-	\end{enumerate}
+	\item[Respaldo.] Diario, con el contenedor de la base. Como fotos y material se guardan en la base, el respaldo incluye los archivos.
+\begin{lstlisting}[style=terminal]
+$ docker compose exec db pg_dump -U sonrisas sonrisas > respaldo.sql
+\end{lstlisting}
+	\item[Rollback.] Si la nueva versión falla, se regresa a la anterior con el respaldo previo y se reinstala el APK anterior (desinstalando antes, porque Android no permite bajar el \texttt{versionCode}):
+\begin{lstlisting}[style=terminal]
+$ docker compose stop backend
+$ docker compose exec -T db psql -U sonrisas sonrisas < respaldo.sql
+$ git checkout <tag-anterior>
+$ docker compose up -d --build
+\end{lstlisting}
 	Como el esquema solo usa \texttt{CREATE TABLE IF NOT EXISTS}, una versión anterior arranca sobre la misma base sin migraciones inversas; la tabla nueva \texttt{bloqueos} simplemente no se usa.
 \end{description}

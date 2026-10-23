@@ -2,31 +2,33 @@
 
 \begin{figure}[H]
 \centering
-\begin{tikzpicture}[
-	caja/.style={draw, rounded corners, align=center, minimum width=3.3cm, minimum height=1cm, font=\small},
-	capa/.style={draw, dashed, rounded corners, inner sep=6pt},
-	flecha/.style={-{Stealth}, thick}]
-	\node[caja] (ui) {UI (Compose)\\pantallas por rol};
-	\node[caja, below=0.5cm of ui] (vm) {ViewModels\\\texttt{Ui\allowbreak{}State}};
-	\node[caja, below=0.5cm of vm] (repo) {Repositorios\\\texttt{data/\allowbreak{}remoto}};
-	\node[caja, below=0.5cm of repo] (ks) {Android Keystore\\token AES-256-GCM};
-	\node[capa, fit=(ui)(vm)(repo)(ks), label=above:{\textbf{App Android}}] (app) {};
+\definecolor{cApp}{HTML}{2F6FB3}\definecolor{cNube}{HTML}{E38B2C}\definecolor{cSrv}{HTML}{2E8B57}\definecolor{cDb}{HTML}{7A4FB5}\definecolor{cSh}{HTML}{6B7280}
+\begin{tikzpicture}[font=\small,
+	caja/.style={draw=#1, fill=#1!12, very thick, rounded corners=4pt, align=center, minimum width=3.4cm, minimum height=1.15cm},
+	grupo/.style={draw=#1, fill=#1!4, dashed, thick, rounded corners=8pt, inner sep=9pt},
+	flecha/.style={-{Stealth[length=3mm]}, very thick, draw=#1},
+	etq/.style={font=\scriptsize\itshape, fill=white, inner sep=1.5pt}]
+	\node[caja=cApp] (ui) {\textbf{UI Compose}\\pantallas por rol};
+	\node[caja=cApp, below=7mm of ui] (vm) {\textbf{ViewModels}\\\texttt{UiState}};
+	\node[caja=cApp, below=7mm of vm] (repo) {\textbf{Repositorios}\\Ktor Client};
+	\node[caja=cApp, below=7mm of repo] (ks) {\textbf{Android Keystore}\\token AES-256-GCM};
+	\begin{scope}[on background layer]\node[grupo=cApp, fit=(ui)(vm)(repo)(ks), label={[cApp, font=\bfseries]above:App Android 3.0.0}] {};\end{scope}
 
-	\node[caja, right=2.6cm of vm] (cf) {Túnel Cloudflare\\HTTPS / TLS};
-	\node[caja, right=1.2cm of cf] (api) {API Ktor\\auth, rate limit,\\cabeceras, BOLA};
-	\node[caja, below=0.9cm of api] (db) {PostgreSQL 17\\volumen Docker};
-	\node[capa, fit=(api)(db), label=above:{\textbf{Docker Compose}}] {};
-	\node[caja, below=0.9cm of cf] (sh) {\texttt{shared/\allowbreak{}}\\modelos y reglas};
+	\node[caja=cNube, right=32mm of repo] (cf) {\textbf{Túnel Cloudflare}\\TLS (HTTPS)};
+	\node[caja=cSrv, right=26mm of cf] (api) {\textbf{API Ktor}\\cabeceras $\cdot$ rate limit\\auth $\cdot$ BOLA};
+	\node[caja=cDb, below=12mm of api] (db) {\textbf{PostgreSQL 17}\\volumen Docker};
+	\begin{scope}[on background layer]\node[grupo=cSrv, fit=(api)(db), label={[cSrv, font=\bfseries]above:Docker Compose}] {};\end{scope}
+	\node[caja=cSh, above=14mm of cf] (sh) {\textbf{\texttt{shared/}}\\modelos y reglas de visibilidad};
 
-	\draw[flecha] (ui) -- (vm);
-	\draw[flecha] (vm) -- (repo);
-	\draw[flecha] (repo.east) -- node[above, font=\scriptsize, sloped]{HTTPS + Bearer} (cf.west);
-	\draw[flecha] (cf) -- node[above, font=\scriptsize]{HTTP interno} (api);
-	\draw[flecha] (api) -- node[right, font=\scriptsize]{JDBC parametrizado} (db);
-	\draw[dashed] (sh) -- (api);
-	\draw[dashed] (sh) -- (repo);
+	\draw[flecha=cApp] (ui) -- (vm);
+	\draw[flecha=cApp] (vm) -- (repo);
+	\draw[flecha=cNube] (repo) -- node[etq, above]{HTTPS + Bearer} (cf);
+	\draw[flecha=cSrv] (cf) -- node[etq, above]{HTTP interno} (api);
+	\draw[flecha=cDb] (api) -- node[etq, right]{JDBC parametrizado} (db);
+	\draw[cSh, thick, dashed] (sh) -| (api);
+	\draw[cSh, thick, dashed] (sh) -| ([xshift=6mm]repo.north east) -- ([xshift=0mm]repo.north east);
 \end{tikzpicture}
-\caption{Capas y componentes de Sonrisas de Cristal.}
+\caption{Capas y componentes de Sonrisas de Cristal. Las líneas punteadas indican el código compartido.}
 \end{figure}
 
 \subsection{Capas y componentes}
