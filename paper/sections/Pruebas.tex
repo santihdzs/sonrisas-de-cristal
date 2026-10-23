@@ -1,0 +1,61 @@
+\section{Matriz de trazabilidad y evidencia de pruebas}
+
+\subsection{Niveles de prueba}
+\begin{description}
+	\item[Unitarias.] Las reglas puras (visibilidad, diseño de la bitácora imprimible y contraseñas temporales) se prueban sin servidor ni Android: \texttt{Diseno\allowbreak{}Bitacora\allowbreak{}Test} en la app y los casos de regla de \texttt{RF02}/\texttt{RF07}.
+	\item[Integración y API.] Cada prueba de \texttt{backend/\allowbreak{}src/\allowbreak{}test} levanta el servidor Ktor completo (\texttt{test\allowbreak{}Application}) con una base de datos real y lo ejercita por HTTP, como lo haría la app. La suite corre contra H2 en modo PostgreSQL y también contra un PostgreSQL 17 real en Docker (ver \texttt{docs/\allowbreak{}pruebas/\allowbreak{}resultados.\allowbreak{}txt}).
+	\item[Seguridad.] \texttt{Seguridad\allowbreak{}Test}, \texttt{SEGBloqueo\allowbreak{}Cuenta\allowbreak{}Test}, \texttt{SEGArchivos\allowbreak{}Test}, \texttt{SEGReloj\allowbreak{}Servidor\allowbreak{}Test} y \texttt{ARCOEliminacion\allowbreak{}Test} prueban que el API rechace peticiones maliciosas o no permitidas.
+	\item[DAST.] Escaneo con OWASP ZAP sobre las rutas del API (sección~\ref{sec:zap}).
+	\item[Sistema.] Recorrido manual de punta a punta con el APK de release firmado en un dispositivo físico conectado al backend publicado por el túnel.
+\end{description}
+
+\subsection{Resultados}
+\input{tables/resultados}
+
+\subsection{Matriz de trazabilidad}
+Los identificadores son los del backlog. Las pruebas automatizadas se nombran \texttt{Clase.\allowbreak{}prueba}. Las pruebas manuales (PM) son recorridos en el teléfono con el APK de release; se describen en la sección~\ref{sec:manual}.
+
+{\small
+\begin{longtable}{p{1.2cm}p{3.2cm}p{3.6cm}p{4.1cm}p{1.4cm}p{1.6cm}}
+\toprule
+\textbf{ID} & \textbf{Descripción} & \textbf{Criterio de aceptación} & \textbf{Prueba o evidencia} & \textbf{Resultado} & \textbf{Estado}\\\midrule\endhead
+RF-01 & Acceso con perfil propio & Cada rol entra a su navegación; contraseña incorrecta no entra & \texttt{RF01\allowbreak{}Acceso\allowbreak{}Perfiles\allowbreak{}Test} (4) & Aprobada & Cumplido\\
+RF-02 & Lista de niños de la sala & La educadora ve solo su sala & \texttt{RF02\allowbreak{}Lista\allowbreak{}Ninos\allowbreak{}Sala\allowbreak{}Test} (4) & Aprobada & Cumplido\\
+RF-03 & Entrada y salida & Hora, quién entrega y quién recoge; sin duplicados & \texttt{RF03\allowbreak{}Asistencia\allowbreak{}Test} (4), \texttt{SEGReloj\allowbreak{}Servidor\allowbreak{}Test.\allowbreak{}la\allowbreak{}Asistencia\ldots} & Aprobada & Cumplido\\
+RF-04 & Bitácora del día & Comida, siesta y notas firmadas por la educadora & \texttt{RF04\allowbreak{}Bitacora\allowbreak{}Test} (4) & Aprobada & Cumplido\\
+RF-05 & Registro para varios niños & Un mismo evento se guarda para todos los niños elegidos & PM-05: registro grupal en el teléfono y verificación en la cuenta de cada familia & Correcto & Cumplido\\
+RF-06 & Vista del familiar & La familia ve el día que registró la educadora & \texttt{RF06\allowbreak{}Familia\allowbreak{}Ve\allowbreak{}El\allowbreak{}Dia\allowbreak{}Test} (4) & Aprobada & Cumplido\\
+RF-07 & Cada familia ve solo a sus hijos & Un niño ajeno no aparece ni por id & \texttt{RF07\allowbreak{}Familia\allowbreak{}Solo\allowbreak{}Sus\allowbreak{}Hijos\allowbreak{}Test} (4), \texttt{Seguridad\allowbreak{}Test.\allowbreak{}S11} & Aprobada & Cumplido\\
+RF-08 & Avisos del centro & Aviso publicado con hora del servidor, visible para la estancia & \texttt{SEGReloj\allowbreak{}Servidor\allowbreak{}Test.\allowbreak{}el\allowbreak{}Aviso\ldots}, PM-08 & Aprobada & Cumplido\\
+RF-09 & Fotografía de la actividad & Solo la ven las familias de los niños etiquetados & \texttt{RF09\allowbreak{}Fotos\allowbreak{}Visibles\allowbreak{}Test} (4), \texttt{Servidor\allowbreak{}Test.\allowbreak{}la\allowbreak{}Imagen\allowbreak{}De\allowbreak{}Una\allowbreak{}Foto\ldots} & Aprobada & Cumplido\\
+RF-10 & Borrar una foto & La familia la borra para todos, con su imagen & \texttt{RF10\allowbreak{}Eliminar\allowbreak{}Foto\allowbreak{}Test} (4) & Aprobada & Cumplido\\
+RF-11 & Funciona sin internet & Registrar sin conexión y sincronizar sin duplicados & Sin prueba: no se implementó & No aplica & Pendiente\\
+RF-12 & Resumen semanal & Semana del niño e impresión con el formato oficial & \texttt{Diseno\allowbreak{}Bitacora\allowbreak{}Test} (7), PM-12 & Aprobada & Cumplido\\
+RF-13 & Desbloqueo con huella & La app se bloquea en segundo plano y abre con la huella & PM-13 en dispositivo con lector & Correcto & Cumplido\\
+RF-14 & Quién hizo qué & Capturas, consultas y exportaciones registradas; solo las lee la Dirección & \texttt{RF14\allowbreak{}Registro\allowbreak{}Actividad\allowbreak{}Test} (4) & Aprobada & Cumplido\\
+RF-15 & Inscripción y expediente & Solo personas autorizadas del expediente entregan o recogen & \texttt{RF15\allowbreak{}Salida\allowbreak{}Persona\allowbreak{}Autorizada\allowbreak{}Test} (4) & Aprobada & Cumplido\\
+RF-16 & Autorización de imagen & No se etiqueta a un niño sin el permiso del uso elegido & Validación en \texttt{POST /\allowbreak{}fotos}; PM-16 & Correcto & Cumplido\\
+RF-17 & Varias estancias & Una Dirección no toca otra estancia; la Fundación no ve niños & \texttt{Seguridad\allowbreak{}Test.\allowbreak{}S12}, \texttt{Servidor\allowbreak{}Test.\allowbreak{}la\allowbreak{}Fundacion\allowbreak{}No\allowbreak{}Recibe\ldots} & Aprobada & Cumplido\\
+RF-18 & Baja y eliminación & Baja con 30 días de gracia y borrado completo & \texttt{Seguridad\allowbreak{}Test.\allowbreak{}S20/\allowbreak{}S21}, \texttt{ARCOEliminacion\allowbreak{}Test} (3) & Aprobada & Cumplido\\
+RF-19 & Incidentes & Incidente con folio y hora del servidor, visible a la familia & \texttt{SEGReloj\allowbreak{}Servidor\allowbreak{}Test.\allowbreak{}el\allowbreak{}Incidente\ldots}, PM-19 & Aprobada & Cumplido\\
+RF-20 & Reporte de asistencia & Por sala y mes; la Fundación solo recibe totales & \texttt{Servidor\allowbreak{}Test.\allowbreak{}la\allowbreak{}Fundacion\allowbreak{}No\allowbreak{}Recibe\ldots}, PM-20 & Aprobada & Cumplido\\
+RF-21 & Horario de actividades & La familia ve el horario de la sala de su hijo & PM-21 & Correcto & Cumplido\\\midrule
+RNF-SEG-01 & Sin secretos en texto plano & La base no guarda contraseñas ni tokens legibles & \texttt{Seguridad\allowbreak{}Test.\allowbreak{}S06} & Aprobada & Cumplido\\
+RNF-SEG-02 & Sesiones robustas & Token ausente, inventado, alterado o vencido responde 401 & \texttt{Seguridad\allowbreak{}Test.\allowbreak{}S01--S05} & Aprobada & Cumplido\\
+RNF-SEG-03 & Sin inyección SQL & Las inyecciones no autentican, no borran tablas ni filtran datos & \texttt{Seguridad\allowbreak{}Test.\allowbreak{}S08--S10} & Aprobada & Cumplido\\
+RNF-SEG-04 & Control de privilegios & Roles sin permiso no borran ni crean cuentas & \texttt{Seguridad\allowbreak{}Test.\allowbreak{}S13/\allowbreak{}S14/\allowbreak{}S26} & Aprobada & Cumplido\\
+RNF-SEG-05 & Rate limiting y bloqueo & 429 por exceso de peticiones; 3 IPs distintas bloquean 3 días; solo la Fundación desbloquea & \texttt{Seguridad\allowbreak{}Test.\allowbreak{}S15--S19}, \texttt{SEGBloqueo\allowbreak{}Cuenta\allowbreak{}Test} (4) & Aprobada & Cumplido\\
+RNF-SEG-06 & Archivos seguros & Solo JPEG/PNG reales de 10 MB o menos; sin EXIF ni GPS & \texttt{SEGArchivos\allowbreak{}Test} (6+) & Aprobada & Cumplido\\
+RNF-SEG-07 & Hora no falsificable & Fechas de 2001 o 2099 enviadas por el cliente se ignoran & \texttt{SEGReloj\allowbreak{}Servidor\allowbreak{}Test} (7) & Aprobada & Cumplido\\
+RNF-SEG-08 & Cabeceras de seguridad & HSTS, CSP, nosniff y X-Frame-Options en cada respuesta & \texttt{Seguridad\allowbreak{}Test.\allowbreak{}S25}, ZAP & Aprobada & Cumplido\\
+RNF-PRIV-01 & Derecho de cancelación & Borrar un expediente elimina sus datos, imágenes y la cuenta de la familia & \texttt{ARCOEliminacion\allowbreak{}Test} (3) & Aprobada & Cumplido\\
+\bottomrule
+\end{longtable}}
+
+\subsection{Evidencia}
+\begin{itemize}
+	\item Reporte JUnit del backend: \texttt{docs/\allowbreak{}pruebas/\allowbreak{}reporte-backend/\allowbreak{}index.\allowbreak{}html} y resumen por clase en \texttt{docs/\allowbreak{}pruebas/\allowbreak{}resultados.\allowbreak{}txt}.
+	\item Verificación del despliegue por el túnel (cabeceras, login de cada rol y un dato capturado por la educadora y leído por la familia): \texttt{docs/\allowbreak{}seguridad/\allowbreak{}verificacion-despliegue.\allowbreak{}txt}.
+	\item Reporte de OWASP ZAP: \texttt{docs/\allowbreak{}seguridad/\allowbreak{}zap/\allowbreak{}}.
+	\item Capturas por rol: \texttt{evidencia-pruebas/\allowbreak{}}.
+\end{itemize}

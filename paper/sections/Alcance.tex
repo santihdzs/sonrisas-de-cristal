@@ -1,0 +1,26 @@
+\section{Resumen del alcance final}
+
+\subsection{Problema}
+Las estancias de la Fundación Estancias Infantiles Sonrisas de Cristal llevaban la bitácora diaria en papel. Las educadoras tomaban fotos de los niños con su celular personal y las enviaban por WhatsApp, así que las imágenes de menores quedaban en teléfonos particulares, sin control. Además, cada estancia pagaba su propia plataforma (cerca de \$2,900 al mes) y la comunicación con las familias estaba dispersa.
+
+\subsection{Alcance entregado}
+Sonrisas de Cristal es una sola plataforma para toda la Fundación, separada por estancia y por sala. Se compone de:
+\begin{itemize}
+	\item una aplicación Android (Kotlin, Jetpack Compose) con cuatro perfiles: Fundación, Dirección, Educadora y Familia;
+	\item un backend propio (Ktor + PostgreSQL), contenerizado con Docker y publicado por HTTPS a través de un túnel de Cloudflare;
+	\item un módulo \texttt{shared/\allowbreak{}} con los modelos y las reglas de privacidad que usan tanto la app como el servidor.
+\end{itemize}
+
+El backlog tiene 21 requerimientos funcionales (RF-01 a RF-21): 14 validados por el socio formador y 7 propuestos por el equipo. Se organizan en 8 épicas y 36 historias de usuario. De los 21, en la versión 3.0.0 se cumplen 20 y uno queda fuera del alcance entregado: RF-11, la operación sin conexión (ver la sección~\ref{sec:estado}).
+
+Los flujos principales son:
+\begin{itemize}
+	\item la educadora registra la llegada y la salida de cada niño, validando a la persona autorizada, y la bitácora del día;
+	\item la familia ve en su teléfono el día y la semana de cada uno de sus hijos, y solo de ellos;
+	\item las fotos solo las ven las familias de los niños que aparecen y con el permiso de imagen correspondiente, y cualquiera de esas familias puede borrarlas;
+	\item la Dirección inscribe niños, crea cuentas y consulta el registro de actividad;
+	\item la Fundación administra estancias y ve totales, nunca datos de un niño en particular.
+\end{itemize}
+
+\subsection{Referencia al acta de acuerdos}
+El equipo no firmó con el socio formador un acta de acuerdos como documento aparte. Los acuerdos de alcance quedaron en el \emph{Product Backlog} (versión validada en la sesión con el socio formador, Entrega 1). Ahí se separan los 14 requerimientos validados por la Fundación de los 7 propuestos por el equipo, que se marcan como \emph{Nueva} hasta que el socio formador los valide. Ese backlog es la referencia de alcance de esta entrega. Todos los identificadores RF y HU de este documento son los del backlog.

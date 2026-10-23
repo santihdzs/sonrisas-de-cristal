@@ -1,0 +1,26 @@
+\section{Plan de implantación}
+
+\begin{description}
+	\item[Versión entregada.] App 3.0.0 (\texttt{version\allowbreak{}Code} 3) y backend del tag \texttt{v3.\allowbreak{}0-entrega-final} del repositorio.
+	\item[Canal de distribución.] APK de release firmado, publicado en el repositorio (\texttt{entrega/\allowbreak{}}), que la Dirección instala en los teléfonos o tabletas de cada sala. Las familias reciben el mismo APK por enlace. La publicación en Google Play (prueba cerrada) queda como siguiente paso; requiere la cuenta de desarrollador de la Fundación.
+	\item[Configuración necesaria.] Un equipo o VPS de la Fundación con Docker y un archivo \texttt{.\allowbreak{}env} con \texttt{POSTGRES\_PASSWORD} aleatoria, \texttt{DATOS\_DEMO=false} y \texttt{CLAVE\_FUNDACION} de 12 caracteres o más. En operación real se recomienda un túnel con nombre de Cloudflare (dominio fijo) en lugar del túnel rápido, cuya dirección cambia al reiniciar. En la app, la dirección del servidor se fija al compilar (\texttt{-Pservidor=https:/\allowbreak{}/\allowbreak{}\ldots}) o se configura una vez manteniendo presionado el logo.
+	\item[Procedimiento de despliegue.]
+	\begin{enumerate}
+		\item Clonar el tag \texttt{v3.\allowbreak{}0-entrega-final} y crear el \texttt{.\allowbreak{}env}.
+		\item Correr \texttt{docker compose --profile tunel up -d --build}.
+		\item Confirmar que \texttt{GET /\allowbreak{}} responde por \texttt{https} con las cabeceras de seguridad.
+		\item Entrar como \texttt{fundacion}, registrar las estancias y crear la cuenta de Dirección de cada una.
+		\item Cada Dirección registra salas y educadoras e inscribe a los niños.
+		\item Instalar el APK y configurar el servidor en cada dispositivo.
+	\end{enumerate}
+	\item[Carga y migración de datos.] El socio formador \textbf{no tiene datos previos que migrar}: hoy la información vive en bitácoras en papel y en chats de WhatsApp, y no conviene trasladar fotos de menores desde teléfonos personales. La carga inicial se hace desde la app. La semilla de producción crea solo la cuenta \texttt{fundacion}, y cada estancia captura a su personal y sus inscripciones conforme los niños se reinscriben, con el consentimiento por escrito del aviso de privacidad. Los datos de demostración (\texttt{DATOS\_DEMO=true}) solo se usan para capacitación y para la presentación.
+	\item[Respaldo.] \texttt{docker compose exec db pg\_dump -U sonrisas sonrisas > respaldo.\allowbreak{}sql} diario. Como fotos y material se guardan en la base, el respaldo incluye los archivos.
+	\item[Rollback.] Si la nueva versión falla:
+	\begin{enumerate}
+		\item Detener el backend con \texttt{docker compose stop backend}.
+		\item Restaurar el respaldo previo con \texttt{psql < respaldo.\allowbreak{}sql}.
+		\item Hacer \texttt{git checkout} del tag anterior y \texttt{docker compose up -d --build}.
+		\item Reinstalar el APK anterior; hay que desinstalar antes porque Android no permite instalar un \texttt{version\allowbreak{}Code} menor.
+	\end{enumerate}
+	Como el esquema solo usa \texttt{CREATE TABLE IF NOT EXISTS}, una versión anterior arranca sobre la misma base sin migraciones inversas; la tabla nueva \texttt{bloqueos} simplemente no se usa.
+\end{description}

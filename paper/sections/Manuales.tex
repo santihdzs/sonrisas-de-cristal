@@ -1,0 +1,92 @@
+\section{Manual de usuario}\label{sec:manual}
+
+\subsection{Entrar a la app}
+\begin{enumerate}
+	\item Abre Sonrisas de Cristal y escribe el usuario y la contraseña que te dio la Dirección o la Fundación.
+	\item Si es la primera vez en ese teléfono, la Dirección configura el servidor: mantiene presionado el logo y escribe la dirección \texttt{https:/\allowbreak{}/\allowbreak{}} del servidor.
+	\item Si escribes mal la contraseña varias veces, la cuenta se bloquea un tiempo. Si los intentos vienen de varios lugares, se bloquea 3 días o hasta que la Fundación la desbloquee.
+	\item En Perfil puedes activar el desbloqueo con huella (PM-13). La app se bloquea al pasar a segundo plano o tras 5 minutos sin uso.
+	\item El aviso de privacidad está en Perfil $\rightarrow$ \emph{Acerca de y aviso de privacidad}.
+\end{enumerate}
+
+Cuentas de demostración (contraseña \texttt{demo}): \texttt{educadora}, \texttt{familia}, \texttt{direccion} y \texttt{fundacion}. Hay más cuentas por sala y por estancia, listadas en el \texttt{README}.
+
+\subsection{Educadora}
+\begin{description}
+	\item[Llegada y salida (RF-03, RF-15).] En \emph{Sala}, toca al niño y luego \emph{Llegada} o \emph{Salida}. Elige de la lista a la persona que lo entrega o lo recoge: solo aparecen las personas autorizadas del expediente. La hora la propone la app y el servidor la valida.
+	\item[Bitácora (RF-04).] En la ficha del niño, usa las acciones rápidas: comida, siesta, baño, ánimo y nota.
+	\item[Registro grupal (RF-05, PM-05).] Desde \emph{Sala}, elige \emph{Registro grupal}, marca a los niños y guarda un solo evento para todos.
+	\item[Incidente (RF-19, PM-19).] En la ficha, \emph{Incidente}: tipo, parte del cuerpo y acción tomada. Se genera un folio y la familia lo ve en \emph{Hoy}.
+	\item[Fotos (RF-09, RF-16, PM-16).] En \emph{Fotos}, toma la foto con la cámara, escribe una descripción y etiqueta a los niños. La app no deja etiquetar a un niño sin el permiso de imagen para ese uso.
+	\item[Mensajes y avisos (RF-08, PM-08).] Chat de la sala, mensajes directos con las familias y avisos de la estancia.
+\end{description}
+
+\subsection{Familia}
+\begin{description}
+	\item[Hoy y Semana (RF-06, RF-12, PM-12).] Muestran la llegada, la salida, quién lo recogió, las comidas, las siestas, los incidentes y el resumen semanal de cada uno de tus hijos. La bitácora se puede imprimir o compartir en PDF.
+	\item[Fotos (RF-09, RF-10).] Ves solo las fotos donde aparece tu hijo. Con \emph{Eliminar}, la foto se borra para todas las familias.
+	\item[Horario (RF-21, PM-21), material y objetos perdidos.] Desde la tarjeta de la sala en \emph{Hoy}.
+\end{description}
+
+\subsection{Dirección}
+\begin{description}
+	\item[Inscripción (RF-15).] En \emph{Niños}, \emph{Inscribir}: datos del niño, salud, tutores, personas autorizadas y permisos de imagen. Al crear la cuenta de un tutor, el usuario y la contraseña temporal se muestran una sola vez.
+	\item[Baja y eliminación (RF-18).] En el expediente, \emph{Dar de baja}. El expediente se borra solo a los 30 días, o al momento con \emph{Eliminar definitivamente}. Así se atiende una solicitud de cancelación del aviso de privacidad.
+	\item[Reportes y registro (RF-14, RF-20, PM-20).] En \emph{Más}: reporte de asistencia por sala y mes, y el registro de quién hizo qué.
+	\item[Personal y salas.] Alta de educadoras, asignación de sala y retiro de acceso.
+\end{description}
+
+\subsection{Fundación}
+\begin{itemize}
+	\item \emph{Inicio} muestra el resumen de todas las estancias y su asistencia, sin nombres de niños (RF-17, RF-20).
+	\item Desde ahí se registran y editan estancias y se crea la cuenta de Dirección de cada una.
+	\item Si hay cuentas bloqueadas, aparece la sección \emph{Cuentas bloqueadas}, con un botón \emph{Desbloquear} por cuenta.
+\end{itemize}
+
+\section{Manual de instalación}
+
+\subsection{Requisitos}
+\begin{itemize}
+	\item Docker 24 o superior con Docker Compose.
+	\item Para compilar la app: Android Studio (su JDK, \texttt{jbr}).
+	\item Un teléfono con Android 8.0 o superior.
+\end{itemize}
+
+\subsection{Levantar el backend}
+\begin{lstlisting}[basicstyle=\ttfamily\small,breaklines=true]
+git clone https://github.com/santihdzs/sonrisas-de-cristal.git
+cd sonrisas-de-cristal && git checkout v3.0-entrega-final
+cp .env.example .env    # define POSTGRES_PASSWORD (larga, aleatoria)
+docker compose --profile tunel up -d --build
+docker compose logs tunel   # direccion https://...trycloudflare.com
+\end{lstlisting}
+
+Variables de entorno (\texttt{.\allowbreak{}env}):
+\begin{itemize}
+	\item \texttt{POSTGRES\_PASSWORD}: obligatoria.
+	\item \texttt{DATOS\_DEMO}: \texttt{true} carga los datos de demostración; en producción, \texttt{false}.
+	\item \texttt{CLAVE\_FUNDACION}: contraseña inicial de la cuenta \texttt{fundacion} cuando \texttt{DATOS\_DEMO=false}; mínimo 12 caracteres.
+	\item \texttt{PROXY\_CONFIABLE}: \texttt{true} detrás del túnel.
+	\item \texttt{HOST\_IP}: por defecto \texttt{127.\allowbreak{}0.\allowbreak{}0.\allowbreak{}1}.
+\end{itemize}
+
+La semilla es idempotente: solo carga datos cuando la base está vacía. Para recargar la demostración con la fecha del día se usa \texttt{docker compose run --rm --no-deps backend /\allowbreak{}app/\allowbreak{}bin/\allowbreak{}backend reiniciar-demo}, que se niega a correr con \texttt{DATOS\_DEMO=false}.
+
+\subsection{Instalar la app}
+\begin{enumerate}
+	\item Descarga el APK firmado (enlace en la sección~\ref{sec:entregables}) y ábrelo en el teléfono. Acepta \emph{instalar apps de origen desconocido} si te lo pide.
+	\item Abre la app, mantén presionado el logo y escribe la dirección \texttt{https:/\allowbreak{}/\allowbreak{}} del túnel.
+	\item Entra con una cuenta de demostración.
+\end{enumerate}
+
+Para compilar el APK de release firmado:
+\begin{lstlisting}[basicstyle=\ttfamily\small,breaklines=true]
+export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+./gradlew :app:assembleRelease   # firma con el keystore definido en keystore.properties (fuera del repo)
+\end{lstlisting}
+
+\subsection{Correr las pruebas}
+\begin{lstlisting}[basicstyle=\ttfamily\small,breaklines=true]
+./gradlew -p backend test          # integracion, API y seguridad
+./gradlew :app:testDebugUnitTest   # unitarias de la app
+\end{lstlisting}

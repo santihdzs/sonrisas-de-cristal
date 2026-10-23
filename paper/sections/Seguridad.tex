@@ -1,0 +1,49 @@
+\section{Evidencia de los controles de seguridad}
+
+\subsection{Controles en la API}
+\begin{longtable}{p{3.2cm}p{7.6cm}p{4.2cm}}
+\toprule
+\textbf{Control} & \textbf{Implementación} & \textbf{Evidencia}\\\midrule\endhead
+Sesiones e identidad & Contraseñas con PBKDF2-HMAC-SHA256 (210\,000 iteraciones, sal de 16 bytes, comparación en tiempo constante). Tokens opacos de 256 bits; el servidor solo guarda su SHA-256. Vencen a los 30 días y se revocan al cerrar sesión o al retirar el acceso. En el teléfono, el token se guarda cifrado con AES-256-GCM, con una llave del Android Keystore. & \texttt{Seguridad.\allowbreak{}kt}; \texttt{Seguridad\allowbreak{}Test.\allowbreak{}S01--S07}\\
+Autorización por rol y objeto (BOLA/IDOR) & Cada ruta calcula del lado del servidor qué estancia, sala y niños puede ver el usuario (\texttt{Visibilidad} en \texttt{shared/\allowbreak{}}). Un id ajeno responde 403 o 404 y nunca devuelve datos. & \texttt{S11--S14}, \texttt{RF02}, \texttt{RF07}, \texttt{RF09}\\
+Operaciones destructivas & Para borrar un expediente se exige que antes esté dado de baja y que lo pida la Dirección de esa estancia. Borrar fotos y retirar accesos se valida contra el dueño del recurso. Toda escritura queda en el registro de actividad. & \texttt{S13}, \texttt{S20}, \texttt{S21}, \texttt{RF10}, \texttt{RF14}\\
+Entrada parametrizada y validada & Todas las consultas usan \texttt{Prepared\allowbreak{}Statement} con \texttt{?}. Fechas, meses, longitudes y tipos se validan y responden 400, no 500. & \texttt{S08--S10}, \texttt{S22}, \texttt{S23}\\
+Rate limiting y bloqueo & Límite general de 1000 peticiones por minuto por IP; 10 logins por minuto, 20 altas de cuenta y 30 subidas por minuto. Con 5 fallos en 15 minutos la cuenta se bloquea 15 minutos. Con fallos desde 3 IPs distintas en 24 horas se bloquea 3 días: el bloqueo se guarda en la base, se registra en la bitácora y solo la Fundación lo quita (\texttt{GET /\allowbreak{}bloqueos}, \texttt{POST /cuentas/\{id\}/desbloqueo} y pantalla de inicio de la Fundación). La IP real se toma del proxy confiable, así que \texttt{X-Forwarded-For} no se puede falsificar. & \texttt{S15--S19}, \texttt{SEGBloqueo\allowbreak{}Cuenta\allowbreak{}Test}\\
+Archivos & El tipo se detecta por \emph{magic bytes} (solo JPEG y PNG para fotos), la imagen se decodifica completa, con un tope de 40 megapíxeles, y se vuelve a codificar sin metadatos (EXIF, GPS, XMP ni comentarios). Límite de 10 MB. La app también vuelve a comprimir antes de subir. & \texttt{SEGArchivos\allowbreak{}Test}\\
+Hora del servidor & El servidor fija la fecha de cada registro y limita la hora a su propio reloj. Una fecha falsificada en el teléfono no llega a la base. No existe creación sin conexión que pueda traer horas del dispositivo. & \texttt{SEGReloj\allowbreak{}Servidor\allowbreak{}Test}\\
+Tráfico cifrado y cabeceras & La app en release solo acepta HTTPS (sin \texttt{cleartext}). El túnel de Cloudflare termina TLS. Cada respuesta lleva \texttt{Strict-Transport-Security}, \texttt{X-Content-Type-Options: nosniff}, \texttt{Content-Security-Policy: default-src 'none'}, \texttt{X-Frame-Options: DENY}, \texttt{Referrer-Policy: no-referrer} y \texttt{Cache-Control: no-store}. & \texttt{S25}; \texttt{verificacion-despliegue.\allowbreak{}txt}\\
+\bottomrule
+\end{longtable}
+
+\subsection{Infraestructura y despliegue seguro}
+\begin{itemize}
+	\item El backend se construye en dos etapas (JDK para compilar, JRE para correr) y corre como el usuario \texttt{sonrisas}, no como root.
+	\item En Compose el contenedor es \texttt{read\_only}, con \texttt{tmpfs} solo en \texttt{/\allowbreak{}tmp}, \texttt{cap\_drop: ALL} y \texttt{no-new-privileges}.
+	\item Los secretos (\texttt{POSTGRES\_PASSWORD} y \texttt{CLAVE\_FUNDACION}) llegan por variables de entorno desde un \texttt{.\allowbreak{}env} que está en \texttt{.\allowbreak{}gitignore}. Sin \texttt{POSTGRES\_PASSWORD}, Compose no arranca.
+	\item El puerto 8080 solo escucha en \texttt{127.\allowbreak{}0.\allowbreak{}0.\allowbreak{}1}. El acceso por internet es por \texttt{cloudflared} con HTTP/2 sobre TCP 443. La base no expone puertos.
+\end{itemize}
+
+\subsection{Auditoría OWASP}
+La auditoría tomó como referencia la edición vigente del OWASP Top 10 (2025), verificada en \url{https://owasp.org/Top10/2025/}, y el OWASP API Security Top 10 (2023). Para cada categoría se revisó el código y se buscó una prueba que lo demuestre.
+
+{\small
+\begin{longtable}{p{4.6cm}p{10.4cm}}
+\toprule
+\textbf{Categoría} & \textbf{Resultado en Sonrisas de Cristal}\\\midrule\endhead
+A01 Broken Access Control / API1 BOLA / API5 BFLA & Autorización por objeto y por función en el servidor; pruebas S11--S14 y RF02/RF07/RF09. En la auditoría se encontró y corrigió un caso: una imagen huérfana se podía descargar solo con su id. Ahora el acceso siempre se valida por sala (\texttt{ARCOEliminacion\allowbreak{}Test}).\\
+A02 Security Misconfiguration / API8 & Cabeceras de seguridad, contenedor endurecido, puerto local y errores sin trazas internas (\texttt{Status\allowbreak{}Pages}). ZAP no reportó configuraciones inseguras de riesgo medio o alto (sección~\ref{sec:zap}).\\
+A03 Software Supply Chain Failures & Versiones fijas en Gradle (catálogo de versiones) y en Docker (\texttt{eclipse-temurin:21}, \texttt{postgres:17} y \texttt{cloudflared:2026.\allowbreak{}9.\allowbreak{}3}, que antes era \texttt{latest} y se fijó en esta auditoría). No se agregaron dependencias para los controles nuevos: la limpieza de imágenes usa \texttt{javax.\allowbreak{}imageio}.\\
+A04 Cryptographic Failures & PBKDF2 con 210\,000 iteraciones, tokens de 256 bits con \texttt{Secure\allowbreak{}Random}, TLS en tránsito y AES-GCM en el teléfono.\\
+A05 Injection & Consultas parametrizadas en todas las rutas; S08--S10.\\
+A06 Insecure Design / API6 & Sin registro público, borrado en dos pasos (baja y después eliminación) y permiso de imagen validado en el servidor.\\
+A07 Authentication Failures / API2 & Rate limiting, bloqueo por cuenta y multi-IP, mensaje de error que no delata si la cuenta existe (S07 y S18) y contraseñas temporales de alta entropía (S27).\\
+A08 Software or Data Integrity Failures & APK firmado; la hora y la autoría de cada registro las fija el servidor (\texttt{SEGReloj\allowbreak{}Servidor\allowbreak{}Test}, \texttt{RF04}).\\
+A09 Security Logging \& Alerting Failures & Registro de actividad (RF-14) más registro del servidor de bloqueos y desbloqueos. No hay alertas automáticas: queda como recomendación de implantación.\\
+A10 Mishandling of Exceptional Conditions / API4 & Las entradas inválidas responden 400 y no 500 (S22). Límites de tamaño (413) y de tasa (429). El servidor falla cerrado: sin sesión válida responde 401.\\
+\bottomrule
+\end{longtable}}
+
+\subsection{Escaneo dinámico con OWASP ZAP}\label{sec:zap}
+Se corrió \texttt{zap-api-scan.\allowbreak{}py} (imagen \texttt{ghcr.\allowbreak{}io/\allowbreak{}zaproxy/\allowbreak{}zaproxy:stable}) contra el backend desplegado con Docker Compose, en la misma red de contenedores. Se usó una especificación OpenAPI con todas las rutas, generada desde el código (\texttt{docs/\allowbreak{}seguridad/\allowbreak{}zap/\allowbreak{}openapi.\allowbreak{}json}), y un token Bearer de la Dirección para que el escaneo alcanzara las rutas autenticadas. El reporte completo está en \texttt{docs/\allowbreak{}seguridad/\allowbreak{}zap/\allowbreak{}reporte-zap.\allowbreak{}html}.
+
+\input{tables/zap}

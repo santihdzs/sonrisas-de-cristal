@@ -1,0 +1,20 @@
+\begin{table}[H]
+\centering\small
+\begin{tabular}{p{5.6cm}p{2.4cm}p{2.6cm}p{2.6cm}}
+\toprule
+\textbf{Suite} & \textbf{Pruebas} & \textbf{H2 (PostgreSQL mode)} & \textbf{PostgreSQL 17}\\\midrule
+RF01--RF15 (por requerimiento) & 40 & 40/40 & 40/40\\
+SeguridadTest (S01--S27) & 27 & 27/27 & en H2\textsuperscript{*}\\
+SEGBloqueoCuentaTest & 4 & 4/4 & en H2\textsuperscript{*}\\
+SEGArchivosTest & 6 & 6/6 & 6/6\\
+SEGRelojServidorTest & 7 & 7/7 & 7/7\\
+ARCOEliminacionTest & 3 & 3/3 & 3/3\\
+ServidorTest y DbTest & 10 & 10/10 & 10/10\\
+\textbf{Backend total} & \textbf{97} & \textbf{97/97} & \textbf{64/64}\\
+App: DisenoBitacoraTest y ArmadoBitacoraTest & 7 & \multicolumn{2}{c}{7/7 (JVM)}\\
+\bottomrule
+\end{tabular}
+
+\smallskip
+\raggedright\footnotesize\textsuperscript{*} Estas dos suites crean su propia base con un reloj o un proxy configurados para la prueba, así que siempre corren en H2. Las otras 64 pruebas con base de datos corrieron también contra PostgreSQL 17 real.
+\end{table}

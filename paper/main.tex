@@ -1,0 +1,96 @@
+\documentclass[pdftex,12pt,a4paper]{article} 
+% margin size
+\usepackage[margin=1in]{geometry}
+
+% Language
+\usepackage[spanish]{babel}
+
+% Math and algorithms
+\usepackage{amsmath,amssymb,amsthm,esint}  % For both in-line and equation mode
+\usepackage{bbm}
+\usepackage{mathdots}
+\usepackage{bm}
+\usepackage{algorithm}
+\usepackage{algorithmic} % Algorithm styles, need to be nested for the example shown
+\usepackage{aliascnt}
+\numberwithin{equation}{section} % Numbering of our equations per section
+\newtheorem{theorem}{Teorema}
+\newtheorem{definition}{Definición}
+\newtheorem{proposition}{Proposición}
+\newtheorem{corollary}{Corolario}
+\newtheorem{remark}{Observación}
+
+\usepackage{setspace} %Spacing on the front page for crest and titles
+\usepackage[]{fncychap} % Styles can be Sonny, Lenny, Glenn, Conny, Rejne, Bjarne and Bjornstrup
+\usepackage[hyphens]{url} % Deals with hyphens in urls to make them clickable
+\usepackage{xcolor} % Great if you want coloured text
+
+% Figures
+\usepackage{wrapfig}
+\usepackage{graphicx} % Inserting images
+\graphicspath{ {figures/} } 
+\usepackage{caption}
+\usepackage{float}
+
+% Tables
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage[htt]{hyphenat}
+\sloppy
+\setlength{\emergencystretch}{3em}
+\setlength{\tabcolsep}{4pt}
+\usepackage{multirow} 
+\renewcommand{\arraystretch}{1.5}
+
+% Appendix
+\usepackage{appendix} 
+
+\usepackage{natbib}
+\usepackage{comment}
+
+% Tikz figures
+\usepackage{tikz}
+\newcommand{\ImageWidth}{14cm} 
+\usetikzlibrary{decorations.pathreplacing,positioning,arrows.meta,fit} 
+
+% Fancy headers and footnotes
+\usepackage{fancyhdr}
+\usepackage[symbol]{footmisc}
+\renewcommand{\thefootnote}{\fnsymbol{footnote}} 
+
+% Hyperlinks and auto-references
+\usepackage{hyperref}
+\hypersetup{colorlinks=true,linkcolor=black,citecolor=black,filecolor=black,urlcolor=blue}  
+\def\sectionautorefname{Sección}
+\def\appendixname{Apéndice}
+\newcommand{\propositionautorefname}{Proposición}
+\newcommand{\definitionautorefname}{Definición}
+\newcommand{\corollaryautorefname}{Corolario}  
+
+% Inline code
+\usepackage{listings}
+
+\setlength{\footnotesep}{0.5cm}
+%%%%%%%%%%%%%%%%%%%%%%%%%% DOCUMENT STARTS %%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
+
+\begin{document} 
+% Front page 
+\include{preamble/front-page}  
+\include{preamble/contents}
+
+% Sections
+\input{sections/Alcance}
+\input{sections/Arquitectura}
+\input{sections/Pruebas}
+\input{sections/Seguridad}
+\input{sections/Manuales}
+\input{sections/Implantacion}
+\input{sections/Administracion}
+\input{sections/Etica}
+\input{sections/Entregables}
+
+% References (comment whole section out if there are none.)
+
+\end{document}

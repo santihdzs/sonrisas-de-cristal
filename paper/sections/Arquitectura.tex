@@ -1,0 +1,55 @@
+\section{Arquitectura final del sistema}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+	caja/.style={draw, rounded corners, align=center, minimum width=3.3cm, minimum height=1cm, font=\small},
+	capa/.style={draw, dashed, rounded corners, inner sep=6pt},
+	flecha/.style={-{Stealth}, thick}]
+	\node[caja] (ui) {UI (Compose)\\pantallas por rol};
+	\node[caja, below=0.5cm of ui] (vm) {ViewModels\\\texttt{Ui\allowbreak{}State}};
+	\node[caja, below=0.5cm of vm] (repo) {Repositorios\\\texttt{data/\allowbreak{}remoto}};
+	\node[caja, below=0.5cm of repo] (ks) {Android Keystore\\token AES-256-GCM};
+	\node[capa, fit=(ui)(vm)(repo)(ks), label=above:{\textbf{App Android}}] (app) {};
+
+	\node[caja, right=2.6cm of vm] (cf) {Túnel Cloudflare\\HTTPS / TLS};
+	\node[caja, right=1.2cm of cf] (api) {API Ktor\\auth, rate limit,\\cabeceras, BOLA};
+	\node[caja, below=0.9cm of api] (db) {PostgreSQL 17\\volumen Docker};
+	\node[capa, fit=(api)(db), label=above:{\textbf{Docker Compose}}] {};
+	\node[caja, below=0.9cm of cf] (sh) {\texttt{shared/\allowbreak{}}\\modelos y reglas};
+
+	\draw[flecha] (ui) -- (vm);
+	\draw[flecha] (vm) -- (repo);
+	\draw[flecha] (repo.east) -- node[above, font=\scriptsize, sloped]{HTTPS + Bearer} (cf.west);
+	\draw[flecha] (cf) -- node[above, font=\scriptsize]{HTTP interno} (api);
+	\draw[flecha] (api) -- node[right, font=\scriptsize]{JDBC parametrizado} (db);
+	\draw[dashed] (sh) -- (api);
+	\draw[dashed] (sh) -- (repo);
+\end{tikzpicture}
+\caption{Capas y componentes de Sonrisas de Cristal.}
+\end{figure}
+
+\subsection{Capas y componentes}
+\begin{description}
+	\item[App Android.] Arquitectura MVVM con una sola Activity. La capa \texttt{ui/\allowbreak{}} contiene las pantallas por rol (Educadora, Familia, Dirección y Fundación) y la navegación. Cada pantalla recibe un \texttt{Ui\allowbreak{}State} (cargando, con datos, vacío o error) de su ViewModel. Los ViewModels llaman a repositorios que hablan con el API (\texttt{data/\allowbreak{}remoto}, Ktor Client). El token de sesión se guarda cifrado con AES-256-GCM, con una llave del Android Keystore.
+	\item[Backend.] Servidor Ktor (Kotlin, JVM 21). Expone 64 rutas REST, en JSON y con Bearer token. Cada petición pasa por cabeceras de seguridad, \emph{rate limiting} por IP, autenticación y autorización por rol y por objeto, que se calcula en el servidor a partir del usuario. Las rutas están separadas por dominio: \texttt{Rutas\allowbreak{}Ninos} (expediente, asistencia, bitácora e incidentes), \texttt{Rutas\allowbreak{}Contenido} (fotos, avisos, objetos perdidos y material), \texttt{Rutas\allowbreak{}Mensajes} y \texttt{Rutas\allowbreak{}Estructura} (estancias, salas, cuentas y bloqueos).
+	\item[Persistencia.] PostgreSQL 17 en un volumen de Docker. Todas las consultas usan \texttt{Prepared\allowbreak{}Statement}. Los archivos (fotos y material) se guardan en la base como \texttt{BYTEA}, así que un respaldo de la base incluye todo.
+	\item[\texttt{shared/\allowbreak{}}.] Módulo Kotlin puro que comparten la app y el servidor: modelos, reglas de visibilidad (quién ve a qué niño), reportes y datos de demostración. Así la regla de privacidad es una sola y no se duplica.
+	\item[Infraestructura.] Docker Compose con tres servicios: \texttt{db}, \texttt{backend} (non-root, sistema de archivos de solo lectura, sin capabilities y con \texttt{no-new-privileges}) y \texttt{tunel} (\texttt{cloudflared}). El puerto del backend solo escucha en \texttt{127.\allowbreak{}0.\allowbreak{}0.\allowbreak{}1}; desde fuera solo se entra por el túnel HTTPS.
+\end{description}
+
+\subsection{Decisiones técnicas principales}
+\begin{longtable}{p{3.6cm}p{11.4cm}}
+\toprule
+\textbf{Decisión} & \textbf{Motivo y efecto}\\\midrule\endhead
+Backend propio en Ktor con \texttt{shared/\allowbreak{}} & La app y el servidor comparten modelos y reglas de visibilidad. Una regla de privacidad se escribe una vez y se prueba una vez.\\
+Tokens opacos en lugar de JWT & El servidor guarda solo el SHA-256 del token. Cerrar sesión o retirar un acceso invalida el token de inmediato, cosa que un JWT sin lista de revocación no permite.\\
+Autorización por objeto en el servidor & El servidor nunca confía en ids que mande el cliente: calcula los niños visibles a partir del usuario. A recursos ajenos responde 403 o 404 (BOLA/IDOR).\\
+Hora del servidor como autoridad & El servidor fija la fecha de todo registro y limita la hora a su reloj. Cambiar el reloj del teléfono no permite fechar registros en otro día ni en el futuro.\\
+Re-codificación de imágenes & Toda foto se valida por \emph{magic bytes}, se decodifica y se vuelve a codificar. Así se eliminan EXIF, GPS y cualquier contenido agregado al archivo.\\
+Sin registro público & Las cuentas solo las crean la Fundación (Dirección) y la Dirección (educadoras y familias). Nadie puede hacerse pasar por tutor de un niño ajeno.\\
+Sin modo sin conexión & RF-11 se dejó fuera: sincronizar datos de menores sin conflictos ni pérdida de datos requería más tiempo que el disponible. Ver la sección~\ref{sec:estado}.\\
+Datos de demostración solo en debug & En release la app solo habla con el servidor; los datos de demostración viven en la base mediante una semilla idempotente.\\
+Túnel de Cloudflare & Da HTTPS público sin abrir puertos ni administrar certificados. Usa HTTP/2 sobre TCP 443 porque la red del campus bloquea QUIC.\\
+\bottomrule
+\end{longtable}

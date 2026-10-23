@@ -1,0 +1,205 @@
+\section{Consideraciones éticas y legales}
+
+\paragraph{Ética, moral y ley en este proyecto.}
+\begin{itemize}
+	\item \textbf{La ley} fija mínimos exigibles. Aquí aplican la LFPDPPP (DOF 20-03-2025), la Ley General de los Derechos de Niñas, Niños y Adolescentes (LGDNNA) y el Código Penal Federal en materia de acceso ilícito a sistemas (arts. 211 bis 1 a 211 bis 7).
+	\item \textbf{La moral} son las convicciones de la comunidad de la estancia. Por ejemplo, que las fotos de un niño no circulen fuera del centro, aunque ninguna norma lo diga con esas palabras.
+	\item \textbf{La ética} es la reflexión del equipo para decidir cuando la ley no alcanza o cuando dos valores chocan, como la transparencia frente a la privacidad.
+\end{itemize}
+Cada criterio que salió de esas tres fuentes se convirtió en un requisito con prueba.
+
+\subsection{Criterios éticos y legales convertidos en requisitos verificables}
+{\small
+\begin{longtable}{p{1.5cm}p{3.6cm}p{3.6cm}p{3.6cm}p{2.2cm}}
+\toprule
+\textbf{ID} & \textbf{Requisito verificable} & \textbf{Criterio de aceptación} & \textbf{Prueba o evidencia} & \textbf{Ref. matriz}\\\midrule\endhead
+RF-07 & (Ley: LGDNNA art.~76) Una familia solo puede obtener datos de sus propios hijos & Pedir por id el expediente, los tutores o el historial de un niño ajeno no devuelve datos & \texttt{RF07\allowbreak{}Familia\allowbreak{}Solo\allowbreak{}Sus\allowbreak{}Hijos\allowbreak{}Test}, \texttt{Seguridad\allowbreak{}Test.\allowbreak{}S11} & Matriz, fila RF-07\\
+RF-16 & (Moral y ética) No se puede etiquetar en una foto a un niño sin el permiso de imagen del uso elegido & \texttt{POST /\allowbreak{}fotos} con un niño sin permiso responde 403 y no guarda la foto & Validación en el servidor (\texttt{Rutas\allowbreak{}Contenido.\allowbreak{}kt}); PM-16 & Matriz, fila RF-16\\
+RF-10 & (Ética) Cualquier familia que aparece en una foto puede borrarla para todos & La foto y su imagen dejan de existir para todas las familias & \texttt{RF10\allowbreak{}Eliminar\allowbreak{}Foto\allowbreak{}Test} & Matriz, fila RF-10\\
+RNF-PRIV-01 / RF-18 & (Ley: LFPDPPP arts. 24 y 25, cancelación) Eliminar un expediente borra sus datos de punta a punta & Tras eliminarlo, no quedan fotos solo de él, imágenes, asistencias, incidentes, registros ligados ni la cuenta y los chats de su familia & \texttt{ARCOEliminacion\allowbreak{}Test} (3) & Matriz, filas RF-18 y RNF-PRIV-01\\
+RNF-SEG-06 & (Ética: minimización, LFPDPPP art.~5) Ninguna foto conserva metadatos de ubicación & El archivo guardado no contiene EXIF, GPS ni el marcador APP1 & \texttt{SEGArchivos\allowbreak{}Test.\allowbreak{}la\allowbreak{}Foto\allowbreak{}Se\allowbreak{}Guarda\allowbreak{}Sin\allowbreak{}Exif\allowbreak{}Ni\allowbreak{}Gps} & Matriz, fila RNF-SEG-06\\
+RNF-SEG-01 & (Ley: LFPDPPP art.~18, medidas de seguridad) Sin secretos en texto plano & La base no contiene contraseñas ni tokens legibles & \texttt{Seguridad\allowbreak{}Test.\allowbreak{}S06} & Matriz, fila RNF-SEG-01\\
+RF-14 & (Ética: rendición de cuentas) Toda captura, consulta de foto o exportación queda registrada y solo la lee la Dirección & Otros roles reciben 403 al leer el registro & \texttt{RF14\allowbreak{}Registro\allowbreak{}Actividad\allowbreak{}Test} & Matriz, fila RF-14\\
+RNF-SEG-07 & (Ética: integridad del expediente) Nadie puede fechar un registro en otro día cambiando la hora del teléfono & Fechas de 2001 o 2099 enviadas por el cliente se reemplazan por la del servidor & \texttt{SEGReloj\allowbreak{}Servidor\allowbreak{}Test} & Matriz, fila RNF-SEG-07\\
+\bottomrule
+\end{longtable}}
+
+\subsection{Aviso de privacidad}
+El aviso integral vive en la app (Perfil $\rightarrow$ \emph{Acerca de y aviso de privacidad}) y en el repositorio, en \texttt{app/\allowbreak{}src/\allowbreak{}main/\allowbreak{}assets/\allowbreak{}aviso-privacidad.\allowbreak{}md}. Los dos son el mismo archivo. Se transcribe a continuación.
+
+\begin{itemize}
+	\item \textbf{Ley y artículos a los que da cumplimiento:} Ley Federal de Protección de Datos Personales en Posesión de los Particulares, publicada en el DOF el 20 de marzo de 2025 y vigente desde el 21 de marzo de 2025: art.~2 fr.~VI (datos sensibles), art.~7 (consentimiento y su revocación), art.~8 (consentimiento expreso y por escrito para datos sensibles), arts.~14--17 (aviso de privacidad, su contenido mínimo y modalidades), art.~18 (medidas de seguridad), art.~21 (representante legal), arts.~22--26 (derechos ARCO), arts.~28, 31 y 34 (solicitud, plazos de 20 y 15 días hábiles y gratuidad), art.~36 (transferencias sin consentimiento) y arts.~40 y 42 (queja ante la Secretaría Anticorrupción y Buen Gobierno).
+	\item \textbf{Normas complementarias para menores:} Reglamento de la LFPDPPP (DOF 21-12-2011, art.~89); Código Civil Federal, arts.~23 y 425 (representación por quien ejerce la patria potestad); LGDNNA, arts.~2 y 76 (interés superior y derecho a la intimidad).
+	\item \textbf{Fuente:} texto vigente de la Cámara de Diputados, \url{https://www.diputados.gob.mx/LeyesBiblio/pdf/LFPDPPP.pdf}.
+\end{itemize}
+
+\begin{quote}\small
+\textbf{Responsable.} La Fundación Estancias Infantiles Sonrisas de Cristal, en Monterrey, Nuevo León. Cada estancia tiene una Dirección que atiende las solicitudes de privacidad de sus familias y de su personal (art.~29).
+
+\textbf{Datos que recopilamos.}
+\begin{itemize}
+	\item De niñas y niños: nombre, apellidos, fecha de nacimiento y sala. Datos de salud, que son sensibles: alergias, padecimientos, medicamentos, lesiones o síntomas al llegar e incidentes. Su día en la estancia: llegada, salida, comidas, siestas, baño, ánimo y notas. Fotografías, solo con la autorización de imagen para el uso autorizado.
+	\item De tutores y personas autorizadas: nombre, parentesco y teléfono; quién dejó y quién recogió al niño; mensajes enviados a la estancia.
+	\item Del personal: nombre, usuario, rol, estancia y sala.
+	\item De todas las cuentas: usuario, una huella irreversible de la contraseña (PBKDF2) y un registro de actividad con la hora del servidor.
+\end{itemize}
+No recopilamos ubicación. A las fotos se les borran los metadatos (EXIF/GPS). Tu huella digital nunca sale del teléfono.
+
+\textbf{Para qué los usamos.}
+\begin{enumerate}
+	\item Registrar la asistencia y entregar al niño solo a personas autorizadas.
+	\item Llevar la bitácora diaria y avisar a la familia de incidentes y de temas de salud.
+	\item La comunicación entre la familia y la estancia.
+	\item Compartir con cada familia las fotos donde aparece su hijo.
+	\item Reportes de asistencia; a la Fundación solo le llegan totales.
+	\item Proteger las cuentas y registrar quién hizo qué.
+\end{enumerate}
+No los usamos con fines comerciales ni para decisiones automatizadas.
+
+\textbf{Consentimiento.} Quien ejerce la patria potestad da su consentimiento expreso y por escrito para los datos de salud al inscribir al niño (art.~8). La autorización de imagen se registra por separado en el expediente.
+
+\textbf{Dónde se guardan.}
+\begin{itemize}
+	\item En la base PostgreSQL de la Fundación, en un contenedor aislado.
+	\item Viajan cifrados con HTTPS (TLS).
+	\item En el teléfono, la sesión se guarda cifrada con AES-256-GCM, con una llave del Android Keystore.
+	\item Cada persona ve solo lo que le corresponde.
+\end{itemize}
+
+\textbf{Con quién se comparten.} Con nadie fuera de la Fundación, salvo los casos del art.~36 (por ejemplo, un requerimiento de una autoridad competente o una emergencia médica de un niño).
+
+\textbf{Cuánto tiempo se conservan.}
+\begin{itemize}
+	\item El expediente, mientras el niño esté inscrito. Al darlo de baja, se borra automáticamente a los 30 días.
+	\item Las fotos, hasta que se borren. De las fotos de grupo, al eliminar un expediente se quita la etiqueta del niño.
+	\item Las cuentas de familia, hasta que se elimina su último expediente, junto con sus conversaciones.
+	\item Las sesiones, 30 días.
+	\item El registro de actividad, mientras opere la estancia. Sus entradas ligadas a un niño se borran con el expediente.
+\end{itemize}
+
+\textbf{Derechos ARCO.} Tú, o quien ejerza la patria potestad del menor (art.~21; art.~89 del Reglamento), puedes pedir a la Dirección, por escrito, el acceso, la rectificación, la cancelación o la oposición. Respondemos en 20 días hábiles y aplicamos lo procedente en los 15 siguientes (art.~31). El trámite es gratuito (art.~34). Si no estás de acuerdo con la respuesta, puedes acudir a la Secretaría Anticorrupción y Buen Gobierno (arts.~40 y 42).
+
+\textbf{Cambios.} Se publican en la app y se anuncian en Avisos (art.~15 fr.~VI).
+\end{quote}
+
+\paragraph{Correspondencia con el comportamiento real.}
+\begin{itemize}
+	\item \textbf{Acceso:} la familia ve todo lo registrado de su hijo.
+	\item \textbf{Rectificación:} la Dirección edita el expediente.
+	\item \textbf{Cancelación:} baja seguida de eliminación, comprobada por \texttt{ARCOEliminacion\allowbreak{}Test}.
+	\item \textbf{Oposición a fotos:} la Dirección cambia la autorización de imagen, y \texttt{POST /\allowbreak{}fotos} la hace cumplir.
+	\item La limpieza de metadatos y el cifrado tienen sus propias pruebas (\texttt{SEGArchivos\allowbreak{}Test}, \texttt{S06}).
+\end{itemize}
+
+\subsection{Clasificación de los datos}
+Niveles de sensibilidad:
+\begin{itemize}
+	\item \textbf{S} (sensible, art.~2 fr.~VI): su mal uso puede causar discriminación o un riesgo grave.
+	\item \textbf{A} (alto): datos de menores o que permiten localizarlos o identificarlos.
+	\item \textbf{M} (medio): datos de contacto o de cuenta.
+	\item \textbf{B} (bajo): datos operativos.
+\end{itemize}
+Todo dato del servidor viaja por TLS, vive en PostgreSQL dentro de un volumen no expuesto y se entrega solo según la regla de visibilidad por rol. En la tabla, la columna \emph{Protección} indica lo que se agrega a eso.
+
+{\small
+\begin{longtable}{p{3.6cm}p{1.3cm}p{3.2cm}p{3.6cm}p{3.0cm}}
+\toprule
+\textbf{Dato almacenado} & \textbf{Nivel} & \textbf{Ubicación} & \textbf{Protección aplicada} & \textbf{Conservación}\\\midrule\endhead
+Nombre y apellidos del niño & A & \texttt{ninos.\allowbreak{}datos} & Visible solo para su sala, su familia y su Dirección & Inscripción + 30 días de baja\\
+Fecha de nacimiento del niño & A & \texttt{ninos.\allowbreak{}datos} & Igual que el nombre & Inscripción + 30 días\\
+Alergias del niño & S & \texttt{ninos.\allowbreak{}datos} & Consentimiento escrito; la Fundación no lo ve & Inscripción + 30 días\\
+Padecimientos y medicamentos & S & \texttt{ninos.\allowbreak{}datos} & Igual que alergias & Inscripción + 30 días\\
+Permisos de imagen (interno y redes) & M & \texttt{ninos.\allowbreak{}datos} & Validados en el servidor al publicar fotos & Inscripción + 30 días\\
+Estado del expediente y fecha de eliminación & B & \texttt{ninos.\allowbreak{}datos} & Solo lo cambian \texttt{/\allowbreak{}baja} y \texttt{/\allowbreak{}reactivar}, con la hora del servidor & Inscripción + 30 días\\
+Personas autorizadas: nombre & A & \texttt{ninos.\allowbreak{}datos} & Visible para la sala, la familia y la Dirección & Inscripción + 30 días\\
+Personas autorizadas: parentesco y teléfono & M & \texttt{ninos.\allowbreak{}datos} & Igual & Inscripción + 30 días\\
+Tutor: nombre y parentesco & M & \texttt{tutores.\allowbreak{}datos} & Visible para su estancia; borrado con el último hijo & Mientras tenga un hijo inscrito\\
+Tutor: teléfono & M & \texttt{tutores.\allowbreak{}datos} & Igual & Igual\\
+Hora de llegada y de salida & A & \texttt{asistencias.\allowbreak{}datos} & Fecha del servidor; hora limitada a la del servidor & Inscripción + 30 días\\
+Quién entregó y quién recogió & A & \texttt{asistencias.\allowbreak{}datos} & Solo personas autorizadas del expediente (RF-15) & Inscripción + 30 días\\
+Lesiones, síntomas y medicamento al llegar & S & \texttt{asistencias.\allowbreak{}datos} & Visible solo para la sala, la familia y la Dirección & Inscripción + 30 días\\
+Comidas, siestas, baño y ánimo & A & \texttt{eventos.\allowbreak{}datos} & Firmados por la educadora con la hora del servidor & Inscripción + 30 días\\
+Notas de la educadora & A & \texttt{eventos.\allowbreak{}datos} & Igual & Inscripción + 30 días\\
+Incidente: tipo y parte del cuerpo & S & \texttt{incidentes.\allowbreak{}datos} & Folio único; hora del servidor & Inscripción + 30 días\\
+Incidente: descripción y acción tomada & S & \texttt{incidentes.\allowbreak{}datos} & Igual & Inscripción + 30 días\\
+Imagen de la foto & A & \texttt{archivos.\allowbreak{}bytes} & Magic bytes, re-codificada sin EXIF ni GPS; descarga solo por quien ve la foto & Hasta que se borre\\
+Descripción y niños etiquetados de la foto & A & \texttt{fotos.\allowbreak{}datos} & Visible solo para las familias etiquetadas & Hasta que se borre\\
+Texto del mensaje & M & \texttt{mensajes.\allowbreak{}datos} & Solo participantes; no se copia al registro de actividad & Mientras exista la cuenta\\
+Autor y hora del mensaje & M & \texttt{mensajes.\allowbreak{}datos} & Hora del servidor & Igual\\
+Lecturas de mensajes y avisos & B & \texttt{lecturas}, \texttt{avisos\_leidos} & Por usuario & Mientras exista la cuenta\\
+Quién reclamó un objeto perdido & M & \texttt{objetos.\allowbreak{}datos} & Una familia solo ve su propio reclamo & Mientras opere la estancia\\
+Foto del objeto perdido & B & \texttt{archivos.\allowbreak{}bytes} & Sin metadatos; visible solo para la sala & Mientras opere la estancia\\
+Usuario (login) & M & \texttt{usuarios.\allowbreak{}datos} & No visible para familias & Mientras exista la cuenta\\
+Nombre y rol de la cuenta & M & \texttt{usuarios.\allowbreak{}datos} & Por estancia & Mientras exista la cuenta\\
+Contraseña & S & \texttt{claves.\allowbreak{}hash} & PBKDF2-SHA256, 210\,000 iteraciones, con sal; nunca en claro & Mientras exista la cuenta\\
+Token de sesión (servidor) & S & \texttt{sesiones.\allowbreak{}token\_hash} & Solo su SHA-256 & 30 días; los vencidos se purgan\\
+Token de sesión (teléfono) & S & SharedPreferences de la app & AES-256-GCM con una llave del Android Keystore; \texttt{allow\allowbreak{}Backup=false} & Hasta cerrar sesión\\
+Desbloqueo con huella activo & B & \texttt{huellas} & Solo un indicador; la huella no sale del teléfono & Mientras exista la cuenta\\
+Bloqueo de cuenta & B & \texttt{bloqueos} & Solo la Fundación lo ve y lo quita & 3 días o hasta el desbloqueo\\
+IP de intentos fallidos & M & Memoria del servidor & No se persiste & 24 horas\\
+Registro de actividad & M & \texttt{registros.\allowbreak{}datos} & Solo lo lee la Dirección; hora del servidor & Mientras opere la estancia; lo ligado a un niño, con su expediente\\
+\bottomrule
+\end{longtable}}
+
+\subsection{Dilemas éticos y decisiones de diseño}
+
+\paragraph{Dilema 1: compartir fotos o proteger la imagen de los niños.}
+\begin{description}
+	\item[El dilema.] Las fotos tranquilizan a las familias, pero cada foto de grupo expone a otros niños cuyas familias quizá no la autorizaron. Además, el archivo puede llevar la ubicación de la estancia en sus metadatos.
+	\item[Alternativas y argumentos.]
+	\begin{enumerate}
+		\item Compartir todas las fotos con toda la sala: máxima transparencia y menos trabajo para la educadora.
+		\item No usar fotos: cero riesgo, pero se pierde un beneficio que las familias valoran.
+		\item Compartir con reglas: cada foto la ven solo las familias de los niños que aparecen, con permiso de imagen por uso, y cualquiera de esas familias puede borrarla. Es más complejo, pero respeta a cada familia.
+	\end{enumerate}
+	\item[Postura del equipo.] La alternativa 3, por el interés superior de la niñez (LGDNNA arts.~2 y 76).
+	\item[Decisión concreta.]
+	\begin{itemize}
+		\item Dos permisos de imagen por niño (RF-16), validados en el servidor.
+		\item La visibilidad de cada foto depende de los niños etiquetados (RF-09).
+		\item Cualquier familia etiquetada puede borrar la foto para todos (RF-10).
+		\item Toda imagen se guarda sin EXIF ni GPS.
+		\item Las fotos se toman dentro de la app y no pasan por la galería del teléfono personal.
+	\end{itemize}
+	\item[Dónde se observa.] Pantalla \emph{Fotos} (los niños sin permiso no se pueden etiquetar), \texttt{Rutas\allowbreak{}Contenido.\allowbreak{}kt}, \texttt{RF09\allowbreak{}Fotos\allowbreak{}Visibles\allowbreak{}Test}, \texttt{RF10\allowbreak{}Eliminar\allowbreak{}Foto\allowbreak{}Test} y \texttt{SEGArchivos\allowbreak{}Test}.
+\end{description}
+
+\paragraph{Dilema 2: trazabilidad o privacidad del registro de actividad.}
+\begin{description}
+	\item[El dilema.] Registrar quién hizo qué protege a los niños y permite aclarar incidentes, pero el registro mismo es un expediente sobre el personal y las familias, y puede volverse vigilancia.
+	\item[Alternativas y argumentos.]
+	\begin{enumerate}
+		\item Registrar todo, mensajes incluidos, y que todos lo consulten: máxima transparencia.
+		\item No registrar nada: máxima privacidad, pero sin rendición de cuentas.
+		\item Registrar solo acciones sobre datos de niños (capturas, consultas de fotos, exportaciones, cuentas) y que solo lo lea la Dirección.
+	\end{enumerate}
+	\item[Postura del equipo.] La alternativa 3: rendición de cuentas proporcional (LFPDPPP art.~5, proporcionalidad).
+	\item[Decisión concreta.]
+	\begin{itemize}
+		\item RF-14: la lectura del registro está restringida a la Dirección.
+		\item El contenido de los mensajes nunca se copia al registro.
+		\item La consulta de una foto por una familia sí queda registrada.
+		\item Al eliminar un expediente se borran sus entradas del registro.
+	\end{itemize}
+	\item[Dónde se observa.] \emph{Más} $\rightarrow$ \emph{Registro de actividad} (solo Dirección), \texttt{RF14\allowbreak{}Registro\allowbreak{}Actividad\allowbreak{}Test} y \texttt{ARCOEliminacion\allowbreak{}Test}.
+\end{description}
+
+\paragraph{Dilema 3: borrar de verdad o conservar evidencia.}
+\begin{description}
+	\item[El dilema.] El derecho de cancelación pide borrar los datos de un niño que deja la estancia. Pero borrar al instante puede destruir evidencia de un incidente, o un error de la Dirección puede borrar un expediente activo.
+	\item[Alternativas y argumentos.]
+	\begin{enumerate}
+		\item Borrado inmediato: cumple la cancelación al momento, pero un error es irreversible.
+		\item Nunca borrar (solo desactivar): conserva la evidencia, pero contradice la ley y el aviso de privacidad.
+		\item Baja con un periodo de gracia de 30 días y luego borrado completo: permite corregir errores y luego cumple la cancelación de punta a punta.
+	\end{enumerate}
+	\item[Postura del equipo.] La alternativa 3.
+	\item[Decisión concreta.]
+	\begin{itemize}
+		\item El servidor rechaza eliminar un expediente activo (S20).
+		\item La purga automática corre cada 6 horas.
+		\item El borrado incluye las imágenes, las entradas del registro, la cuenta de la familia y sus chats (\texttt{ARCOEliminacion\allowbreak{}Test}).
+		\item En la auditoría se corrigió que las imágenes quedaban huérfanas.
+	\end{itemize}
+	\item[Dónde se observa.] Expediente $\rightarrow$ \emph{Dar de baja} y \emph{Eliminar definitivamente}; sección 7 del aviso de privacidad.
+\end{description}

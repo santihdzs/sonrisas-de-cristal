@@ -1,0 +1,17 @@
+\begin{table}[H]
+\centering\small
+\begin{tabular}{p{2.4cm}p{6.2cm}p{1.6cm}p{4.6cm}}
+\toprule
+\textbf{Riesgo} & \textbf{Alerta} & \textbf{Instancias} & \textbf{Justificación o mitigación}\\\midrule
+Alto / Medio & Ninguna & 0 & No aplica\\
+Bajo & Cross-Origin-Resource-Policy Header Missing & 1 $\rightarrow$ 0 & Corregido: \texttt{Cross-Origin-Resource-Policy: same-origin} en \texttt{CabecerasSeguras}; se volvió a escanear\\
+Informativo & A Client Error response code was returned & 4385 & Esperado: son los 400, 403, 404 y 429 con que el API rechaza entradas inválidas, accesos no permitidos y exceso de peticiones; ningún 500\\
+Informativo & Non-Storable Content & 5 & Intencional: \texttt{Cache-Control: no-store} para que ni proxies ni teléfonos guarden datos de niños en caché\\
+\bottomrule
+\end{tabular}
+\caption{Alertas de OWASP ZAP (escaneo autenticado). Resumen: FAIL-NEW 0, WARN-NEW 0, PASS 120.}
+\end{table}
+
+Durante el escaneo autenticado el backend respondió 3867 veces con 429 (límite general de 1000 peticiones por minuto por IP), 150 con 403 (la Dirección intentó acciones de otro rol), 595 con 400, ninguna con 401 (la sesión siguió válida) y ninguna con 500. El rate limiting también recortó parte del escaneo activo. Por eso, la inyección SQL, el IDOR y la escalada de privilegios se verifican además con las pruebas deterministas S08--S14 y \texttt{SEGBloqueoCuentaTest}, que no dependen del ritmo del escáner. Antes de este escaneo se corrió uno sin sesión (\texttt{antes-reporte-zap.*}), donde apareció la única alerta baja. El detalle está en \texttt{docs/seguridad/zap/hallazgos.md}.
+
+La verificación del despliegue por el túnel HTTPS está en \texttt{docs/seguridad/verificacion-despliegue.txt}: cabeceras presentes, contenedor con el usuario \texttt{sonrisas} (uid 999), \texttt{ReadonlyRootfs}, \texttt{CapDrop=ALL}, \texttt{no-new-privileges} y puerto 8080 solo en \texttt{127.0.0.1}. El túnel rápido de Cloudflare también contesta por \texttt{http://} sin redirigir. La app release no lo usa porque bloquea el tráfico en claro, y HSTS obliga a HTTPS en clientes que lo respetan.
