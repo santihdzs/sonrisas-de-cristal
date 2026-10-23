@@ -114,7 +114,7 @@ El APK de la entrega está en `entrega/sonrisas-de-cristal-v3.0.0.apk`. Para ins
 
 ## Cuentas de prueba
 
-Todas usan la contraseña `demo`. Detalle de cada cuenta y guion de la demo en [DEMO.md](DEMO.md).
+Todas usan la contraseña `demo`.
 
 | Rol | Usuarios |
 | --- | --- |

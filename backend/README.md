@@ -29,7 +29,7 @@ Sin Docker (usa H2, una base en el archivo `backend/datos/`):
 JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home" ./gradlew -p backend run
 ```
 
-En los dos casos queda en `http://localhost:8080`. La primera vez carga los datos de prueba de la demo (las mismas cuentas de `DEMO.md`, contraseña `demo`). Los cambios se guardan en la base: sobreviven a reiniciar el servidor y la app.
+En los dos casos queda en `http://localhost:8080`. La primera vez carga los datos de prueba de la demo (cuentas listadas en el README principal, contraseña `demo`). Los cambios se guardan en la base: sobreviven a reiniciar el servidor y la app.
 
 ### Volver a cargar los datos de prueba
 
