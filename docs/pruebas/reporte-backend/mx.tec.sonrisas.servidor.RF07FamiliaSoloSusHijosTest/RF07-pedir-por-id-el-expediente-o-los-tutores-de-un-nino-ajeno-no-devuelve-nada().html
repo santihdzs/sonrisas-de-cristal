@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<meta http-equiv="x-ua-compatible" content="IE=edge"/>
+<title>Test results - RF07 pedir por id el expediente o los tutores de un nino ajeno no devuelve nada()</title>
+<link href="../css/base-style.css" rel="stylesheet" type="text/css"/>
+<link href="../css/style.css" rel="stylesheet" type="text/css"/>
+<script src="../js/report.js" type="text/javascript"></script>
+</head>
+<body>
+<div id="content">
+<div class="breadcrumbs">
+<a class="breadcrumb" href="../index.html">all</a> &gt; 
+<a class="breadcrumb" href="index.html">mx.tec.sonrisas.servidor.RF07FamiliaSoloSusHijosTest</a> &gt; 
+<span class="breadcrumb">RF07 pedir por id el expediente o los tutores de un nino ajeno no devuelve nada()</span>
+</div>
+<div class="tab-container">
+<ul class="tabLinks">
+<li>
+<a class="successGroup" href="#">Gradle Test Run :test</a>
+</li>
+</ul>
+<div class="tab">
+<h2>Gradle Test Run :test</h2>
+<h1>RF07 pedir por id el expediente o los tutores de un nino ajeno no devuelve nada()</h1>
+<div class="tab-container">
+<ul class="tabLinks">
+<li>
+<a class="" href="#">summary</a>
+</li>
+<li>
+<a class="" href="#">standard output</a>
+</li>
+</ul>
+<div class="tab">
+<h2>summary</h2>
+<div>
+<div class="summary">
+<table>
+<tr>
+<td>
+<div class="summaryGroup">
+<table>
+<tr>
+<td>
+<div class="infoBox">
+<div class="counter">1</div>
+<p>tests</p>
+</div>
+</td>
+<td>
+<div class="infoBox">
+<div class="counter">0</div>
+<p>failures</p>
+</div>
+</td>
+<td>
+<div class="infoBox">
+<div class="counter">0</div>
+<p>skipped</p>
+</div>
+</td>
+<td>
+<div class="infoBox duration">
+<div class="counter">0.233s</div>
+<p>duration</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+</td>
+<td>
+<div class="infoBox success successRate">
+<div class="percent">100%</div>
+<p>successful</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
+</div>
+</div>
+<div class="tab">
+<h2>standard output</h2>
+<span class="code">
+<div class="clipboard-copy-btn-container">
+<button class="clipboard-copy-btn" aria-label="Copy to clipboard" data-copy-element-id="root-0-test-stdout-RF07 pedir por id el expediente o los tutores de un nino ajeno no devuelve nada()">Copy</button>
+</div>
+<pre id="root-0-test-stdout-RF07 pedir por id el expediente o los tutores de un nino ajeno no devuelve nada()">22:59:17.929 INFO  io.ktor.test - No ktor.deployment.watch patterns specified, automatic reload is not active.
+22:59:17.930 INFO  io.ktor.test - Application started in 0.001 seconds.
+22:59:17.930 INFO  io.ktor.test - Responding at http://localhost:80
+22:59:17.931 INFO  io.ktor.test - Responding at https://localhost:443
+22:59:17.954 INFO  io.ktor.test - 200 OK: POST - /auth/login in 23ms
+22:59:17.973 INFO  io.ktor.test - 200 OK: POST - /auth/login in 18ms
+22:59:17.974 INFO  io.ktor.test - 200 OK: GET - /ninos in 0ms
+22:59:17.993 INFO  io.ktor.test - 200 OK: POST - /auth/login in 18ms
+22:59:17.994 INFO  io.ktor.test - 200 OK: GET - /ninos in 1ms
+22:59:17.995 INFO  io.ktor.test - 404 Not Found: GET - /ninos/09529ec1-b54a-8a9f-b72d-31c2e79d3e41 in 1ms
+22:59:17.997 INFO  io.ktor.test - 200 OK: GET - /ninos/09529ec1-b54a-8a9f-b72d-31c2e79d3e41/tutores in 2ms
+22:59:17.998 INFO  io.ktor.test - 404 Not Found: GET - /ninos/ae28dfff-8422-a7b5-ddcb-4b586c2b3575 in 1ms
+22:59:17.998 INFO  io.ktor.test - 200 OK: GET - /ninos/ae28dfff-8422-a7b5-ddcb-4b586c2b3575/tutores in 0ms
+22:59:17.999 INFO  io.ktor.test - 404 Not Found: GET - /ninos/a1e41581-efb4-74cb-f0a5-a3061a6bc07f in 1ms
+22:59:17.999 INFO  io.ktor.test - 200 OK: GET - /ninos/a1e41581-efb4-74cb-f0a5-a3061a6bc07f/tutores in 0ms
+22:59:18.000 INFO  io.ktor.test - 404 Not Found: GET - /ninos/c7cee23f-dd02-e590-77aa-43847d6d748b in 0ms
+22:59:18.001 INFO  io.ktor.test - 200 OK: GET - /ninos/c7cee23f-dd02-e590-77aa-43847d6d748b/tutores in 1ms
+22:59:18.001 INFO  io.ktor.test - 404 Not Found: GET - /ninos/9612cc7a-c0f6-8feb-78d3-f73f1b1dc981 in 0ms
+22:59:18.002 INFO  io.ktor.test - 200 OK: GET - /ninos/9612cc7a-c0f6-8feb-78d3-f73f1b1dc981/tutores in 0ms
+22:59:18.003 INFO  io.ktor.test - 404 Not Found: GET - /ninos/ed414397-5805-1ff8-5de1-85e0a9c5622f in 1ms
+22:59:18.003 INFO  io.ktor.test - 200 OK: GET - /ninos/ed414397-5805-1ff8-5de1-85e0a9c5622f/tutores in 0ms
+22:59:18.004 INFO  io.ktor.test - 404 Not Found: GET - /ninos/903bb162-5091-cfc3-e898-9f74ba3307bb in 1ms
+22:59:18.004 INFO  io.ktor.test - 200 OK: GET - /ninos/903bb162-5091-cfc3-e898-9f74ba3307bb/tutores in 0ms
+22:59:18.005 INFO  io.ktor.test - 404 Not Found: GET - /ninos/6b17f3b0-72b1-03af-c727-0cf3ee17d8f2 in 0ms
+22:59:18.006 INFO  io.ktor.test - 200 OK: GET - /ninos/6b17f3b0-72b1-03af-c727-0cf3ee17d8f2/tutores in 1ms
+22:59:18.006 INFO  io.ktor.test - 404 Not Found: GET - /ninos/e1b5fa6d-6f6c-8333-cfc9-26f15bd7f467 in 0ms
+22:59:18.007 INFO  io.ktor.test - 200 OK: GET - /ninos/e1b5fa6d-6f6c-8333-cfc9-26f15bd7f467/tutores in 1ms
+22:59:18.008 INFO  io.ktor.test - 404 Not Found: GET - /ninos/a6701d8e-faa3-125c-6bbf-513cf2314fdd in 1ms
+22:59:18.008 INFO  io.ktor.test - 200 OK: GET - /ninos/a6701d8e-faa3-125c-6bbf-513cf2314fdd/tutores in 0ms
+22:59:18.009 INFO  io.ktor.test - 404 Not Found: GET - /ninos/adfd0f88-fe8f-8ec3-01b2-92fea550a69a in 0ms
+22:59:18.010 INFO  io.ktor.test - 200 OK: GET - /ninos/adfd0f88-fe8f-8ec3-01b2-92fea550a69a/tutores in 1ms
+22:59:18.010 INFO  io.ktor.test - 404 Not Found: GET - /ninos/1cdb6caa-5fc9-4fbf-f98d-31019ae28879 in 0ms
+22:59:18.011 INFO  io.ktor.test - 200 OK: GET - /ninos/1cdb6caa-5fc9-4fbf-f98d-31019ae28879/tutores in 1ms
+22:59:18.011 INFO  io.ktor.test - 404 Not Found: GET - /ninos/48eb70e3-2af3-8ee2-acd8-2d2075f89b9c in 0ms
+22:59:18.012 INFO  io.ktor.test - 200 OK: GET - /ninos/48eb70e3-2af3-8ee2-acd8-2d2075f89b9c/tutores in 0ms
+22:59:18.012 INFO  io.ktor.test - 404 Not Found: GET - /ninos/8352ff6e-e4af-b73b-80bd-7547abfc20e5 in 0ms
+22:59:18.013 INFO  io.ktor.test - 200 OK: GET - /ninos/8352ff6e-e4af-b73b-80bd-7547abfc20e5/tutores in 0ms
+22:59:18.013 INFO  io.ktor.test - 404 Not Found: GET - /ninos/1b1869a9-8326-5238-837f-a42966e2dd61 in 0ms
+22:59:18.014 INFO  io.ktor.test - 200 OK: GET - /ninos/1b1869a9-8326-5238-837f-a42966e2dd61/tutores in 0ms
+22:59:18.015 INFO  io.ktor.test - 404 Not Found: GET - /ninos/99dabd6e-f106-48e7-663f-597baf1cd49f in 1ms
+22:59:18.015 INFO  io.ktor.test - 200 OK: GET - /ninos/99dabd6e-f106-48e7-663f-597baf1cd49f/tutores in 0ms
+22:59:18.016 INFO  io.ktor.test - 404 Not Found: GET - /ninos/dbaa2f08-8780-78be-1e5c-5a12e4990ae7 in 1ms
+22:59:18.016 INFO  io.ktor.test - 200 OK: GET - /ninos/dbaa2f08-8780-78be-1e5c-5a12e4990ae7/tutores in 0ms
+22:59:18.017 INFO  io.ktor.test - 404 Not Found: GET - /ninos/ffcf2e80-9020-0b65-953b-03374773d787 in 1ms
+22:59:18.017 INFO  io.ktor.test - 200 OK: GET - /ninos/ffcf2e80-9020-0b65-953b-03374773d787/tutores in 0ms
+22:59:18.018 INFO  io.ktor.test - 404 Not Found: GET - /ninos/d82bb5c0-20b2-6688-5f62-93cd00b64469 in 1ms
+22:59:18.018 INFO  io.ktor.test - 200 OK: GET - /ninos/d82bb5c0-20b2-6688-5f62-93cd00b64469/tutores in 0ms
+22:59:18.019 INFO  io.ktor.test - 404 Not Found: GET - /ninos/94896adb-77dd-a5f0-9eea-aac76822aac4 in 0ms
+22:59:18.019 INFO  io.ktor.test - 200 OK: GET - /ninos/94896adb-77dd-a5f0-9eea-aac76822aac4/tutores in 0ms
+22:59:18.020 INFO  io.ktor.test - 404 Not Found: GET - /ninos/fa2c5fc5-2c6c-bf47-ef34-b448bf65aa79 in 0ms
+22:59:18.020 INFO  io.ktor.test - 200 OK: GET - /ninos/fa2c5fc5-2c6c-bf47-ef34-b448bf65aa79/tutores in 0ms
+22:59:18.021 INFO  io.ktor.test - 404 Not Found: GET - /ninos/eecba186-09d9-aa0d-0c19-241b672fd4f3 in 0ms
+22:59:18.021 INFO  io.ktor.test - 200 OK: GET - /ninos/eecba186-09d9-aa0d-0c19-241b672fd4f3/tutores in 0ms
+22:59:18.022 INFO  io.ktor.test - 404 Not Found: GET - /ninos/691ca5f8-02a7-aa02-c64c-b842cbad117a in 0ms
+22:59:18.022 INFO  io.ktor.test - 200 OK: GET - /ninos/691ca5f8-02a7-aa02-c64c-b842cbad117a/tutores in 0ms
+22:59:18.023 INFO  io.ktor.test - 404 Not Found: GET - /ninos/44182e6d-eeec-e184-f6f5-016a7c54a689 in 0ms
+22:59:18.024 INFO  io.ktor.test - 200 OK: GET - /ninos/44182e6d-eeec-e184-f6f5-016a7c54a689/tutores in 1ms
+22:59:18.024 INFO  io.ktor.test - 404 Not Found: GET - /ninos/11e3a3f5-171a-bf7e-74cb-a03b47690fd2 in 0ms
+22:59:18.025 INFO  io.ktor.test - 200 OK: GET - /ninos/11e3a3f5-171a-bf7e-74cb-a03b47690fd2/tutores in 1ms
+22:59:18.025 INFO  io.ktor.test - 404 Not Found: GET - /ninos/b27c1f71-5af3-fb29-f8cc-64b5d668021b in 0ms
+22:59:18.026 INFO  io.ktor.test - 200 OK: GET - /ninos/b27c1f71-5af3-fb29-f8cc-64b5d668021b/tutores in 0ms
+22:59:18.026 INFO  io.ktor.test - 404 Not Found: GET - /ninos/5bcb9213-c31d-be1a-97f8-b3867b8faca4 in 0ms
+22:59:18.027 INFO  io.ktor.test - 200 OK: GET - /ninos/5bcb9213-c31d-be1a-97f8-b3867b8faca4/tutores in 0ms
+22:59:18.028 INFO  io.ktor.test - 404 Not Found: GET - /ninos/160c7487-45aa-b60d-427c-abe9f34419e9 in 1ms
+22:59:18.028 INFO  io.ktor.test - 200 OK: GET - /ninos/160c7487-45aa-b60d-427c-abe9f34419e9/tutores in 0ms
+22:59:18.028 INFO  io.ktor.test - 404 Not Found: GET - /ninos/f7e53556-a52b-2ec4-4b35-93739cb5aaab in 0ms
+22:59:18.029 INFO  io.ktor.test - 200 OK: GET - /ninos/f7e53556-a52b-2ec4-4b35-93739cb5aaab/tutores in 0ms
+22:59:18.030 INFO  io.ktor.test - 404 Not Found: GET - /ninos/f92406af-3139-deb3-84a0-4d07fc8f8388 in 1ms
+22:59:18.030 INFO  io.ktor.test - 200 OK: GET - /ninos/f92406af-3139-deb3-84a0-4d07fc8f8388/tutores in 0ms
+22:59:18.031 INFO  io.ktor.test - 404 Not Found: GET - /ninos/962da2ac-42fb-61cc-6b21-d615cb096552 in 1ms
+22:59:18.031 INFO  io.ktor.test - 200 OK: GET - /ninos/962da2ac-42fb-61cc-6b21-d615cb096552/tutores in 0ms
+22:59:18.032 INFO  io.ktor.test - 404 Not Found: GET - /ninos/18169800-eabd-f590-2f38-beef83917d09 in 1ms
+22:59:18.032 INFO  io.ktor.test - 200 OK: GET - /ninos/18169800-eabd-f590-2f38-beef83917d09/tutores in 0ms
+22:59:18.033 INFO  io.ktor.test - 404 Not Found: GET - /ninos/0dada910-0adc-1a67-5ab4-ab694745a306 in 0ms
+22:59:18.033 INFO  io.ktor.test - 200 OK: GET - /ninos/0dada910-0adc-1a67-5ab4-ab694745a306/tutores in 0ms
+22:59:18.034 INFO  io.ktor.test - 404 Not Found: GET - /ninos/c7025d44-aeb7-980f-822d-5b4b9ee281c3 in 0ms
+22:59:18.035 INFO  io.ktor.test - 200 OK: GET - /ninos/c7025d44-aeb7-980f-822d-5b4b9ee281c3/tutores in 1ms
+</pre>
+</span>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<p>
+<div>
+<label class="hidden" id="label-for-line-wrapping-toggle" for="line-wrapping-toggle">Wrap lines
+<input id="line-wrapping-toggle" type="checkbox" autocomplete="off"/>
+</label>
+</div>Generated by 
+<a href="https://www.gradle.org">Gradle 9.8.0</a> at Oct 22, 2026, 10:59:29 PM</p>
+</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,46 @@
+Pruebas del backend (./gradlew -p backend test), 2026-10-22 23:00
+
+1) H2 en memoria (modo por defecto)
+  ARCOEliminacionTest                  3 pruebas, 0 fallas, 0 errores, 0 omitidas
+  DbTest                               2 pruebas, 0 fallas, 0 errores, 0 omitidas
+  RF01AccesoPerfilesTest               4 pruebas, 0 fallas, 0 errores, 0 omitidas
+  RF02ListaNinosSalaTest               4 pruebas, 0 fallas, 0 errores, 0 omitidas
+  RF03AsistenciaTest                   4 pruebas, 0 fallas, 0 errores, 0 omitidas
+  RF04BitacoraTest                     4 pruebas, 0 fallas, 0 errores, 0 omitidas
+  RF06FamiliaVeElDiaTest               4 pruebas, 0 fallas, 0 errores, 0 omitidas
+  RF07FamiliaSoloSusHijosTest          4 pruebas, 0 fallas, 0 errores, 0 omitidas
+  RF09FotosVisiblesTest                4 pruebas, 0 fallas, 0 errores, 0 omitidas
+  RF10EliminarFotoTest                 4 pruebas, 0 fallas, 0 errores, 0 omitidas
+  RF14RegistroActividadTest            4 pruebas, 0 fallas, 0 errores, 0 omitidas
+  RF15SalidaPersonaAutorizadaTest      4 pruebas, 0 fallas, 0 errores, 0 omitidas
+  SEGArchivosTest                      6 pruebas, 0 fallas, 0 errores, 0 omitidas
+  SEGBloqueoCuentaTest                 4 pruebas, 0 fallas, 0 errores, 0 omitidas
+  SEGRelojServidorTest                 7 pruebas, 0 fallas, 0 errores, 0 omitidas
+  SeguridadTest                       27 pruebas, 0 fallas, 0 errores, 0 omitidas
+  ServidorTest                         8 pruebas, 0 fallas, 0 errores, 0 omitidas
+  TOTAL: 97 pruebas, 0 con falla
+
+2) PostgreSQL 17 real (docker postgres:17), con PRUEBAS_DATABASE_URL=postgres://sonrisas:***@127.0.0.1:55432/sonrisas
+   cada prueba crea su propio esquema y lo borra al terminar.
+   usan postgres: RF01-RF15, ARCOEliminacionTest, SEGArchivosTest, SEGRelojServidorTest, ServidorTest (64 pruebas).
+   siguen en h2 aunque exista la variable: SeguridadTest y SEGBloqueoCuentaTest (crean su propia base), DbTest (no usa base).
+  ARCOEliminacionTest                  3 pruebas, 0 fallas, 0 errores, 0 omitidas
+  DbTest                               2 pruebas, 0 fallas, 0 errores, 0 omitidas
+  RF01AccesoPerfilesTest               4 pruebas, 0 fallas, 0 errores, 0 omitidas
+  RF02ListaNinosSalaTest               4 pruebas, 0 fallas, 0 errores, 0 omitidas
+  RF03AsistenciaTest                   4 pruebas, 0 fallas, 0 errores, 0 omitidas
+  RF04BitacoraTest                     4 pruebas, 0 fallas, 0 errores, 0 omitidas
+  RF06FamiliaVeElDiaTest               4 pruebas, 0 fallas, 0 errores, 0 omitidas
+  RF07FamiliaSoloSusHijosTest          4 pruebas, 0 fallas, 0 errores, 0 omitidas
+  RF09FotosVisiblesTest                4 pruebas, 0 fallas, 0 errores, 0 omitidas
+  RF10EliminarFotoTest                 4 pruebas, 0 fallas, 0 errores, 0 omitidas
+  RF14RegistroActividadTest            4 pruebas, 0 fallas, 0 errores, 0 omitidas
+  RF15SalidaPersonaAutorizadaTest      4 pruebas, 0 fallas, 0 errores, 0 omitidas
+  SEGArchivosTest                      6 pruebas, 0 fallas, 0 errores, 0 omitidas
+  SEGBloqueoCuentaTest                 4 pruebas, 0 fallas, 0 errores, 0 omitidas
+  SEGRelojServidorTest                 7 pruebas, 0 fallas, 0 errores, 0 omitidas
+  SeguridadTest                       27 pruebas, 0 fallas, 0 errores, 0 omitidas
+  ServidorTest                         8 pruebas, 0 fallas, 0 errores, 0 omitidas
+  TOTAL: 97 pruebas, 0 con falla
+
+Reporte html de junit (corrida en h2): docs/pruebas/reporte-backend/index.html
