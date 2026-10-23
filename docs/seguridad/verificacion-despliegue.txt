@@ -1,0 +1,76 @@
+Verificacion del despliegue (docker compose + tunel cloudflare)
+fecha: 2026-10-23T05:04:16Z
+url del tunel: https://comprehensive-foundations-headlines-arts.trycloudflare.com
+Los tokens se reemplazaron por <REDACTADO>.
+
+== 1. Cabeceras de seguridad por HTTPS ==
+$ curl -sS -D - -o /dev/null https://comprehensive-foundations-headlines-arts.trycloudflare.com/
+HTTP/2 200 
+date: Fri, 23 Oct 2026 05:04:17 GMT
+content-type: text/plain; charset=UTF-8
+content-length: 36
+cf-ray: a4ee33397b49367c-DFW
+cf-cache-status: DYNAMIC
+cache-control: no-store
+server: cloudflare
+strict-transport-security: max-age=31536000; includeSubDomains
+x-robots-tag: none
+x-robots-tag: none
+content-security-policy: default-src 'none'; frame-ancestors 'none'
+cross-origin-resource-policy: same-origin
+referrer-policy: no-referrer
+x-content-type-options: nosniff
+x-frame-options: DENY
+x-ratelimit-limit: 1000
+x-ratelimit-remaining: 999
+x-ratelimit-reset: 1792731917
+
+$ curl -sS -D - -o /dev/null http://comprehensive-foundations-headlines-arts.trycloudflare.com/   (http sin cifrar)
+HTTP/1.1 200 OK
+Date: Fri, 23 Oct 2026 05:04:17 GMT
+Content-Type: text/plain; charset=UTF-8
+Content-Length: 36
+Connection: keep-alive
+
+== 2. Login de cada cuenta de la demo (contrasena CONTRASENA_DEMO de shared/) ==
+POST /auth/login {"usuario":"fundacion","contrasena":"***"} -> HTTP 200  rol: FUNDACION | Guadalupe Villarreal Ríos  cuerpo: {"token":"<REDACTADO>","perfil":{"usuario":{"id":"a2ed5f17-0198-10a8-f4f2-742052290369","usuario":"fundacion","nombre":"Guadalupe Villarreal Ríos","rol":"FUNDA...
+POST /auth/login {"usuario":"direccion","contrasena":"***"} -> HTTP 200  rol: DIRECCION | Claudia Martínez Leal  cuerpo: {"token":"<REDACTADO>","perfil":{"usuario":{"id":"9b6b45b5-ce3a-bafc-966f-94157a646b61","usuario":"direccion","nombre":"Claudia Martínez Leal","rol":"DIRECCION...
+POST /auth/login {"usuario":"direccion.vv","contrasena":"***"} -> HTTP 200  rol: DIRECCION | Verónica Salazar Treviño  cuerpo: {"token":"<REDACTADO>","perfil":{"usuario":{"id":"fa88cf01-523e-cbc7-b6c7-87605786b4ea","usuario":"direccion.vv","nombre":"Verónica Salazar Treviño","rol":"DI...
+POST /auth/login {"usuario":"educadora","contrasena":"***"} -> HTTP 200  rol: EDUCADORA | Mariana López Hernández  cuerpo: {"token":"<REDACTADO>","perfil":{"usuario":{"id":"6e713210-2bd5-2ef1-f5ec-9a15fcc41de0","usuario":"educadora","nombre":"Mariana López Hernández","rol":"EDUCAD...
+POST /auth/login {"usuario":"educadora.lactantes","contrasena":"***"} -> HTTP 200  rol: EDUCADORA | Rosa Elena Garza Villarreal  cuerpo: {"token":"<REDACTADO>","perfil":{"usuario":{"id":"1dd2038d-3d3a-4585-f2f1-ae9fab3a46f7","usuario":"educadora.lactantes","nombre":"Rosa Elena Garza Villarreal","...
+POST /auth/login {"usuario":"educadora.preescolar","contrasena":"***"} -> HTTP 200  rol: EDUCADORA | Patricia Cantú Morales  cuerpo: {"token":"<REDACTADO>","perfil":{"usuario":{"id":"6aa71832-ce35-6e37-2e01-6f95c9e4faad","usuario":"educadora.preescolar","nombre":"Patricia Cantú Morales","rol...
+POST /auth/login {"usuario":"educadora.vv.lactantes","contrasena":"***"} -> HTTP 200  rol: EDUCADORA | Brenda Salinas Ochoa  cuerpo: {"token":"<REDACTADO>","perfil":{"usuario":{"id":"39c0c65d-d854-26d2-8662-a462e0226a58","usuario":"educadora.vv.lactantes","nombre":"Brenda Salinas Ochoa","rol"...
+POST /auth/login {"usuario":"educadora.vv.maternales","contrasena":"***"} -> HTTP 200  rol: EDUCADORA | Yolanda Ibarra Treviño  cuerpo: {"token":"<REDACTADO>","perfil":{"usuario":{"id":"21a71b2b-a45c-d15b-9eea-9556c0802b16","usuario":"educadora.vv.maternales","nombre":"Yolanda Ibarra Treviño","...
+POST /auth/login {"usuario":"educadora.vv.preescolar","contrasena":"***"} -> HTTP 200  rol: EDUCADORA | Carmen Solís Rangel  cuerpo: {"token":"<REDACTADO>","perfil":{"usuario":{"id":"61cd729c-86e4-4528-6013-70b44953de9b","usuario":"educadora.vv.preescolar","nombre":"Carmen Solís Rangel","rol...
+POST /auth/login {"usuario":"familia","contrasena":"***"} -> HTTP 200  rol: FAMILIAR | Laura Treviño Garza  cuerpo: {"token":"<REDACTADO>","perfil":{"usuario":{"id":"4805efae-8116-9289-a682-d5885091753e","usuario":"familia","nombre":"Laura Treviño Garza","rol":"FAMILIAR","es...
+POST /auth/login {"usuario":"familia.papa","contrasena":"***"} -> HTTP 200  rol: FAMILIAR | Jorge Ramírez Salinas  cuerpo: {"token":"<REDACTADO>","perfil":{"usuario":{"id":"6a9663d3-ee27-94ed-e50d-0b166a6aa0fe","usuario":"familia.papa","nombre":"Jorge Ramírez Salinas","rol":"FAMILI...
+POST /auth/login {"usuario":"familia.paola","contrasena":"***"} -> HTTP 200  rol: FAMILIAR | Paola Elizondo Garza  cuerpo: {"token":"<REDACTADO>","perfil":{"usuario":{"id":"d60d8221-d29c-402e-00f4-bde9fa49e083","usuario":"familia.paola","nombre":"Paola Elizondo Garza","rol":"FAMILIA...
+POST /auth/login {"usuario":"familia","contrasena":"incorrecta"} -> {"mensaje":"Usuario o contraseña incorrectos."} HTTP 401
+
+== 3. Persistencia y visibilidad entre cuentas: la educadora escribe, la familia lee ==
+como educadora: GET /ninos -> id de Sofia = f92406af-3139-deb3-84a0-4d07fc8f8388
+como educadora: POST /eventos  Authorization: Bearer <REDACTADO>
+  cuerpo: [{"type":"mx.tec.sonrisas.domain.EventoBitacora.Nota","id":"verif-1792731945","ninoId":"f92406af-3139-deb3-84a0-4d07fc8f8388","cuando":"2026-10-22T10:30:00","registradoPorId":"","texto":"Verificacion de despliegue: hoy armo un rompecabezas"}]
+  ->  HTTP 204
+como familia (mama de Sofia): GET /eventos?nino=f92406af-3139-deb3-84a0-4d07fc8f8388&desde=2026-10-22&hasta=2026-10-22  Authorization: Bearer <REDACTADO>
+  -> [{'type': 'mx.tec.sonrisas.domain.EventoBitacora.Nota', 'id': 'verif-1792731945', 'ninoId': 'f92406af-3139-deb3-84a0-4d07fc8f8388', 'cuando': '2026-10-22T10:30', 'registradoPorId': '6e713210-2bd5-2ef1-f5ec-9a15fcc41de0', 'texto': 'Verificacion de despliegue: hoy armo un rompecabezas'}]
+como familia.paola (otra familia): mismo GET -> [] HTTP 200
+sin sesion: GET /ninos/f92406af-3139-deb3-84a0-4d07fc8f8388 -> HTTP 401
+Nota: el servidor puso registradoPorId con el id de la educadora de la sesion (RF-14), aunque el cuerpo lo mando vacio.
+Nota: trycloudflare tambien contesta por http sin redirigir; la app usa https y HSTS hace que el navegador ya no use http.
+
+== 4. Contenedor del backend endurecido (docker inspect, despues de reconstruir) ==
+$ docker inspect <backend>
+Config.User=sonrisas
+HostConfig.ReadonlyRootfs=true
+HostConfig.CapDrop=[ALL]
+HostConfig.CapAdd=[]
+HostConfig.SecurityOpt=[no-new-privileges:true]
+HostConfig.Privileged=false
+HostConfig.Tmpfs=map[/tmp:]
+HostConfig.PortBindings={"8080/tcp":[{"HostIp":"127.0.0.1","HostPort":"8080"}]}
+$ docker compose exec backend id
+uid=999(sonrisas) gid=999(sonrisas) groups=999(sonrisas)
+$ docker compose exec backend touch /app/x
+touch: cannot touch '/app/x': Read-only file system
+Conclusion: usuario sin privilegios (uid 999), sistema de archivos de solo lectura, sin capacidades de linux, no-new-privileges, puerto 8080 solo en 127.0.0.1.
