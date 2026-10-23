@@ -41,3 +41,4 @@ keystore.properties
 !/entrega/*.apk
 /paper/main.pdf
 /slides/main.pdf
+/CLAUDE.md
