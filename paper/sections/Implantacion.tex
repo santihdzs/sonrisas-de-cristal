@@ -6,8 +6,8 @@
 	\item[Configuración necesaria.] Un equipo o VPS de la Fundación con Docker y un archivo \texttt{.\allowbreak{}env} con \texttt{POSTGRES\_PASSWORD} aleatoria, \texttt{DATOS\_DEMO=false} y \texttt{CLAVE\_FUNDACION} de 12 caracteres o más. En operación real se recomienda un túnel con nombre de Cloudflare (dominio fijo) en lugar del túnel rápido, cuya dirección cambia al reiniciar. En la app, la dirección del servidor se fija al compilar (\texttt{-Pservidor=https:/\allowbreak{}/\allowbreak{}\ldots}) o se configura una vez manteniendo presionado el logo.
 	\item[Procedimiento de despliegue.]
 	\begin{enumerate}
-		\item Clonar el tag \texttt{v3.\allowbreak{}0-entrega-final} y crear el \texttt{.\allowbreak{}env}.
-		\item Levantar los servicios: \texttt{docker compose --profile tunel up -d --build}.
+		\item Clonar el tag \texttt{v3.0-entrega-final}, copiar \texttt{.env.example} a \texttt{.env} y ajustar los valores de producción: \texttt{POSTGRES\_PASSWORD} aleatoria, \texttt{DATOS\_DEMO=false} y \texttt{CLAVE\_FUNDACION}.
+		\item Correr \texttt{./levantar.sh} (sección~\ref{sec:instalacion}).
 		\item Confirmar que \texttt{GET /\allowbreak{}} responde por \texttt{https} con las cabeceras de seguridad.
 		\item Entrar como \texttt{fundacion}, registrar las estancias y crear la cuenta de Dirección de cada una.
 		\item Cada Dirección registra salas y educadoras e inscribe a los niños.

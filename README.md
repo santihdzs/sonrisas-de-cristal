@@ -25,13 +25,21 @@ Toda regla de privacidad vive en la capa de datos, nunca en las pantallas. Con s
 
 ## Backend
 
-Requiere Docker. Desde la raíz del repo, tres comandos levantan PostgreSQL, el backend con los datos de demostración y el túnel HTTPS (el `.env.example` ya trae valores que funcionan; en producción cambia `POSTGRES_PASSWORD`):
+Requiere Docker. Un solo comando, desde la raíz del repo:
 
 ```sh
-cp .env.example .env          # PowerShell: Copy-Item .env.example .env
-docker compose --profile tunel up -d --build
-docker compose logs tunel | grep trycloudflare   # dirección https para la app
+./levantar.sh
 ```
+
+Crea `.env` a partir de `.env.example` (ya trae valores listos para la demo), levanta PostgreSQL, el backend con los datos de demostración y el túnel HTTPS, e imprime la dirección `https://….trycloudflare.com` que se le da a la app. En Windows (PowerShell):
+
+```powershell
+Copy-Item .env.example .env
+docker compose --profile tunel up -d --build
+docker compose logs tunel     # dirección https para la app
+```
+
+Detener sin borrar datos: `docker compose --profile tunel down`. En producción cambia `POSTGRES_PASSWORD` en `.env` por una aleatoria (`openssl rand -hex 24`) y pon `DATOS_DEMO=false`.
 
 Variables de `.env.example`:
 

@@ -43,55 +43,107 @@ Cuentas de demostración (contraseña \texttt{demo}): \texttt{educadora}, \textt
 	\item Si hay cuentas bloqueadas, aparece la sección \emph{Cuentas bloqueadas}, con un botón \emph{Desbloquear} por cuenta.
 \end{itemize}
 
-\section{Manual de instalación}
+\section{Manual de instalación y ejecución}\label{sec:instalacion}
+Esta sección basta para que una persona externa levante el sistema completo, instale la app y corra las pruebas. Todos los comandos se ejecutan desde la raíz del repositorio.
 
 \subsection{Requisitos}
 \begin{itemize}
-	\item Docker 24 o superior con Docker Compose.
-	\item Para compilar la app: Android Studio (su JDK, \texttt{jbr}).
-	\item Un teléfono con Android 8.0 o superior.
+	\item \textbf{Backend:} Docker 24 o superior con Docker Compose. No hace falta instalar Java ni PostgreSQL.
+	\item \textbf{App:} un teléfono o emulador con Android 8.0 o superior.
+	\item \textbf{Solo para compilar o correr pruebas:} el JDK que trae Android Studio.
 \end{itemize}
 
-\subsection{Levantar el backend}
+\subsection{Levantar el backend (un comando)}
 \begin{lstlisting}[style=terminal]
 $ git clone https://github.com/santihdzs/sonrisas-de-cristal.git
-$ cd sonrisas-de-cristal && git checkout v3.0-entrega-final
-$ cp .env.example .env      # ya trae valores para la demo
-$ docker compose --profile tunel up -d --build
-$ docker compose logs tunel | grep trycloudflare   # direccion https
+$ cd sonrisas-de-cristal
+$ ./levantar.sh
 \end{lstlisting}
 
-Variables de entorno (\texttt{.\allowbreak{}env}):
+\texttt{levantar.sh} hace todo lo siguiente:
 \begin{itemize}
-	\item \texttt{POSTGRES\_PASSWORD}: obligatoria.
-	\item \texttt{DATOS\_DEMO}: \texttt{true} carga los datos de demostración; en producción, \texttt{false}.
-	\item \texttt{CLAVE\_FUNDACION}: contraseña inicial de la cuenta \texttt{fundacion} cuando \texttt{DATOS\_DEMO=false}; mínimo 12 caracteres.
-	\item \texttt{PROXY\_CONFIABLE}: \texttt{true} detrás del túnel.
-	\item \texttt{HOST\_IP}: por defecto \texttt{127.\allowbreak{}0.\allowbreak{}0.\allowbreak{}1}.
+	\item crea el \texttt{.env} a partir de \texttt{.env.example}, que ya trae valores listos para la demostración;
+	\item construye y levanta PostgreSQL, el backend y el túnel HTTPS de Cloudflare;
+	\item al arrancar, carga los datos de demostración en la base;
+	\item imprime la dirección pública \texttt{https://\ldots.trycloudflare.com} que usará la app.
 \end{itemize}
+La salida termina así:
+\begin{lstlisting}[style=terminal]
+Backend local:                 http://127.0.0.1:8080
+Backend público (para la app): https://<palabras>.trycloudflare.com
+Cuentas de demostración: educadora, familia, direccion, fundacion (contraseña: demo)
+\end{lstlisting}
 
-La semilla es idempotente: solo carga datos cuando la base está vacía. Para recargar la demostración con la fecha del día (se niega a correr con \texttt{DATOS\_DEMO=false}):
+En Windows (PowerShell), el equivalente es:
+\begin{lstlisting}[style=terminal]
+$ Copy-Item .env.example .env
+$ docker compose --profile tunel up -d --build
+$ docker compose logs tunel
+\end{lstlisting}
+El último comando muestra la dirección \texttt{https://} del túnel.
+
+\subsection{Instalar y conectar la app}
+\begin{enumerate}
+	\item Descarga el APK firmado (sección~\ref{sec:entregables}) y ábrelo en el teléfono. Acepta \emph{instalar apps de origen desconocido} si te lo pide.
+	\item En la pantalla de inicio de sesión, mantén presionado el logo y pega la dirección \texttt{https://} que imprimió \texttt{levantar.sh}. La dirección del túnel rápido cambia cada vez que el túnel se reinicia; en ese caso se repite este paso.
+	\item Entra con una cuenta de demostración. Todas usan la contraseña \texttt{demo}:
+\end{enumerate}
+
+\begin{center}\small
+\begin{tabular}{ll}
+\toprule
+\textbf{Rol} & \textbf{Usuarios}\\\midrule
+Fundación (administración) & \texttt{fundacion}\\
+Dirección & \texttt{direccion}, \texttt{direccion.vv}\\
+Educadora & \texttt{educadora}, \texttt{educadora.lactantes}, \texttt{educadora.preescolar}, \texttt{educadora.vv.*}\\
+Familia & \texttt{familia}, \texttt{familia.papa}, \texttt{familia.paola}\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Operación}
+Recargar la demostración con la fecha de hoy (borra los datos y vuelve a sembrar; se niega a correr con \texttt{DATOS\_DEMO=false}):
 \begin{lstlisting}[style=terminal]
 $ docker compose run --rm --no-deps backend /app/bin/backend reiniciar-demo
 \end{lstlisting}
-
-\subsection{Instalar la app}
-\begin{enumerate}
-	\item Descarga el APK firmado (enlace en la sección~\ref{sec:entregables}) y ábrelo en el teléfono. Acepta \emph{instalar apps de origen desconocido} si te lo pide.
-	\item Abre la app, mantén presionado el logo y escribe la dirección \texttt{https:/\allowbreak{}/\allowbreak{}} del túnel.
-	\item Entra con una cuenta de demostración.
-\end{enumerate}
-
-Para compilar el APK de release firmado:
+Detener todo, sin borrar datos:
 \begin{lstlisting}[style=terminal]
-$ export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
-$ ./gradlew :app:assembleRelease   # firma con keystore.properties (fuera de git)
+$ docker compose --profile tunel down
 \end{lstlisting}
+
+Variables de \texttt{.env} (todas tienen valor en \texttt{.env.example}):
+\begin{itemize}
+	\item \texttt{POSTGRES\_PASSWORD}: contraseña de la base. En producción se cambia por una aleatoria (\texttt{openssl rand -hex 24}).
+	\item \texttt{DATOS\_DEMO}: \texttt{true} carga la demostración. En producción, \texttt{false}.
+	\item \texttt{CLAVE\_FUNDACION}: contraseña inicial de la cuenta \texttt{fundacion} cuando \texttt{DATOS\_DEMO=false}; mínimo 12 caracteres.
+	\item \texttt{PROXY\_CONFIABLE}: \texttt{true} detrás del túnel.
+	\item \texttt{HOST\_IP}: \texttt{127.0.0.1}, para que el puerto no quede abierto a la red.
+\end{itemize}
 
 \subsection{Correr las pruebas}
 \begin{lstlisting}[style=terminal]
-$ ./gradlew -p backend test          # integracion, API y seguridad (H2)
-$ PRUEBAS_DATABASE_URL=postgres://usuario:clave@127.0.0.1:5432/sonrisas \
-    ./gradlew -p backend test        # la misma suite contra PostgreSQL
+$ export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+$ ./gradlew -p backend test          # 97 pruebas: API, integracion y seguridad
 $ ./gradlew :app:testDebugUnitTest   # unitarias de la app
 \end{lstlisting}
+
+Para correr la misma suite contra PostgreSQL real, se levanta uno desechable y se pasa su URL:
+\begin{lstlisting}[style=terminal]
+$ docker run -d --rm --name pg-pruebas -p 127.0.0.1:55432:5432 \
+    -e POSTGRES_USER=sonrisas -e POSTGRES_PASSWORD=pruebas -e POSTGRES_DB=sonrisas postgres:17
+$ PRUEBAS_DATABASE_URL=postgres://sonrisas:pruebas@127.0.0.1:55432/sonrisas \
+    ./gradlew -p backend test
+$ docker stop pg-pruebas
+\end{lstlisting}
+El reporte HTML queda en \texttt{backend/build/reports/tests/test/index.html}.
+
+\subsection{Compilar el APK de release firmado}
+La llave de firma no está en el repositorio. Se crea una vez y se describe en \texttt{keystore.properties}, que está en \texttt{.gitignore}:
+\begin{lstlisting}[style=terminal]
+$ keytool -genkeypair -keystore ~/sonrisas-release.jks -alias sonrisas \
+    -keyalg RSA -keysize 3072 -validity 10000
+$ printf 'storeFile=%s\nstorePassword=...\nkeyAlias=sonrisas\nkeyPassword=...\n' \
+    ~/sonrisas-release.jks > keystore.properties
+$ ./gradlew :app:assembleRelease
+\end{lstlisting}
+El APK queda en \texttt{app/build/outputs/apk/release/app-release.apk}.
