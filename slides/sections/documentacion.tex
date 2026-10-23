@@ -1,0 +1,31 @@
+\section{Documentación, implantación y dilemas éticos (3 min)}
+
+\begin{frame}{Documentación e implantación \hfill\small 3 min}
+  \large
+  \begin{itemize}
+    \item Manual de usuario, manual de instalación y arquitectura
+    \item APK firmada y backend en Docker
+    \item Sin datos previos que migrar: la bitácora en papel se reemplaza por captura inicial desde la app
+    \item \textit{Rollback} con \texttt{pg\_dump}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Aviso de privacidad}
+  \large
+  \begin{itemize}
+    \item LFPDPPP (DOF 20-03-2025): arts. 8, 15, 21--31 y 36
+    \item LGDNNA: art. 76
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Dilemas éticos}
+  \begin{tabular}{@{}>{\raggedright\arraybackslash}p{4.4cm}>{\raggedright\arraybackslash}p{8.8cm}@{}}
+    \toprule
+    \textbf{Dilema} & \textbf{Cómo lo resolvimos}\\
+    \midrule
+    Compartir fotos vs.\ privacidad del menor & RF-16: permisos de imagen; RF-07 y RF-10: cada familia ve solo a su hijo y puede borrar la foto\\[0.4em]
+    Trazabilidad vs.\ privacidad del registro & RF-14: solo la Dirección lee el registro; los mensajes no se copian a él\\[0.4em]
+    Eliminación vs.\ auditoría & Borrar un expediente elimina sus registros y la cuenta de la familia\\
+    \bottomrule
+  \end{tabular}
+\end{frame}

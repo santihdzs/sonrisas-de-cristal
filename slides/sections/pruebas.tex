@@ -1,0 +1,35 @@
+\section{Pruebas y matriz (2 min)}
+
+\begin{frame}{Pruebas \hfill\small 2 min}
+  \large
+  \begin{itemize}
+    \item Backend: \textbf{97 pruebas} aprobadas en H2 y en PostgreSQL 17 real
+    \item App: 7 \textit{unit tests}
+    \item Niveles:
+      \begin{itemize}
+        \item \textit{unit}
+        \item integración de API
+        \item seguridad
+        \item DAST (OWASP ZAP)
+        \item sistema en dispositivo
+      \end{itemize}
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Matriz de pruebas (extracto)}
+  \footnotesize
+  \begin{tabular}{@{}l>{\raggedright\arraybackslash}p{4.6cm}>{\raggedright\arraybackslash}p{5.8cm}l@{}}
+    \toprule
+    \textbf{RF} & \textbf{Requisito} & \textbf{Evidencia} & \textbf{Estado}\\
+    \midrule
+    RF-03 & Entrada y salida & \texttt{RF03AsistenciaTest} (4) & Cumplido\\
+    RF-07 & Cada familia ve solo a sus hijos & \texttt{RF07FamiliaSoloSusHijosTest} (4) & Cumplido\\
+    RF-09 & Foto visible solo a los etiquetados & \texttt{RF09FotosVisiblesTest} (4) & Cumplido\\
+    RF-10 & Borrar una foto para todos & \texttt{RF10EliminarFotoTest} (4) & Cumplido\\
+    RF-14 & Registro de quién hizo qué & \texttt{RF14RegistroActividadTest} (4) & Cumplido\\
+    RF-16 & Autorización de imagen & Validación en \texttt{POST /fotos} y prueba en dispositivo & Cumplido\\
+    RF-18 & Baja y eliminación & \texttt{ARCOEliminacionTest} (3) & Cumplido\\
+    RF-11 & Funciona sin internet & No se implementó & Pendiente\\
+    \bottomrule
+  \end{tabular}
+\end{frame}

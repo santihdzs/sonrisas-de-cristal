@@ -1,0 +1,28 @@
+\section{Seguridad (2 min)}
+
+\begin{frame}{Seguridad \hfill\small 2 min}
+  \begin{columns}[T]
+    \begin{column}{0.48\textwidth}
+      \begin{itemize}
+        \item Contraseñas con PBKDF2 (210k iteraciones)
+        \item Tokens opacos, guardados como SHA-256
+        \item Android Keystore con AES-GCM
+        \item Revisión de BOLA en cada ruta
+        \item SQL parametrizado
+        \item \textit{Rate limit}; 3 IPs distintas bloquean la cuenta 3 días; solo un administrador la desbloquea
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.48\textwidth}
+      \begin{itemize}
+        \item Archivos: \textit{magic bytes} y EXIF eliminado
+        \item La hora la pone el servidor
+        \item Cabeceras de seguridad
+        \item Docker endurecido
+        \item Cloudflare Tunnel
+        \item OWASP ZAP autenticado: 0 alertas altas, medias o bajas (PASS 120)
+      \end{itemize}
+    \end{column}
+  \end{columns}
+  \vspace{0.8em}
+  \centering Referencia: OWASP Top 10 2025 y OWASP API Security Top 10 2023
+\end{frame}

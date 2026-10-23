@@ -1,0 +1,68 @@
+\documentclass[aspectratio=169,11pt]{beamer}
+\usepackage[spanish]{babel}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{amsmath,amssymb}
+
+% reuse the paper's figures and logo, nothing is regenerated.
+% first hit wins, so a local figures/ overrides the paper's.
+\graphicspath{{figures/}{../paper/figures/}}
+
+\usepackage{loomtheme}
+
+\title{Reto: Sistema completo, documentación y presentación final}
+\date{22 de octubre de 2026}
+
+\begin{document}
+
+\begin{frame}[plain]
+  \centering
+  \includegraphics[height=0.9cm]{tec_logo.png}\par\vspace{0.4em}
+  {\scriptsize Instituto Tecnológico y de Estudios Superiores de Monterrey\\
+  Escuela de Ingeniería y Ciencias, Campus Monterrey\\
+  Integración de seguridad informática en redes y sistemas de software (Gpo 403)\par}
+  \vspace{0.6em}
+  {\usebeamerfont{title}\usebeamercolor[fg]{title}\inserttitle\par}
+  \vspace{0.4em}
+  {\small Equipo NeuralHub \textperiodcentered{} Socio formador: Fundación Estancias Infantiles Sonrisas de Cristal\par}
+  \vspace{0.6em}
+  \begin{columns}[T]
+    \begin{column}{0.5\textwidth}
+      \raggedleft\scriptsize
+      \textbf{Estudiantes}\\
+      Santiago Hernández Senosiain A01787550\\
+      Gilberto Olavarrieta Sánchez A01286889\\
+      Franco Salazar Guerrero A01178655\\
+      Gerardo Islas Gómez A01739896
+    \end{column}
+    \begin{column}{0.45\textwidth}
+      \raggedright\scriptsize
+      \textbf{Profesores}\\
+      Juan David Guarnizo Hernández\\
+      Rolando Evelio Pérez Versón\\
+      Aída Judith Gándara Tovar
+    \end{column}
+  \end{columns}
+  \vspace{0.6em}
+  {\small\insertdate\par}
+\end{frame}
+
+\begin{frame}{Agenda (15 min)}
+  \tableofcontents
+\end{frame}
+
+\input{sections/problema}
+\input{sections/demo}
+\input{sections/pruebas}
+\input{sections/seguridad}
+\input{sections/diferenciadora}
+\input{sections/documentacion}
+
+\begin{frame}[plain]
+  \centering
+  {\usebeamerfont{title}\usebeamercolor[fg]{title}Gracias\par}
+  \vspace{0.5em}{\large ¿Preguntas?\par}
+\end{frame}
+
+\end{document}
