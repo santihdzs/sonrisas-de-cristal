@@ -21,7 +21,7 @@ Toda regla de privacidad vive en la capa de datos, nunca en las pantallas. Con s
 - [Presentación 1](docs/presentaciones/presentacion-1.pdf) · [Presentación 2](docs/presentaciones/presentacion-2.pdf)
 - [APK de release firmado](entrega/sonrisas-de-cristal-v3.0.0.apk)
 - [Reporte OWASP ZAP](docs/seguridad/zap/hallazgos.md) · [Verificación del despliegue](docs/seguridad/verificacion-despliegue.txt) · [Resultados de pruebas](docs/pruebas/resultados.txt)
-- [Video de demostración](ENLACE_DRIVE_PENDIENTE)
+- [Video de demostración](https://drive.google.com/file/d/12scqGtx0UNwZK7dzs1meVS2RLC9BJlBB/view?usp=sharing)
 
 ## Backend
 
